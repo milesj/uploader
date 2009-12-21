@@ -832,10 +832,15 @@ class UploaderComponent extends Object {
 		
 		if (file_exists($dest) && $overwrite === false) {
 			if (empty($append)) {
-				$append = time();
+				$no = 1;
+				while (file_exists($this->finalDir . $this->_filename($name, $no))) {
+					$no++;
+				}
+				$name = $this->_filename($name, $no);
+			} else {
+				$name = $this->_filename($name, $append);
 			}
 			
-			$name = $this->_filename($name, $append);
 			$dest = $this->finalDir . $name;
 		}
 		
