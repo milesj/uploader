@@ -18,7 +18,7 @@ class UploaderConfig {
 	 * @access public
 	 * @var string
 	 */
-	public $version = '2.3'; 
+	public $version = '2.4';
  
 	/**
 	 * The accepted file/mime types

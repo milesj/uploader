@@ -223,7 +223,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function required(&$Model, $data) {
 		foreach ($data as $fieldName => $field) {
-			if ($this->__settings[$Model->alias][$fieldName]['optional'] === false && empty($field['tmp_name'])) {
+			if (($this->__settings[$Model->alias][$fieldName]['optional'] === false || $this->__settings[$Model->alias][$fieldName]['optional']['value'] === false) && empty($field['tmp_name'])) {
 				return false;
 			}
 		}
