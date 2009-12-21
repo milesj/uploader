@@ -300,7 +300,7 @@ class UploaderComponent extends Object {
 		}
 		
 		$append = 'cropped_'. $newWidth .'x'. $newHeight;
-		if (!empty($options['append'])) {
+		if ($options['append'] !== null) {
 			$append = $options['append'];
 		}
 		
@@ -454,7 +454,7 @@ class UploaderComponent extends Object {
 		}
 		
 		$append = 'flip_'. $adir;
-		if (!empty($options['append'])) {
+		if ($options['append'] !== null) {
 			$append = $options['append'];
 		}
 		
@@ -578,7 +578,7 @@ class UploaderComponent extends Object {
 		}
 		
 		$append = $newWidth .'x'. $newHeight;
-		if (!empty($options['append'])) {
+		if ($options['append'] !== null) {
 			$append = $options['append'];
 		}
 		
@@ -617,7 +617,7 @@ class UploaderComponent extends Object {
 		$height = round($this->__data[$this->__current]['height'] * $options['percent']);
 		
 		$append = 'scaled_'. $width .'x'. $height;
-		if (!empty($options['append'])) {
+		if ($options['append'] !== null) {
 			$append = $options['append'];
 		}
 		
