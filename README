@@ -1,5 +1,5 @@
 Uploader - CakePHP Plugin
-******************************
+*************************
 
 Requirements
 ============
@@ -8,13 +8,12 @@ Requirements
 	* PHP 5.2.x
 	* Being Awesome
 
+Documentation
+=============
+
+	* http://www.milesj.me/resources/script/uploader-plugin
+
 Installation
 ============
 
-	Documentation:
-		* http://www.milesj.me/resources/script/uploader-plugin
-
-	Quick Installation:
-		* Clone the repo into a folder called "uploader" within your CakePHP's plugins directory.
-		* Add the uploader to the components: public $components = array('Uploader.Uploader');
-		* Or use the behaviors: public $actsAs = array('Uploader.Attachment', 'Uploader.FileValidation');
+	* Clone the repo into a folder called "uploader" within your CakePHP's plugins directory.
