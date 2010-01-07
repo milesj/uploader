@@ -8,6 +8,21 @@ Requirements
 	* PHP 5.2.x
 	* Being Awesome
 
+Features
+========
+
+    * Automatically sets all ini settings required for file uploading
+    * Support for a wide range of mime types: text, images, archives, audio, video, application
+    * Logs all internal errors that can be retrieved and displayed
+    * Saves a log for all uploads happening during the current request
+    * Automatically validates against the default mime types and internal errors
+    * Can scan the uploaded files for viruses using the ClamAV module
+    * Files can be uploaded anywhere within the webroot folder
+    * Convenience methods for deleting a file, moving/renaming a file and getting the file extension or dimensions
+    * Built in methods for resizing images and generating thumbnails
+    * Custom Behavior to add validation rules to your Models validation set
+    * Custom Behavior that allows models to attach files to automatically upload the file and save its information to a database
+
 Documentation
 =============
 
