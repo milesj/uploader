@@ -945,29 +945,40 @@ class UploaderComponent extends Object {
 		$validMime = false;
 	
 		// Check valid mime type!
+		if (!isset($this->__data[$this->__current]['group'])) {
+			$this->__data[$this->__current]['group'] = '';
+		}
+
 		foreach ($this->__mimeTypes as $grouping => $mimes) {
 			if (isset($mimes[$this->__data[$this->__current]['ext']])) {
 				$validExt = true;
 			}
-			if (in_array(mb_strtolower($this->__data[$this->__current]['type']), $mimes)) {
-				$validMime = true;
-			}
-			if ($validExt === true && $validMime === true) {
-				if (empty($this->__data[$this->__current]['group'])) {
-					$this->__data[$this->__current]['group'] = $grouping;
+
+			$currType = mb_strtolower($this->__data[$this->__current]['type']);
+			
+			foreach ($mimes as $mimeExt => $mimeType) {
+				if (($currType == $mimeType) || (is_array($mimeType) && in_array($currType, $mimeType))) {
+					$validMime = true;
+					break;
 				}
+			}
+
+			if ($validExt === true && $validMime === true) {
+				$this->__data[$this->__current]['group'] = $grouping;
 			}
 		}
 	
-		if ($validExt === false && $validMime === false) {
+		if (($validExt === false) || ($validMime === false)) {
 			return false;
 		}
 		
 		// Correctly uploaded?
-		if ($this->__data[$this->__current]['error'] > 0 || 
-			!is_uploaded_file($this->__data[$this->__current]['tmp_name']) || 
-			!is_file($this->__data[$this->__current]['tmp_name'])) {
-				return false;
+		if (
+			($this->__data[$this->__current]['error'] > 0) ||
+			(!is_uploaded_file($this->__data[$this->__current]['tmp_name'])) ||
+			(!is_file($this->__data[$this->__current]['tmp_name'])))
+		{
+			return false;
 		}
 			
 		// Requires the ClamAV module to be installed
@@ -976,6 +987,7 @@ class UploaderComponent extends Object {
 			if (!extension_loaded('clamav')) {
 				@dl('clamav.'. PHP_SHLIB_SUFFIX);
 			}
+			
 			if (extension_loaded('clamav')) {
 				cl_setlimits(5, 1000, 200, 0, 10485760);
 				//clam_get_version();

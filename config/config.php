@@ -18,7 +18,7 @@ class UploaderConfig {
 	 * @access public
 	 * @var string
 	 */
-	public $version = '2.4';
+	public $version = '2.5';
  
 	/**
 	 * The accepted file/mime types
@@ -30,14 +30,16 @@ class UploaderConfig {
 			'bmp'	=> 'image/bmp',
 			'gif'	=> 'image/gif',
 			'jpe'	=> 'image/jpeg',
-			'jpg'	=> 'image/jpeg',
+			'jpg'	=> array('image/jpeg', 'image/pjpeg'),
 			'jpeg'	=> 'image/jpeg',
+			'pjpeg'	=> 'image/pjpeg',
 			'svg'	=> 'image/svg+xml',
 			'svgz'	=> 'image/svg+xml',
 			'tif'	=> 'image/tiff',
 			'tiff'	=> 'image/tiff',
 			'ico'	=> 'image/vnd.microsoft.icon',
-			'png'	=> 'image/png'
+			'png'	=> array('image/png', 'image/x-png'),
+			'xpng'	=> 'image/x-png'
 		),
 		'text' => array(
 			'txt' 	=> 'text/plain',

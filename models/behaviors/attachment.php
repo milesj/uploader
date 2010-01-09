@@ -126,6 +126,11 @@ class AttachmentBehavior extends ModelBehavior {
 						if (!empty($attachment['transforms'])) {
 							foreach ($attachment['transforms'] as $method => $options) {
 								if (is_array($options) && isset($options['dbColumn'])) {
+									if (isset($options['method'])) {
+										$method = $options['method'];
+										unset($options['method']);
+									}
+
 									if (!method_exists($this->Uploader, $method)) {
 										trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method', E_USER_WARNING);
 										return false;
