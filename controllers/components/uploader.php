@@ -964,16 +964,14 @@ class UploaderComponent extends Object {
 			foreach ($mimes as $mimeExt => $mimeType) {
 				if (($currType == $mimeType) || (is_array($mimeType) && in_array($currType, $mimeType))) {
 					$validMime = true;
-					break;
+					break 2;
 				}
 			}
-
-			if ($validExt === true && $validMime === true) {
-				$this->__data[$this->__current]['group'] = $grouping;
-			}
 		}
-	
-		if (($validExt === false) || ($validMime === false)) {
+		
+		if ($validExt === true && $validMime === true) {
+			$this->__data[$this->__current]['group'] = $grouping;
+		} else {
 			return false;
 		}
 		
