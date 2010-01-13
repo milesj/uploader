@@ -1,13 +1,12 @@
 <?php
 /** 
- * attachment.php
+ * Attachment Behavior
  *
  * A CakePHP Behavior that attaches a file to a model, and uploads automatically, then stores a value in the database.
  *
  * @author 		Miles Johnson - www.milesj.me
  * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
  * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @package		Uploader Plugin - Attachment Behavior
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
  
@@ -16,21 +15,24 @@ App::import('Component', 'Uploader.Uploader');
 class AttachmentBehavior extends ModelBehavior { 
 
 	/**
-	 * Files that have been uploaded / attached; used for fallback functions
+	 * Files that have been uploaded / attached; used for fallback functions.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__attached = array();
 	
 	/**
-	 * All user defined attachments; images => model
+	 * All user defined attachments; images => model.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__attachments = array();
 	
 	/**
-	 * The default settings for attachments
+	 * The default settings for attachments.
+	 *
 	 * @access private
 	 * @var array
 	 */
@@ -44,7 +46,8 @@ class AttachmentBehavior extends ModelBehavior {
 	);
 
 	/**
-	 * Initialize uploader and save attachments
+	 * Initialize uploader and save attachments.
+	 *
 	 * @access public
 	 * @uses UploaderComponent
 	 * @param object $Model
@@ -62,7 +65,8 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Deletes any files that have been attached to this model
+	 * Deletes any files that have been attached to this model.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @return boolean
@@ -82,7 +86,8 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Before saving the data, try uploading the image, if successful save to database
+	 * Before saving the data, try uploading the image, if successful save to database.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @return boolean
@@ -166,7 +171,8 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Applies dynamic settings to an attachment
+	 * Applies dynamic settings to an attachment.
+	 *
 	 * @access public
 	 * @param string $model
 	 * @param string $file
@@ -180,7 +186,8 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Delete all attached images if attaching fails midway
+	 * Delete all attached images if attaching fails midway.
+	 * 
 	 * @access private
 	 * @param string $file
 	 * @return void

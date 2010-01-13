@@ -1,13 +1,12 @@
 <?php
 /** 
- * file_validation.php
+ * File Validation Behavior
  *
  * A CakePHP Behavior that adds validation model rules to file uploading.
  *
  * @author 		Miles Johnson - www.milesj.me
  * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
  * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @package		Uploader Plugin - File Validation Behavior
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
  
@@ -20,7 +19,8 @@ App::import(array(
 class FileValidationBehavior extends ModelBehavior {
 
 	/**
-	 * Default settings 
+	 * Default settings.
+	 *
 	 * @access private
 	 * @var array
 	 */ 
@@ -35,21 +35,24 @@ class FileValidationBehavior extends ModelBehavior {
 	);	
 	
 	/**
-	 * The accepted file/mime types; imported from vendor 
+	 * The accepted file/mime types; imported from vendor.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__mimeTypes = array();
 	
 	/**
-	 * Current settings
+	 * Current settings.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__settings = array();  
 	
 	/**
-	 * Default / List of validation sets 
+	 * Default / List of validation sets.
+	 *
 	 * @access private
 	 * @var array
 	 */
@@ -73,7 +76,8 @@ class FileValidationBehavior extends ModelBehavior {
 	); 
 	
 	/**
-	 * Setup the validation and model settings
+	 * Setup the validation and model settings.
+	 *
 	 * @access public
 	 * @uses UploaderConfig
 	 * @param object $Model
@@ -92,7 +96,8 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Checks an image dimensions
+	 * Checks an image dimensions.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @param array $data
@@ -139,7 +144,8 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Validates an image filesize
+	 * Validates an image filesize.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @param array $data
@@ -168,7 +174,8 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Validates the ext and mimetype
+	 * Validates the ext and mimetype.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @param array $data
@@ -215,7 +222,8 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Makes sure a file field is required and not optional
+	 * Makes sure a file field is required and not optional.
+	 *
 	 * @access public
 	 * @param object $Model
 	 * @param array $data
@@ -232,7 +240,8 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Build the validation rules and validate
+	 * Build the validation rules and validate.
+	 * 
 	 * @access public
 	 * @param object $Model
 	 * @return boolean

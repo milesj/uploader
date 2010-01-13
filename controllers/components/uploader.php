@@ -1,6 +1,6 @@
 <?php 
 /** 
- * uploader.php
+ * Uploader Component
  *
  * A CakePHP Component that will upload a wide range of file types. Each file will be uploaded into app/webroot/<upload dir> (the path your provide). 
  * Security and type checking have been integrated to only allow valid files. Additionally, images have the option of transforming an image.
@@ -8,7 +8,6 @@
  * @author 		Miles Johnson - www.milesj.me
  * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
  * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @package		Uploader Plugin - Uploader Component
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
  
@@ -23,21 +22,24 @@ App::import(array(
 class UploaderComponent extends Object {
 
 	/**
-	 * The direction to flip: vertical
+	 * The direction to flip: vertical.
+	 *
 	 * @constant
 	 * @var int
 	 */
 	const DIR_VERT = 1;
 	
 	/**
-	 * The direction to flip: horizontal
+	 * The direction to flip: horizontal.
+	 *
 	 * @constant
 	 * @var int
 	 */
 	const DIR_HORI = 2;
 	
 	/**
-	 * The direction to flip: vertical and horizontal
+	 * The direction to flip: vertical and horizontal.
+	 *
 	 * @constant
 	 * @var int
 	 */
@@ -45,13 +47,15 @@ class UploaderComponent extends Object {
 	
 	/**
 	 * Should we allow file uploading for this request?
+	 *
 	 * @access public
 	 * @var boolean
 	 */
 	public $enableUpload = true;
 	
 	/**
-	 * Max filesize using shorthand notation: http://us2.php.net/manual/en/faq.using.php#faq.using.shorthandbytes
+	 * Max filesize using shorthand notation: http://us2.php.net/manual/en/faq.using.php#faq.using.shorthandbytes.
+	 *
 	 * @access public
 	 * @var string
 	 */ 
@@ -59,6 +63,7 @@ class UploaderComponent extends Object {
 	
 	/**
 	 * How long should file names be?
+	 *
 	 * @access public
 	 * @var int
 	 */
@@ -66,55 +71,63 @@ class UploaderComponent extends Object {
 	
 	/**
 	 * Should we scan the file for viruses? Requires ClamAV module: http://www.clamav.net/
+	 *
 	 * @access public
 	 * @var boolean
 	 */
 	public $scanFile = false;
 	
 	/**
-	 * Temp upload directory
+	 * Temp upload directory.
+	 *
 	 * @access public
 	 * @var string
 	 */
 	public $tempDir = TMP;
 	
 	/**
-	 * Destination upload directory within app/webroot/
+	 * Destination upload directory within app/webroot/.
+	 *
 	 * @access public
 	 * @var string
 	 */
 	public $uploadDir = 'files/uploads/';
 	
 	/**
-	 * The accepted file/mime types; imported from vendor
+	 * The accepted file/mime types; imported from vendor.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__mimeTypes = array();
 	
 	/**
-	 * Holds the the current $_FILES data
+	 * Holds the the current $_FILES data.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__data = array(); 
 
 	/**
-	 * Holds the the logged uploads
+	 * Holds the the logged uploads.
+	 *
 	 * @access private
 	 * @var array
 	 */
 	private $__logs = array(); 
 	
 	/**
-	 * The current file being processed
+	 * The current file being processed.
+	 *
 	 * @access private
 	 * @var string
 	 */
 	private $__current;
 	
 	/**
-	 * Load the controllers file data into the component
+	 * Load the controllers file data into the component.
+	 *
 	 * @access public
 	 * @uses UploaderConfig
 	 * @param object $Controller
@@ -136,7 +149,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Set our ini settings for future use
+	 * Set our ini settings for future use.
+	 *
 	 * @access public
 	 * @uses Folder
 	 * @param object $Controller
@@ -191,7 +205,8 @@ class UploaderComponent extends Object {
 	}
 		
 	/**
-	 * Return the bytes based off the shorthand notation
+	 * Return the bytes based off the shorthand notation.
+	 *
 	 * @access public
 	 * @param int $size
 	 * @param string $return
@@ -232,7 +247,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Crops a photo, resizes first depending on which side is larger
+	 * Crops a photo, resizes first depending on which side is larger.
+	 *
 	 * @access public
 	 * @param array $options
 	 * - location: Which area of the image should be grabbed for the crop: center, left, right, top, bottom
@@ -325,7 +341,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Deletes a file, path is relative to webroot/
+	 * Deletes a file, path is relative to webroot/.
+	 *
 	 * @access public
 	 * @param string $path
 	 * @return boolean
@@ -346,7 +363,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Get the dimensions of an image
+	 * Get the dimensions of an image.
+	 *
 	 * @access public
 	 * @uses HttpSocket
 	 * @param string $path
@@ -396,7 +414,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Get the extension
+	 * Get the extension.
+	 *
 	 * @access public
 	 * @param string $file
 	 * @return string
@@ -406,7 +425,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Flips an image in 3 possible directions
+	 * Flips an image in 3 possible directions.
+	 *
 	 * @access public
 	 * @param array $options
 	 * - dir: The direction the image should be flipped
@@ -477,7 +497,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Adds a mime type to the list of allowed types
+	 * Adds a mime type to the list of allowed types.
+	 *
 	 * @access public
 	 * @param string $group
 	 * @param string $ext
@@ -495,7 +516,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Move a file to another destination
+	 * Move a file to another destination.
+	 *
 	 * @access public
 	 * @param string $origPath
 	 * @param string $destPath
@@ -525,7 +547,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Rename a file / Alias for move()
+	 * Rename a file / Alias for move().
+	 *
 	 * @access public
 	 * @param string $origPath
 	 * @param string $destPath
@@ -537,7 +560,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Resizes and image based off a previously uploaded image
+	 * Resizes and image based off a previously uploaded image.
+	 *
 	 * @access public
 	 * @param array $options
 	 * - width, height: The width and height to resize the image to
@@ -597,7 +621,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Scale the image based on a percentage
+	 * Scale the image based on a percentage.
+	 *
 	 * @access public
 	 * @param array $options
 	 * - percent: What percentage should the image be scaled to, defaults to %50 (.5)
@@ -636,7 +661,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Main function for transforming an image
+	 * Main function for transforming an image.
+	 *
 	 * @access public
 	 * @param array $options
 	 * @return boolean
@@ -697,13 +723,14 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Upload the file to the destination
+	 * Upload the file to the destination.
+	 *
 	 * @access public
 	 * @param string $file
 	 * @param array $options
-	 * - name: What should the filename be changed to
-	 * - overwrite: Should we overwrite the existant file with the same name?
-	 * - multiple: Is this method being called from uploadAll()
+	 *	- name: What should the filename be changed to
+	 *	- overwrite: Should we overwrite the existant file with the same name?
+	 *	- multiple: Is this method being called from uploadAll()
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function upload($file, $options = array()) {
@@ -755,7 +782,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Upload multiple files, but have less configuration options and no transforming
+	 * Upload multiple files, but have less configuration options and no transforming.
+	 *
 	 * @access public
 	 * @param array $fields
 	 * @param boolean $overwrite
@@ -787,7 +815,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Check the destination folder
+	 * Check the destination folder.
+	 *
 	 * @access protected
 	 * @uses Folder
 	 * @return void
@@ -818,7 +847,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Determine the filename and path of the file
+	 * Determine the filename and path of the file.
+	 *
 	 * @access protected
 	 * @param string $name
 	 * @param boolean $overwrite
@@ -853,7 +883,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Determines the name of the file
+	 * Determines the name of the file.
+	 *
 	 * @access protected
 	 * @param string $name
 	 * @param string $append
@@ -891,7 +922,8 @@ class UploaderComponent extends Object {
 	}
 	
 	/**
-	 * Formates and returns the data array
+	 * Formates and returns the data array.
+	 *
 	 * @access protected
 	 * @param string $target
 	 * @param string $append
@@ -923,7 +955,8 @@ class UploaderComponent extends Object {
 	}	
 	
 	/**
-	 * Parses the controller data to only grab $_FILES related data
+	 * Parses the controller data to only grab $_FILES related data.
+	 *
 	 * @access private
 	 * @param array $data
 	 * @return void
@@ -941,7 +974,8 @@ class UploaderComponent extends Object {
 	}
 
 	/**
-	 * Does validation on the current upload
+	 * Does validation on the current upload.
+	 * 
 	 * @access private
 	 * @return boolean
 	 */
