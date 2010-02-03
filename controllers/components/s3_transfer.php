@@ -10,7 +10,11 @@
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
 
-App::import('Vendor', 'Uploader.S3');
+App::import(array(
+	'type' => 'File',
+	'name' => 'Uploader.S3',
+	'file' => 'vendors'. DS .'S3.php'
+));
 
 class S3TransferComponent extends Object {
 
@@ -21,6 +25,14 @@ class S3TransferComponent extends Object {
 	 * @var array
 	 */
 	public $components = array('Uploader.Uploader');
+
+	/**
+	 * The bucket to use globally. Can be overwritten in each method.
+	 *
+	 * @access public
+	 * @var string
+	 */
+	public $bucket;
 
 	/**
 	 * Your S3 access key.
@@ -78,12 +90,14 @@ class S3TransferComponent extends Object {
 	 * Delete an object from a bucket.
 	 *
 	 * @access public
-	 * @param string $bucket
 	 * @param string $url	- Full URL or Object file name
+	 * @param string $bucket
 	 * @return boolean
 	 */
-	public function delete($bucket, $url) {
+	public function delete($url, $bucket = null) {
 		if ($this->__enabled) {
+			$bucket = (!empty($bucket) ? $bucket : $this->bucket);
+
 			return $this->S3->deleteObject($bucket, basename($url));
 		}
 
@@ -94,12 +108,14 @@ class S3TransferComponent extends Object {
 	 * Get a certain amount of objects from a bucket.
 	 *
 	 * @access public
-	 * @param string $bucket
 	 * @param int $limit
+	 * @param string $bucket
 	 * @return array
 	 */
-	public function getBucket($bucket, $limit = 15) {
+	public function getBucket($limit = 15, $bucket = null) {
 		if ($this->__enabled) {
+			$bucket = (!empty($bucket) ? $bucket : $this->bucket);
+
 			return $this->S3->getBucket($bucket, null, null, $limit);
 		}
 
@@ -113,7 +129,7 @@ class S3TransferComponent extends Object {
 	 * @param boolean $detailed
 	 * @return array
 	 */
-	public function listBuckets($detailed = false) {
+	public function listBuckets($detailed = true) {
 		if ($this->__enabled) {
 			return $this->S3->listBuckets($detailed);
 		}
@@ -125,25 +141,28 @@ class S3TransferComponent extends Object {
 	 * Transfer an object to the storage bucket.
 	 *
 	 * @access public
-	 * @param string $bucket
-	 * @param array $data
+	 * @param string $path
 	 * @param boolean $delete
+	 * @param string $bucket
 	 * @return string
 	 */
-	public function transfer($bucket, array $data = array(), $delete = true) {
-		if (empty($data['path']) || empty($data['name'])) {
-			trigger_error('Uploader.S3Transfer::transfer(): File data incomplete, please try again.', E_USER_WARNING);
+	public function transfer($path, $delete = true, $bucket = null) {
+		if (empty($path)) {
+			trigger_error('Uploader.S3Transfer::transfer(): File path missing, please try again.', E_USER_WARNING);
 			
 			return false;
 		}
 
 		if ($this->__enabled) {
-			if ($this->S3->putObjectFile($data['path'], $bucket, $data['name'], S3::ACL_PUBLIC_READ)) {
+			$bucket = (!empty($bucket) ? $bucket : $this->bucket);
+			$name = basename($path);
+
+			if ($this->S3->putObjectFile($path, $bucket, $name, S3::ACL_PUBLIC_READ)) {
 				if ($delete) {
-					$this->Uploader->delete($data['path']);
+					$this->Uploader->delete($path);
 				}
 
-				return 'http://'. $bucket .'.s3.amazonaws.com/'. $data['name'];
+				return 'http://'. $bucket .'.s3.amazonaws.com/'. $name;
 			}
 		}
 		
