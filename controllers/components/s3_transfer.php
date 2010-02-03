@@ -154,10 +154,16 @@ class S3TransferComponent extends Object {
 		}
 
 		if ($this->__enabled) {
+			if (strpos($bucket, WWW_ROOT) === false) {
+				$fullPath = WWW_ROOT . trim($path, '/');
+			} else {
+				$fullPath = $path;
+			}
+
 			$bucket = (!empty($bucket) ? $bucket : $this->bucket);
 			$name = basename($path);
 
-			if ($this->S3->putObjectFile($path, $bucket, $name, S3::ACL_PUBLIC_READ)) {
+			if ($this->S3->putObjectFile($fullPath, $bucket, $name, S3::ACL_PUBLIC_READ)) {
 				if ($delete) {
 					$this->Uploader->delete($path);
 				}
