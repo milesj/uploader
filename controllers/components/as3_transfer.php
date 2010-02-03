@@ -2,7 +2,7 @@
 /**
  * AS3 Transfer Component
  *
- * @todo
+ * A component that can transfer a file into Amazon's storage bucket - defined in the config.
  *
  * @author 		Miles Johnson - www.milesj.me
  * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
@@ -15,6 +15,38 @@ App::import('Vendor', 'S3');
 class As3TransferComponent extends Object {
 
 	/**
+	 * Components.
+	 *
+	 * @access public
+	 * @var array
+	 */
+	public $components = array('Uploader.Uploader');
+
+	/**
+	 * Your S3 access key.
+	 *
+	 * @access public
+	 * @var boolean
+	 */
+	public $accessKey;
+
+	/**
+	 * Your S3 secret key.
+	 *
+	 * @access public
+	 * @var boolean
+	 */
+	public $secretKey;
+
+	/**
+	 * Should the request use SSL?
+	 *
+	 * @access public
+	 * @var boolean
+	 */
+	public $useSsl = true;
+
+	/**
 	 * Is the behavior configured correctly and usable.
 	 *
 	 * @access private
@@ -23,40 +55,18 @@ class As3TransferComponent extends Object {
 	private $__enabled = false;
 
 	/**
-	 * User defined config.
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $__config = array();
-
-	/**
-	 * The default settings for attachments.
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $__defaults = array(
-		'useSsl' 	=> true,
-		'accessKey'	=> null,
-		'secretKey' => null
-	);
-
-	/**
 	 * Initialize transfer and classes.
 	 *
 	 * @access public
 	 * @param object $Controller
-	 * @param array $settings
+	 * @param array $config
 	 * @return boolean
 	 */
-	public function initialize(&$Controller, $settings = array()) {
-		$this->__config = array_merge($this->__defaults, $settings);
-
-		if (empty($this->__config['accessKey']) && empty($this->__config['secretKey'])) {
-			trigger_error('Uploader.As3Transfer::setup(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
+	public function initialize(&$Controller, $config = array()) {
+		if (empty($this->accessKey) && empty($this->secretKey)) {
+			trigger_error('Uploader.As3Transfer::initialize(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
 		} else {
-			$this->S3 = new S3($this->__config['accessKey'], $this->__config['secretKey'], $this->__config['useSsl']);
+			$this->S3 = new S3($this->accessKey, $this->secretKey, $this->useSsl);
 			$this->__enabled = true;
 		}
 	}
@@ -118,9 +128,24 @@ class As3TransferComponent extends Object {
 	 * Transfer an object to the storage bucket.
 	 *
 	 * @access public
+	 * @param string $bucket
+	 * @param array $data
+	 * @param boolean $delete
+	 * @return string
 	 */
-	public function transfer() {
+	public function transfer($bucket, array $data = array(), $delete = true) {
+		if (empty($data['path']) || empty($data['name'])) {
+			trigger_error('Uploader.As3Transfer::transfer(): File data incomplete, please try again.', E_USER_WARNING);
+			return false;
+		}
 
+		if ($this->S3->putObjectFile($data['path'], $bucket, $data['name'], S3::ACL_PUBLIC_READ)) {
+			if ($delete) {
+				$this->Uploader->delete($data['path']);
+			}
+
+			return 'http://'. $bucket .'.s3.amazonaws.com/'. $data['name'];
+		}
 	}
 
 }
