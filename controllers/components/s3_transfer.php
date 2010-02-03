@@ -66,7 +66,7 @@ class S3TransferComponent extends Object {
 			trigger_error('Uploader.S3Transfer::setup(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
 
 		} else if (!function_exists('curl_init')) {
-			trigger_error('Uploader.S3Transfer::setup(): You must have the cURL extension loaded to use the AS3Transfer.', E_USER_WARNING);
+			trigger_error('Uploader.S3Transfer::setup(): You must have the cURL extension loaded to use the S3Transfer.', E_USER_WARNING);
 
 		} else {
 			$this->S3 = new S3($this->accessKey, $this->secretKey, $this->useSsl);
