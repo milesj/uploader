@@ -1,8 +1,8 @@
 <?php
 /**
- * AS3 Transfer Component
+ * S3 Transfer Component
  *
- * A component that can transfer a file into Amazon's storage bucket - defined in the config.
+ * A component that can transfer a file into Amazon's storage bucket (AS3) - defined in the config.
  *
  * @author 		Miles Johnson - www.milesj.me
  * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
@@ -10,9 +10,9 @@
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
 
-App::import('Vendor', 'S3');
+App::import('Vendor', 'Uploader.S3');
 
-class As3TransferComponent extends Object {
+class S3TransferComponent extends Object {
 
 	/**
 	 * Components.
@@ -59,12 +59,15 @@ class As3TransferComponent extends Object {
 	 *
 	 * @access public
 	 * @param object $Controller
-	 * @param array $config
 	 * @return boolean
 	 */
-	public function initialize(&$Controller, $config = array()) {
+	public function startup(&$Controller) {
 		if (empty($this->accessKey) && empty($this->secretKey)) {
-			trigger_error('Uploader.As3Transfer::initialize(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
+			trigger_error('Uploader.S3Transfer::setup(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
+
+		} else if (!function_exists('curl_init')) {
+			trigger_error('Uploader.S3Transfer::setup(): You must have the cURL extension loaded to use the AS3Transfer.', E_USER_WARNING);
+
 		} else {
 			$this->S3 = new S3($this->accessKey, $this->secretKey, $this->useSsl);
 			$this->__enabled = true;
@@ -80,18 +83,8 @@ class As3TransferComponent extends Object {
 	 * @return boolean
 	 */
 	public function delete($bucket, $url) {
-		if (strpos($url, 'http') !== false) {
-			$parts = parse_url($url);
-
-			if (isset($parts['path'])) {
-				$url = trim($parts['path'], '/');
-			} else {
-				$url = false;
-			}
-		}
-
-		if ($url && $this->__enabled) {
-			return $this->S3->deleteObject($bucket, $url);
+		if ($this->__enabled) {
+			return $this->S3->deleteObject($bucket, basename($url));
 		}
 
 		return false;
@@ -109,6 +102,8 @@ class As3TransferComponent extends Object {
 		if ($this->__enabled) {
 			return $this->S3->getBucket($bucket, null, null, $limit);
 		}
+
+		return false;
 	}
 
 	/**
@@ -122,6 +117,8 @@ class As3TransferComponent extends Object {
 		if ($this->__enabled) {
 			return $this->S3->listBuckets($detailed);
 		}
+
+		return false;
 	}
 
 	/**
@@ -135,17 +132,22 @@ class As3TransferComponent extends Object {
 	 */
 	public function transfer($bucket, array $data = array(), $delete = true) {
 		if (empty($data['path']) || empty($data['name'])) {
-			trigger_error('Uploader.As3Transfer::transfer(): File data incomplete, please try again.', E_USER_WARNING);
+			trigger_error('Uploader.S3Transfer::transfer(): File data incomplete, please try again.', E_USER_WARNING);
+			
 			return false;
 		}
 
-		if ($this->S3->putObjectFile($data['path'], $bucket, $data['name'], S3::ACL_PUBLIC_READ)) {
-			if ($delete) {
-				$this->Uploader->delete($data['path']);
-			}
+		if ($this->__enabled) {
+			if ($this->S3->putObjectFile($data['path'], $bucket, $data['name'], S3::ACL_PUBLIC_READ)) {
+				if ($delete) {
+					$this->Uploader->delete($data['path']);
+				}
 
-			return 'http://'. $bucket .'.s3.amazonaws.com/'. $data['name'];
+				return 'http://'. $bucket .'.s3.amazonaws.com/'. $data['name'];
+			}
 		}
+		
+		return false;
 	}
 
 }
