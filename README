@@ -1,4 +1,4 @@
-Uploader v2.4.5 - CakePHP Plugin
+Uploader v2.4.6 - CakePHP Plugin
 ********************************
 
 Requirements
@@ -21,6 +21,8 @@ Features
     * Built in methods for resizing images and generating thumbnails
     * Custom Behavior to add validation rules to your Models validation set
     * Custom Behavior that allows models to attach files to automatically upload the file and save its information to a database
+	* Component to support the Amazon S3 system, allowing you to transfer your files to the bucket
+	* S3 Transfer functionality is also inherited into the Attachment Behavior
 
 Documentation
 =============

@@ -10,7 +10,7 @@
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
  
-App::import('Component', 'Uploader.Uploader');
+App::import('Component', array('Uploader.Uploader', 'Uploader.S3Transfer'));
 
 class AttachmentBehavior extends ModelBehavior { 
 
@@ -42,7 +42,8 @@ class AttachmentBehavior extends ModelBehavior {
 		'maxNameLength' => null,
 		'overwrite'		=> true,
 		'name'			=> null,
-		'transforms'	=> array()
+		'transforms'	=> array(),
+		's3'			=> array()
 	);
 
 	/**
@@ -56,6 +57,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 */
 	public function setup(&$Model, $settings = array()) {
 		$this->Uploader = new UploaderComponent();
+		$this->S3Transfer = new S3TransferComponent();
 		
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $attachment) {
@@ -76,7 +78,10 @@ class AttachmentBehavior extends ModelBehavior {
 		
 		if (!empty($data[$Model->alias])) {
 			foreach ($data[$Model->alias] as $field => $value) {
-				if (is_file(WWW_ROOT . $value)) {
+				if (strpos($value, 's3.amazonaws.com') !== false) {
+					$this->S3Transfer->delete($value);
+					
+				} else if (is_file(WWW_ROOT . $value)) {
 					$this->Uploader->delete($value);
 				}
 			}
@@ -101,7 +106,27 @@ class AttachmentBehavior extends ModelBehavior {
 				if (isset($this->__attachments[$Model->alias][$file])) {
 					$attachment = $this->__attachments[$Model->alias][$file];
 					$options = array();
-					
+					$s3 = false;
+
+					// S3
+					if (!empty($attachment['s3'])) {
+						if (!empty($attachment['s3']['bucket']) && !empty($attachment['s3']['accessKey']) && !empty($attachment['s3']['secretKey'])) {
+							$this->S3Transfer->bucket = $attachment['s3']['bucket'];
+							$this->S3Transfer->accessKey = $attachment['s3']['accessKey'];
+							$this->S3Transfer->secretKey = $attachment['s3']['secretKey'];
+
+							if (isset($attachment['s3']['useSsl']) && is_bool($attachment['s3']['useSsl'])) {
+								$this->S3Transfer->useSsl = $attachment['s3']['useSsl'];
+							}
+
+							$this->S3Transfer->startup($Model);
+							$s3 = true;
+						} else {
+							trigger_error('Uploader.Attachment::beforeSave(): To use the S3 transfer, you must supply an accessKey, secretKey and bucket.', E_USER_WARNING);
+						}
+					}
+
+					// Uploader
 					if (!empty($attachment['uploadDir'])) {
 						$this->Uploader->uploadDir = $attachment['uploadDir'];
 					}
@@ -124,8 +149,14 @@ class AttachmentBehavior extends ModelBehavior {
 
 					// Upload file and attache to model data
 					if ($data = $this->Uploader->upload($file, $options)) {
-						$Model->data[$Model->alias][$attachment['dbColumn']] = $data['path'];
-						$this->__attached[$file][$attachment['dbColumn']] = $data['path'];
+						$basePath = $data['path'];
+
+						if ($s3 === true) {
+							$basePath = $this->S3Transfer->transfer($basePath);
+						}
+
+						$Model->data[$Model->alias][$attachment['dbColumn']] = $basePath;
+						$this->__attached[$file][$attachment['dbColumn']] = $basePath;
 						
 						// Apply transformations
 						if (!empty($attachment['transforms'])) {
@@ -137,22 +168,30 @@ class AttachmentBehavior extends ModelBehavior {
 									}
 
 									if (!method_exists($this->Uploader, $method)) {
-										trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method', E_USER_WARNING);
+										trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method.', E_USER_WARNING);
 										return false;
 									}
 									
 									if ($path = $this->Uploader->$method($options)) {
+										if ($s3 === true) {
+											$path = $this->S3Transfer->transfer($path);
+										}
+
 										$Model->data[$Model->alias][$options['dbColumn']] = $path;
 										$this->__attached[$file][$options['dbColumn']] = $path;
 									
 										// Delete original if same column name
 										if ($options['dbColumn'] == $attachment['dbColumn']) {
-											$this->Uploader->delete($data['path']);
+											if ($s3 === true) {
+												$this->S3Transfer->delete($basePath);
+											} else {
+												$this->Uploader->delete($basePath);
+											}
 										}
 										
 									} else {
 										$this->__deleteAttached($file);
-										$Model->validationErrors[$file] = 'An error occured during '. $method .' transformation!';
+										$Model->validationErrors[$file] = sprintf(__('An error occured during "%s" transformation!', true), $method);
 										return false;
 									}
 								}
@@ -160,7 +199,7 @@ class AttachmentBehavior extends ModelBehavior {
 						}
 						
 					} else {
-						$Model->validationErrors[$file] = 'There was an error attaching this file!';
+						$Model->validationErrors[$file] = __('There was an error attaching this file!', true);
 						return false;
 					}
 				}
@@ -195,7 +234,12 @@ class AttachmentBehavior extends ModelBehavior {
 	private function __deleteAttached($file) {
 		if (!empty($this->__attached[$file])) {
 			foreach ($this->__attached[$file] as $column => $path) {
-				$this->Uploader->delete($path);
+				if (strpos($value, 's3.amazonaws.com') !== false) {
+					$this->S3Transfer->delete($path);
+
+				} else {
+					$this->Uploader->delete($path);
+				}
 			}
 		}
 	}
