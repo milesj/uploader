@@ -234,7 +234,7 @@ class AttachmentBehavior extends ModelBehavior {
 	private function __deleteAttached($file) {
 		if (!empty($this->__attached[$file])) {
 			foreach ($this->__attached[$file] as $column => $path) {
-				if (strpos($value, 's3.amazonaws.com') !== false) {
+				if (strpos($path, 's3.amazonaws.com') !== false) {
 					$this->S3Transfer->delete($path);
 
 				} else {
