@@ -376,7 +376,7 @@ class UploaderComponent extends Object {
 		}
 
 		$dim = array();
-		$data = getimagesize($path);
+		$data = @getimagesize($path);
 		
 		if (!empty($data) && is_array($data)) {
 			$dim = array('width' => $data[0], 'height' => $data[1], 'type' => $data['mime']);
@@ -393,7 +393,7 @@ class UploaderComponent extends Object {
 			$dim = array(
 				'width' 	=> @imagesx($image),
 				'height' 	=> @imagesy($image),
-				'type'		=> mime_content_type($path)
+				'type'		=> function_exists('mime_content_type') ? mime_content_type($path) : null
 			);
 			
 			if (empty($dim['type'])) {
