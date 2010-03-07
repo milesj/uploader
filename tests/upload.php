@@ -8,6 +8,17 @@
  * @link		www.milesj.me/resources/script/uploader-plugin
  */
 
+/**
+	CREATE TABLE IF NOT EXISTS `uploads` (
+	  `id` int(11) NOT NULL AUTO_INCREMENT,
+	  `caption` varchar(255) NOT NULL,
+	  `path` varchar(255) NOT NULL,
+	  `path_alt` varchar(255) NOT NULL,
+	  `created` datetime DEFAULT NULL,
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+*/
+
 class Upload extends AppModel {
 
 	/**
