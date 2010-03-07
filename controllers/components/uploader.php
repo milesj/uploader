@@ -44,6 +44,46 @@ class UploaderComponent extends Object {
 	 * @var int
 	 */
 	const DIR_BOTH = 3;
+
+	/**
+	 * The location to crop: top.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const LOC_TOP = 1;
+
+	/**
+	 * The location to crop: bottom.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const LOC_BOT = 2;
+
+	/**
+	 * The location to crop: left.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const LOC_LEFT = 3;
+
+	/**
+	 * The location to crop: right.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const LOC_RIGHT = 4;
+
+	/**
+	 * The location to crop: center.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const LOC_CENTER = 5;
 	
 	/**
 	 * Should we allow file uploading for this request?
@@ -142,10 +182,7 @@ class UploaderComponent extends Object {
 			@dl('gd.'. PHP_SHLIB_SUFFIX);
 		}
 		
-		$data = $Controller->data;
-		if (!empty($data)) {
-			$this->__parseData($data);
-		}
+		$this->__parseData($Controller->data);
 	}
 	
 	/**
@@ -262,7 +299,7 @@ class UploaderComponent extends Object {
 			return false;
 		}
 		
-		$defaults = array('location' => 'center', 'quality' => 100, 'width' => null, 'height' => null, 'append' => null);
+		$defaults = array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null);
 		$options = array_merge($defaults, $options);
 		
 		$width 	= $this->__data[$this->__current]['width'];
@@ -298,18 +335,18 @@ class UploaderComponent extends Object {
 		}
 		
 		if ($dest_w > $dest_h) {
-			if ($location == 'center') {
+			if ($location == self::LOC_CENTER) {
 				$src_x = ceil(($width - $height) / 2);
 				$src_y = 0;
-			} else if ($location == 'bottom' || $location == 'right') {
+			} else if ($location == self::LOC_BOT || $location == self::LOC_RIGHT) {
 				$src_x = ($width - $height);
 				$src_y = 0;
 			}
 		} else if ($dest_h > $dest_w) {
-			if ($location == 'center') {
+			if ($location == self::LOC_CENTER) {
 				$src_x = 0;
 				$src_y = ceil(($height - $width) / 2);
-			} else if ($location == 'bottom' || $location == 'right') {
+			} else if ($location == self::LOC_BOT || $location == self::LOC_RIGHT) {
 				$src_x = 0;
 				$src_y = ($height - $width);
 			}
@@ -351,8 +388,10 @@ class UploaderComponent extends Object {
 		if (empty($path)) {
 			return false;
 		}
-		
-		$path = WWW_ROOT . $path;
+
+		if (strpos($path, WWW_ROOT) === false) {
+			$path = WWW_ROOT . $path;
+		}
 		
 		if (file_exists($path)) {
 			clearstatcache();
@@ -449,7 +488,7 @@ class UploaderComponent extends Object {
 		$src_w	= $width;
 		$src_h 	= $height;
 		
-		switch ($dir) {
+		switch ($options['dir']) {
 			// vertical
 			case self::DIR_VERT:
 				$src_y = --$height;
@@ -963,11 +1002,19 @@ class UploaderComponent extends Object {
 	 */
 	private function __parseData($data) {
 		if (is_array($data)) {
-			foreach ($data as $field => $value) {
-				if (isset($value['tmp_name'])) {
-					$this->__data[$field] = $value;
-				} else {
-					$this->__parseData($value);
+			foreach ($data as $model => $fields) {
+				foreach ($fields as $field => $value) {
+					if (isset($value['tmp_name'])) {
+						if (count($data) == 1) {
+							$slug = $field;
+						} else {
+							$slug = $model .'.'. $field;
+						}
+
+						$this->__data[$slug] = $value;
+					} else {
+						$this->__parseData($value);
+					}
 				}
 			}
 		}
