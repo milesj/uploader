@@ -11,7 +11,7 @@
 class UploadController extends AppController {
 
 	var $uses = array('Upload');
-	var $components = array('Uploader.Uploader');
+	var $components = array('Uploader.Uploader', 'Security');
 
 	/**
 	 * Test case for uploading an image with no transformations.

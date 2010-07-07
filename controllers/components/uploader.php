@@ -12,12 +12,7 @@
  */
  
 App::import('Core', array('Folder', 'HttpSocket'));
-
-App::import(array(
-	'type' => 'File', 
-	'name' => 'Uploader.UploaderConfig', 
-	'file' => 'config'. DS .'config.php'
-));
+Configure::load('Uploader.config');
 
 class UploaderComponent extends Object {
 
@@ -175,7 +170,7 @@ class UploaderComponent extends Object {
 	 * @return void
 	 */
 	public function initialize(&$Controller, $settings = array()) {
-		$this->__mimeTypes = UploaderConfig::$mimeTypes;
+		$this->__mimeTypes = Configure::read('Uploader.mimeTypes');
 		
 		if (!extension_loaded('gd')) {
 			@dl('gd.'. PHP_SHLIB_SUFFIX);

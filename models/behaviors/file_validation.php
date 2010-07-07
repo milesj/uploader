@@ -9,12 +9,8 @@
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
  * @link        http://milesj.me/resources/script/uploader-plugin
  */
- 
-App::import(array(
-	'type' => 'File', 
-	'name' => 'Uploader.UploaderConfig', 
-	'file' => 'config'. DS .'config.php'
-));
+
+Configure::load('Uploader.config');
 
 class FileValidationBehavior extends ModelBehavior {
 
@@ -85,7 +81,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	public function setup(&$Model, $settings = array()) {
-		$this->__mimeTypes = UploaderConfig::$mimeTypes;
+		$this->__mimeTypes = Configure::read('Uploader.mimeTypes');
 		
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $options) {

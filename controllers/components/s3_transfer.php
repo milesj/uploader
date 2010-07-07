@@ -10,11 +10,7 @@
  * @link        http://milesj.me/resources/script/uploader-plugin
  */
 
-App::import(array(
-	'type' => 'File',
-	'name' => 'Uploader.S3',
-	'file' => 'vendors'. DS .'S3.php'
-));
+App::import('Vendor', 'Uploader.S3');
 
 class S3TransferComponent extends Object {
 
@@ -160,7 +156,7 @@ class S3TransferComponent extends Object {
 				$fullPath = $path;
 			}
 
-			$bucket = (!empty($bucket) ? $bucket : $this->bucket);
+			$bucket = !empty($bucket) ? $bucket : $this->bucket;
 			$name = basename($path);
 
 			if ($this->S3->putObjectFile($fullPath, $bucket, $name, S3::ACL_PUBLIC_READ)) {
