@@ -175,8 +175,11 @@ class UploaderComponent extends Object {
 		if (!extension_loaded('gd')) {
 			@dl('gd.'. PHP_SHLIB_SUFFIX);
 		}
-		
-		$this->__parseData($Controller->data);
+
+        $data = $Controller->data;
+		unset($data['_Token']);
+
+		$this->__parseData($data, null, count($data));
 	}
 	
 	/**
@@ -220,7 +223,6 @@ class UploaderComponent extends Object {
 			$execTime = 3;
 		}
 		
-		//ini_set('file_uploads', $this->enableUpload);
 		ini_set('memory_limit', (($byte * $multiplier) * $multiplier) . $last);
 		ini_set('post_max_size', ($byte * $multiplier) . $last);
 		ini_set('upload_tmp_dir', $this->tempDir);
@@ -992,26 +994,24 @@ class UploaderComponent extends Object {
 	 *
 	 * @access private
 	 * @param array $data
+     * @param string $model
+     * @param int $count
 	 * @return void
 	 */
-	private function __parseData($data) {
+	private function __parseData($data, $model = null, $count = 1) {
 		if (is_array($data)) {
-            unset($data['_Token']);
-            
-			foreach ($data as $model => $fields) {
-				foreach ($fields as $field => $value) {
-					if (isset($value['tmp_name'])) {
-						if (count($data) == 1) {
-							$slug = $field;
-						} else {
-							$slug = $model .'.'. $field;
-						}
+			foreach ($data as $field => $value) {
+                if (is_array($value) && isset($value['tmp_name'])) {
+                    if ($count == 1) {
+                        $slug = $field;
+                    } else {
+                        $slug = $model .'.'. $field;
+                    }
 
-						$this->__data[$slug] = $value;
-					} else {
-						$this->__parseData($value);
-					}
-				}
+                    $this->__data[$slug] = $value;
+                } else {
+                    $this->__parseData($value, $field, $count);
+                }
 			}
 		}
 	}
