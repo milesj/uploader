@@ -650,7 +650,7 @@ class UploaderComponent extends Object {
 		
 		if ($this->transform($transform)) {
 			return $this->_return($transform['target'], $newWidth .'x'. $newHeight);
-		} 
+		}
 		
 		return false;
 	}
@@ -705,7 +705,7 @@ class UploaderComponent extends Object {
 	public function transform($options) {
 		$defaults = array('dest_x' => 0, 'dest_y' => 0, 'source_x' => 0, 'source_y' => 0, 'dest_w' => null, 'dest_h' => null, 'source_w' => $this->__data[$this->__current]['width'], 'source_h' => $this->__data[$this->__current]['height'], 'quality' => 100);
 		$options = array_merge($defaults, $options);
-		
+
 		$original = $this->__data[$this->__current]['path'];
 		$mimeType = $this->__data[$this->__current]['type'];
 		
@@ -719,10 +719,17 @@ class UploaderComponent extends Object {
 		
 		// Create an image to work with
 		switch ($mimeType) {
-			case 'image/gif':  $source = imagecreatefromgif($original); break;
-			case 'image/png':  $source = imagecreatefrompng($original); break;
+			case 'image/gif':  
+                $source = imagecreatefromgif($original);
+            break;
+			case 'image/png':  
+                $source = imagecreatefrompng($original);
+            break;
 			case 'image/jpg':
-			case 'image/jpeg': $source = imagecreatefromjpeg($original);  break;
+			case 'image/jpeg':
+            case 'image/pjpeg':
+                $source = imagecreatefromjpeg($original);
+            break;
 			default: return false; break;
 		}
 	
@@ -740,10 +747,17 @@ class UploaderComponent extends Object {
 		
 		// Now write the resized image to the server
 		switch ($mimeType) {
-			case 'image/gif':  imagegif($target, $options['target']); break;
-			case 'image/png':  imagepng($target, $options['target']); break;
+			case 'image/gif':  
+                imagegif($target, $options['target']);
+            break;
+			case 'image/png':  
+                imagepng($target, $options['target']);
+            break;
 			case 'image/jpg':
-			case 'image/jpeg': imagejpeg($target, $options['target'], $options['quality']); break;
+			case 'image/jpeg':
+            case 'image/pjpeg':
+                imagejpeg($target, $options['target'], $options['quality']);
+            break;
 			default:  
 				imagedestroy($source);
 				imagedestroy($target);
