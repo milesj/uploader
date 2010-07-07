@@ -4,10 +4,10 @@
  *
  * A CakePHP Behavior that adds validation model rules to file uploading.
  *
- * @author 		Miles Johnson - www.milesj.me
- * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
- * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link		www.milesj.me/resources/script/uploader-plugin
+ * @author      Miles Johnson - www.milesj.me
+ * @copyright   Copyright 2006-2010, Miles Johnson, Inc.
+ * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
+ * @link        http://milesj.me/resources/script/uploader-plugin
  */
  
 App::import(array(
@@ -85,8 +85,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	public function setup(&$Model, $settings = array()) {
-		$Uploader = new UploaderConfig();
-		$this->__mimeTypes = $Uploader->mimeTypes;
+		$this->__mimeTypes = UploaderConfig::$mimeTypes;
 		
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $options) {

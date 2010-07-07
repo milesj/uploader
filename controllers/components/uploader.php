@@ -5,10 +5,10 @@
  * A CakePHP Component that will upload a wide range of file types. Each file will be uploaded into app/webroot/<upload dir> (the path your provide). 
  * Security and type checking have been integrated to only allow valid files. Additionally, images have the option of transforming an image.
  *
- * @author 		Miles Johnson - www.milesj.me
- * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
- * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link		www.milesj.me/resources/script/uploader-plugin
+ * @author      Miles Johnson - www.milesj.me
+ * @copyright   Copyright 2006-2010, Miles Johnson, Inc.
+ * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
+ * @link        http://milesj.me/resources/script/uploader-plugin
  */
  
 App::import('Core', array('Folder', 'HttpSocket'));
@@ -175,8 +175,7 @@ class UploaderComponent extends Object {
 	 * @return void
 	 */
 	public function initialize(&$Controller, $settings = array()) {
-		$Uploader = new UploaderConfig();
-		$this->__mimeTypes = $Uploader->mimeTypes;
+		$this->__mimeTypes = UploaderConfig::$mimeTypes;
 		
 		if (!extension_loaded('gd')) {
 			@dl('gd.'. PHP_SHLIB_SUFFIX);
@@ -1002,6 +1001,8 @@ class UploaderComponent extends Object {
 	 */
 	private function __parseData($data) {
 		if (is_array($data)) {
+            unset($data['_Token']);
+            
 			foreach ($data as $model => $fields) {
 				foreach ($fields as $field => $value) {
 					if (isset($value['tmp_name'])) {

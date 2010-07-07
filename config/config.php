@@ -4,10 +4,10 @@
  *
  * A config class that holds all the settings and default mimetypes.
  *
- * @author 		Miles Johnson - www.milesj.me
- * @copyright	Copyright 2006-2009, Miles Johnson, Inc.
- * @license 	http://www.opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link		www.milesj.me/resources/script/uploader-plugin
+ * @author      Miles Johnson - www.milesj.me
+ * @copyright   Copyright 2006-2010, Miles Johnson, Inc.
+ * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
+ * @link        http://milesj.me/resources/script/uploader-plugin
  */
  
 class UploaderConfig { 
@@ -17,6 +17,7 @@ class UploaderConfig {
 	 *
 	 * @access public
 	 * @var string
+     * @static
 	 */
 	public $version = '2.5';
  
@@ -25,8 +26,9 @@ class UploaderConfig {
 	 * 
 	 * @access public
 	 * @var array
+     * @static
 	 */
-	public $mimeTypes = array(
+	public static $mimeTypes = array(
 		'image' => array(
 			'bmp'	=> 'image/bmp',
 			'gif'	=> 'image/gif',
