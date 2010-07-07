@@ -822,9 +822,10 @@ class UploaderComponent extends Object {
 	 * @access public
 	 * @param array $fields
 	 * @param boolean $overwrite
+     * @param boolean $rollback
 	 * @return array
 	 */
-	public function uploadAll($fields = array(), $overwrite = false) {
+	public function uploadAll($fields = array(), $overwrite = false, $rollback = true) {
 		if ($this->enableUpload === false) {
 			return false;
 		} else {
@@ -836,17 +837,32 @@ class UploaderComponent extends Object {
 		}
 		
 		$data = array();
+        $fail = false;
+        
 		if (!empty($fields)) {
 			foreach ($fields as $field) {
 				if (isset($this->__data[$field])) {
 					if ($upload = $this->upload($field, array('overwrite' => $overwrite, 'multiple' => true))) {
 						$data[$field] = $upload;
-					}
+					} else {
+                        $fail = true;
+                        break;
+                    }
 				}
 			}
 		}
-		
-		return $data;
+
+        if ($fail) {
+            if ($rollback && !empty($data)) {
+                foreach ($data as $file) {
+                    $this->delete($file['path']);
+                }
+            }
+
+            return false;
+        }
+
+        return $data;
 	}
 	
 	/**
