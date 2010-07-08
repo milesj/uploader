@@ -22,16 +22,20 @@ class FileValidationBehavior extends ModelBehavior {
 	 */ 
 	private $__defaults = array(
 		'dimension' => array(
-			'width' => null, 
-			'height'=> null
-		), 
-		'filesize' 	=> null,
+			'width' => null,
+			'height' => null
+		),
+        'minWidth'  => null,
+        'minHeight' => null,
+        'maxWidth'  => null,
+        'maxHeight' => null,
+		'filesize'  => null,
 		'extension' => null,
-		'optional' 	=> false
+		'optional'  => false
 	);	
 	
 	/**
-	 * The accepted file/mime types; imported from vendor.
+	 * The accepted file mime types; imported from config.
 	 *
 	 * @access private
 	 * @var array
@@ -47,7 +51,7 @@ class FileValidationBehavior extends ModelBehavior {
 	private $__settings = array();  
 	
 	/**
-	 * Default / List of validation sets.
+	 * Default list of validation sets.
 	 *
 	 * @access private
 	 * @var array
@@ -57,9 +61,25 @@ class FileValidationBehavior extends ModelBehavior {
 			'rule' => array('dimension'),
 			'message' => 'Your dimensions are incorrect'
 		),
+		'minWidth' => array(
+			'rule' => array('minWidth'),
+			'message' => 'Your image width is too small'
+		),
+		'minHeight' => array(
+			'rule' => array('minHeight'),
+			'message' => 'Your image height is too small'
+		),
+		'maxWidth' => array(
+			'rule' => array('maxWidth'),
+			'message' => 'Your image width is too large'
+		),
+		'maxHeight' => array(
+			'rule' => array('maxHeight'),
+			'message' => 'Your image height is too large'
+		),
 		'filesize' => array(
 			'rule' => array('filesize'),
-			'message' => 'Your filesize is to large'
+			'message' => 'Your filesize is too large'
 		),
 		'mimetype' => array(
 			'rule' => array('mimetype'),
@@ -81,11 +101,9 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	public function setup(&$Model, $settings = array()) {
-		$this->__mimeTypes = Configure::read('Uploader.mimeTypes');
-		
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $options) {
-				$this->__settings[$Model->alias][$field] = array_merge($this->__defaults, $options);
+				$this->__settings[$Model->alias][$field] = $options + $this->__defaults;
 			}
 		}
 	}
@@ -101,45 +119,11 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function dimension(&$Model, $data, $width = 100, $height = 100) {
-		foreach ($data as $fieldName => $field) {
-			if ($this->__settings[$Model->alias][$fieldName]['optional'] === true && empty($field['tmp_name'])) {
-				return true;
-			}
-			
-			if (empty($field['tmp_name'])) {
-				return false;
-			} else {
-				$file = getimagesize($field['tmp_name']);
-				
-				if (!$file) {
-					return false;
-				}
-				
-				$w = $file[0];
-				$h = $file[1];
-				$width = intval($width);
-				$height = intval($height);
-				
-				if ($width > 0 && $height > 0) {
-					return ($w > $width || $h > $height) ? false : true;
-					
-				} else if ($width > 0 && !$height) {
-					return ($w > $width) ? false : true;
-					
-				} else if ($height > 0 && !$width) {
-					return ($h > $height) ? false : true;
-					
-				} else {
-					return false;
-				}
-			}
-		}
-		
-		return true;
+		return $this->_validateImage($Model, $data, 'dimension', $width, $height);
 	}
 	
 	/**
-	 * Validates an image filesize.
+	 * Validates an image filesize. Default max size is 5 MB.
 	 *
 	 * @access public
 	 * @param object $Model
@@ -149,23 +133,72 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function filesize(&$Model, $data, $maxSize = null) {
 		if (empty($maxSize) || !is_numeric($maxSize)) {
-			$maxSize = 5242880; // 5 MB
+			$maxSize = 5242880;
 		}
 		
 		foreach ($data as $fieldName => $field) {
 			if ($this->__settings[$Model->alias][$fieldName]['optional'] === true && empty($field['tmp_name'])) {
 				return true;
+			} else if (empty($field['tmp_name'])) {
+				return false;
 			}
 			
-			if (empty($field['tmp_name'])) {
-				return false;
-			} else {
-				$fileSize = $field['size'];
-				return ($fileSize > $maxSize) ? false : true;
-			}
+            return ($field['size'] <= $maxSize);
 		}
 		
 		return true;
+	}
+
+	/**
+	 * Checks the maximum image height.
+	 *
+	 * @access public
+	 * @param object $Model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function maxHeight(&$Model, $data, $size = 100) {
+		return $this->_validateImage($Model, $data, 'maxHeight', null, $size);
+	}
+
+	/**
+	 * Checks the maximum image width.
+	 *
+	 * @access public
+	 * @param object $Model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function maxWidth(&$Model, $data, $size = 100) {
+		return $this->_validateImage($Model, $data, 'maxWidth', $size, null);
+	}
+
+	/**
+	 * Checks the minimum image height.
+	 *
+	 * @access public
+	 * @param object $Model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function minHeight(&$Model, $data, $size = 100) {
+		return $this->_validateImage($Model, $data, 'minHeight', null, $size);
+	}
+
+	/**
+	 * Checks the minimum image width.
+	 *
+	 * @access public
+	 * @param object $Model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function minWidth(&$Model, $data, $size = 100) {
+		return $this->_validateImage($Model, $data, 'minWidth', $size, null);
 	}
 	
 	/**
@@ -181,19 +214,17 @@ class FileValidationBehavior extends ModelBehavior {
 		foreach ($data as $fieldName => $field) {
 			if ($this->__settings[$Model->alias][$fieldName]['optional'] === true && empty($field['tmp_name'])) {
 				return true;
-			}
-			
-			if (empty($field['tmp_name'])) {
+			} else if (empty($field['tmp_name'])) {
 				return false;
 			} else {
 				$ext = mb_strtolower(trim(mb_strrchr($field['name'], '.'), '.'));
 			}
 			
 			if (!empty($allowed) && is_array($allowed)) {
-				if (!in_array($ext, $allowed)) {
-					return false;
-				}
+				return in_array($ext, $allowed);
 			} else {
+                $this->__mimeTypes = Configure::read('Uploader.mimeTypes');
+                
 				$validExt = false;
 				$validMime = false;
 			
@@ -333,6 +364,57 @@ class FileValidationBehavior extends ModelBehavior {
 			}
 		}
 		
+		return true;
+	}
+
+    /**
+	 * Validates multiple combinations of height and width for an image.
+	 *
+	 * @access protected
+	 * @param object $Model
+	 * @param array $data
+     * @param string $type
+	 * @param int $width
+	 * @param int $height
+	 * @return boolean
+	 */
+	protected function _validateImage(&$Model, $data, $type, $width = 100, $height = 100) {
+		foreach ($data as $fieldName => $field) {
+			if ($this->__settings[$Model->alias][$fieldName]['optional'] === true && empty($field['tmp_name'])) {
+				return true;
+			} else if (empty($field['tmp_name'])) {
+				return false;
+            }
+
+            $file = getimagesize($field['tmp_name']);
+
+            if (!$file) {
+                return false;
+            }
+
+            $w = $file[0];
+            $h = $file[1];
+
+            switch ($type) {
+                case 'maxWidth':    return ($w <= $width); break;
+                case 'maxHeight':   return ($h <= $height); break;
+                case 'minWidth':    return ($w >= $width); break;
+                case 'minHeight':   return ($h >= $height); break;
+                case 'dimensions':
+                default:
+                    if ($width > 0 && $height > 0) {
+                        return ($w <= $width || $h <= $height);
+                    } else if ($width > 0 && !$height) {
+                        return ($w <= $width);
+                    } else if ($height > 0 && !$width) {
+                        return ($h <= $height);
+                    } else {
+                        return false;
+                    }
+                break;
+            }
+		}
+
 		return true;
 	}
 	
