@@ -4,8 +4,8 @@ Uploader v2.5 - CakePHP Plugin
 Requirements
 ============
 
-	* CakePHP 1.2
-	* PHP 5.2.x
+    * CakePHP 1.2
+    * PHP 5.2.x
 
 Features
 ========
@@ -27,9 +27,9 @@ Features
 Documentation
 =============
 
-	* http://www.milesj.me/resources/script/uploader-plugin
+    * http://milesj.me/resources/script/uploader-plugin
 
 Installation
 ============
 
-	* Clone the repo into a folder called "uploader" within your CakePHP's plugins directory.
+    * Clone the repo into a folder called "uploader" within your CakePHP's plugins directory.
