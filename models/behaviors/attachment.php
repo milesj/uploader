@@ -49,7 +49,15 @@ class AttachmentBehavior extends ModelBehavior {
         'name'			=> null,
         'transforms'	=> array(),
         's3'			=> array(),
-        'metaColumns'   => true
+        'metaColumns'   => array(
+            'type' => '',
+            'size' => '',
+            'filesize' => '',
+            'ext' => '',
+            'group' => '',
+            'width' => '',
+            'height' => ''
+        )
     );
 
     /**
@@ -178,7 +186,7 @@ class AttachmentBehavior extends ModelBehavior {
                                     }
 
                                     if ($path = $this->Uploader->$method($options)) {
-                                        if ($s3 === true) {
+                                        if ($s3) {
                                             $path = $this->S3Transfer->transfer($path);
                                         }
 
@@ -187,7 +195,7 @@ class AttachmentBehavior extends ModelBehavior {
 
                                         // Delete original if same column name
                                         if ($options['dbColumn'] == $attachment['dbColumn']) {
-                                            if ($s3 === true) {
+                                            if ($s3) {
                                                 $this->S3Transfer->delete($basePath);
                                             } else {
                                                 $this->Uploader->delete($basePath);
@@ -203,8 +211,10 @@ class AttachmentBehavior extends ModelBehavior {
                             }
                         }
 
-                        if ($attachment['metaColumns']) {
-                            $Model->data[$Model->alias] = $Model->data[$Model->alias] + $fileData;
+                        if (!empty($attachment['metaColumns'])) {
+                            foreach ($attachment['metaColumns'] as $field => $dbCol) {
+                                $Model->data[$Model->alias][$dbCol] = $fileData[$field];
+                            }
                         }
                     } else {
                         $Model->validationErrors[$file] = __('There was an error attaching this file!', true);
