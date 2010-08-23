@@ -15,8 +15,8 @@ App::import('Component', array('Uploader.Uploader', 'Uploader.S3Transfer'));
 class AttachmentBehavior extends ModelBehavior {
 
     /**
-      * AS3 domain snippet.
-      */
+     * AS3 domain snippet.
+     */
     const AS3_DOMAIN = 's3.amazonaws.com';
 
     /**

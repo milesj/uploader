@@ -10,13 +10,16 @@
 
 class UploadController extends AppController {
 
-    var $uses = array('Upload');
-    var $components = array('Uploader.Uploader', 'Security');
+    /**
+     * Include plugin.
+     */
+    public $uses = array('Upload');
+    public $components = array('Uploader.Uploader', 'Security');
 
     /**
      * Test case for uploading an image with no transformations.
      */
-    function index() {
+    public function index() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->upload('file', array('name' => 'default', 'overwrite' => true))) {
                 debug($data);
@@ -29,7 +32,7 @@ class UploadController extends AppController {
     /**
      * Test case for crop()ping images.
      */
-    function crop() {
+    public function crop() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->upload('file', array('name' => 'crop', 'overwrite' => true))) {
                 debug($data);
@@ -46,7 +49,7 @@ class UploadController extends AppController {
     /**
      * Test case for getting an images dimensions.
      */
-    function dimensions() {
+    public function dimensions() {
         debug($this->Uploader->dimensions($this->testPath));
 
         $this->set('title_for_layout', 'Upload: Dimensions');
@@ -56,7 +59,7 @@ class UploadController extends AppController {
     /**
      * Test case for getting an images ext.
      */
-    function ext() {
+    public function ext() {
         debug($this->Uploader->ext($this->testPath));
 
         $this->set('title_for_layout', 'Upload: Extension');
@@ -66,7 +69,7 @@ class UploadController extends AppController {
     /**
      * Test case for flip()ping images.
      */
-    function flip() {
+    public function flip() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->upload('file', array('name' => 'flip', 'overwrite' => true))) {
                 debug($data);
@@ -83,7 +86,7 @@ class UploadController extends AppController {
     /**
      * Test case for resize()ing images.
      */
-    function resize() {
+    public function resize() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->upload('file', array('name' => 'resize', 'overwrite' => true))) {
                 debug($data);
@@ -100,7 +103,7 @@ class UploadController extends AppController {
     /**
      * Test case for scale()ing images.
      */
-    function scale() {
+    public function scale() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->upload('file', array('name' => 'scale', 'overwrite' => true))) {
                 debug($data);
@@ -117,7 +120,7 @@ class UploadController extends AppController {
     /**
      * Test case for uploading multiple images.
      */
-    function upload_all() {
+    public function upload_all() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->uploadAll(array('file1', 'file2', 'file3'), true)) {
                 debug($data);
@@ -130,7 +133,7 @@ class UploadController extends AppController {
     /**
      * Test case for uploading multiple images with validation.
      */
-    function upload_all_validate() {
+    public function upload_all_validate() {
         if (!empty($this->data)) {
             $this->Upload->set($this->data);
 
@@ -147,7 +150,7 @@ class UploadController extends AppController {
     /**
      * Test case for uploading multiple images from different models.
      */
-    function multi_models() {
+    public function multi_models() {
         if (!empty($this->data)) {
             if ($data = $this->Uploader->uploadAll(array('Upload.file', 'Upload1.file', 'Upload2.file'), true)) {
                 debug($data);
@@ -160,7 +163,7 @@ class UploadController extends AppController {
     /**
      * Test case for checking the behavior validation.
      */
-    function behaviors() {
+    public function behaviors() {
         if (!empty($this->data)) {
             $this->Upload->set($this->data);
 
@@ -177,7 +180,7 @@ class UploadController extends AppController {
     /**
      * Executed before each action
      */
-    function beforeFilter() {
+    public function beforeFilter() {
         parent::beforeFilter();
 
         $this->testPath = WWW_ROOT .'files'. DS .'uploads'. DS .'test.jpg';
