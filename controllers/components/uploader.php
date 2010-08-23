@@ -195,7 +195,7 @@ class UploaderComponent extends Object {
         }
 
         $fileUploads = ini_get('file_uploads');
-        if ($fileUploads === 0 || $fileUploads === false) {
+        if (!$fileUploads) {
             $this->enableUpload = false;
         } else if (!is_bool($this->enableUpload)) {
             $this->enableUpload = $fileUploads;
@@ -295,9 +295,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null, 'prepend' => null);
-        $options = $options + $defaults;
-
+        $options = $options + array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null, 'prepend' => null);
         $width 	= $this->__data[$this->__current]['width'];
         $height = $this->__data[$this->__current]['height'];
         $src_x 	= 0;
@@ -349,8 +347,9 @@ class UploaderComponent extends Object {
         }
 
         $append = '_cropped_'. $newWidth .'x'. $newHeight;
-        if ($options['append'] !== null) {
-            $append = $options['append'];
+
+        if (empty($options['append'])) {
+            $options['append'] = $append;
         }
 
         $transform = array(
@@ -362,12 +361,12 @@ class UploaderComponent extends Object {
             'source_h'	=> $height,
             'dest_w'	=> $dest_w,
             'dest_h'	=> $dest_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], 'cropped_'. $newWidth .'x'. $newHeight);
+            return $this->_return($transform['target'], $append);
         }
 
         return false;
@@ -475,9 +474,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null, 'prepend' => null);
-        $options = $options + $defaults;
-
+        $options = $options + array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null, 'prepend' => null);
         $width 	= $this->__data[$this->__current]['width'];
         $height = $this->__data[$this->__current]['height'];
         $src_x	= 0;
@@ -510,8 +507,9 @@ class UploaderComponent extends Object {
         }
 
         $append = '_flip_'. $adir;
-        if ($options['append'] !== null) {
-            $append = $options['append'];
+
+        if (empty($options['append'])) {
+            $options['append'] = $append;
         }
 
         $transform = array(
@@ -521,12 +519,12 @@ class UploaderComponent extends Object {
             'source_y'	=> $src_y,
             'source_w'	=> $src_w,
             'source_h'	=> $src_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], 'flip_'. $adir);
+            return $this->_return($transform['target'], $append);
         }
 
         return false;
@@ -574,7 +572,7 @@ class UploaderComponent extends Object {
             }
         } else {
             if (file_exists($destFull)) {
-                $destination = $this->_destination(basename($destPath), false, array('append' => 'moved'), false);
+                $destination = $this->_destination(basename($destPath), false, array('append' => '_moved'), false);
                 rename($destFull, $destination);
             }
         }
@@ -612,9 +610,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false);
-        $options = $options + $defaults;
-
+        $options = $options + array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false);
         $width = $this->__data[$this->__current]['width'];
         $height = $this->__data[$this->__current]['height'];
         $maxWidth = $options['width'];
@@ -639,19 +635,20 @@ class UploaderComponent extends Object {
         }
 
         $append = '_'. $newWidth .'x'. $newHeight;
-        if ($options['append'] !== null) {
-            $append = $options['append'];
+
+        if (empty($options['append'])) {
+            $options['append'] = $append;
         }
 
         $transform = array(
             'width'		=> round($newWidth),
             'height'	=> round($newHeight),
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], $newWidth .'x'. $newHeight);
+            return $this->_return($transform['target'], $append);
         }
 
         return false;
@@ -673,26 +670,25 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('percent' => .5, 'quality' => 100, 'append' => null, 'prepend' => null);
-        $options = $options + $defaults;
-
+        $options = $options + array('percent' => .5, 'quality' => 100, 'append' => null, 'prepend' => null);
         $width = round($this->__data[$this->__current]['width'] * $options['percent']);
         $height = round($this->__data[$this->__current]['height'] * $options['percent']);
 
         $append = '_scaled_'. $width .'x'. $height;
-        if ($options['append'] !== null) {
-            $append = $options['append'];
+        
+        if (empty($options['append'])) {
+            $options['append'] = $append;
         }
 
         $transform = array(
             'width'		=> $width,
             'height'	=> $height,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], 'scaled_'. $width .'x'. $height);
+            return $this->_return($transform['target'], $append);
         }
 
         return false;
@@ -706,9 +702,7 @@ class UploaderComponent extends Object {
      * @return boolean
      */
     public function transform($options) {
-        $defaults = array('dest_x' => 0, 'dest_y' => 0, 'source_x' => 0, 'source_y' => 0, 'dest_w' => null, 'dest_h' => null, 'source_w' => $this->__data[$this->__current]['width'], 'source_h' => $this->__data[$this->__current]['height'], 'quality' => 100);
-        $options = $options + $defaults;
-
+        $options = $options + array('dest_x' => 0, 'dest_y' => 0, 'source_x' => 0, 'source_y' => 0, 'dest_w' => null, 'dest_h' => null, 'source_w' => $this->__data[$this->__current]['width'], 'source_h' => $this->__data[$this->__current]['height'], 'quality' => 100);
         $original = $this->__data[$this->__current]['path'];
         $mimeType = $this->__data[$this->__current]['type'];
 
@@ -786,8 +780,7 @@ class UploaderComponent extends Object {
      * @return mixed - Array on success, false on failure
      */
     public function upload($file, $options = array()) {
-        $defaults = array('name' => null, 'overwrite' => false, 'multiple' => false);
-        $options = $options + $defaults;
+        $options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
 
         if ($options['multiple'] === false) {
             if ($this->enableUpload === false) {
