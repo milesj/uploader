@@ -169,7 +169,7 @@ class AttachmentBehavior extends ModelBehavior {
                     if ($fileData = $this->Uploader->upload($file, $options)) {
                         $basePath = $fileData['path'];
 
-                        if ($s3 === true) {
+                        if ($s3) {
                             $basePath = $this->S3Transfer->transfer($basePath);
                         }
 

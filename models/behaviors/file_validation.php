@@ -200,8 +200,10 @@ class FileValidationBehavior extends ModelBehavior {
             if (!empty($allowed) && is_array($allowed)) {
                 return in_array($ext, $allowed);
             } else {
-                $this->__mimeTypes = Configure::read('Uploader.mimeTypes');
-
+                if (empty($this->__mimeTypes)) {
+                    $this->__mimeTypes = Configure::read('Uploader.mimeTypes');
+                }
+                
                 $validExt = false;
                 $validMime = false;
 
@@ -215,7 +217,7 @@ class FileValidationBehavior extends ModelBehavior {
                     }
                 }
 
-                if ($validExt === false && $validMime === false) {
+                if (!$validExt && !$validMime) {
                     return false;
                 }
             }
