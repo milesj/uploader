@@ -164,7 +164,6 @@ class UploaderComponent extends Object {
      * Load the controllers file data into the component.
      *
      * @access public
-     * @uses UploaderConfig
      * @param object $Controller
      * @param array $settings
      * @return void
@@ -271,7 +270,7 @@ class UploaderComponent extends Object {
         $sizes = array('YB', 'ZB', 'EB', 'PB', 'TB', 'GB', 'MB', 'KB', 'B');
         $total = count($sizes);
 
-        while($total-- && $size > 1024) {
+        while ($total-- && $size > 1024) {
             $size /= 1024;
         }
 
@@ -287,6 +286,7 @@ class UploaderComponent extends Object {
      * - location: Which area of the image should be grabbed for the crop: center, left, right, top, bottom
      * - width, height: The width and height to resize the image to before cropping
      * - append: What should be appended to the end of the filename
+     * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return mixed
      */
@@ -295,7 +295,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null);
+        $defaults = array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null, 'prepend' => null);
         $options = $options + $defaults;
 
         $width 	= $this->__data[$this->__current]['width'];
@@ -348,7 +348,7 @@ class UploaderComponent extends Object {
             }
         }
 
-        $append = 'cropped_'. $newWidth .'x'. $newHeight;
+        $append = '_cropped_'. $newWidth .'x'. $newHeight;
         if ($options['append'] !== null) {
             $append = $options['append'];
         }
@@ -362,7 +362,7 @@ class UploaderComponent extends Object {
             'source_h'	=> $height,
             'dest_w'	=> $dest_w,
             'dest_h'	=> $dest_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $append, false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
             'quality'	=> $options['quality']
         );
 
@@ -466,6 +466,7 @@ class UploaderComponent extends Object {
      * @param array $options
      * - dir: The direction the image should be flipped
      * - append: What should be appended to the end of the filename
+     * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return string
      */
@@ -474,7 +475,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null);
+        $defaults = array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null, 'prepend' => null);
         $options = $options + $defaults;
 
         $width 	= $this->__data[$this->__current]['width'];
@@ -508,7 +509,7 @@ class UploaderComponent extends Object {
             default: return false; break;
         }
 
-        $append = 'flip_'. $adir;
+        $append = '_flip_'. $adir;
         if ($options['append'] !== null) {
             $append = $options['append'];
         }
@@ -520,7 +521,7 @@ class UploaderComponent extends Object {
             'source_y'	=> $src_y,
             'source_w'	=> $src_w,
             'source_h'	=> $src_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $append, false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
             'quality'	=> $options['quality']
         );
 
@@ -573,7 +574,7 @@ class UploaderComponent extends Object {
             }
         } else {
             if (file_exists($destFull)) {
-                $destination = $this->_destination(basename($destPath), false, 'moved', false);
+                $destination = $this->_destination(basename($destPath), false, array('append' => 'moved'), false);
                 rename($destFull, $destination);
             }
         }
@@ -602,6 +603,7 @@ class UploaderComponent extends Object {
      * - width, height: The width and height to resize the image to
      * - quality: The quality of the image
      * - append: What should be appended to the end of the filename
+     * - prepend: What should be prepended to the front of the filename
      * - expand: Should the image be resized if the dimension is greater than the original dimension
      * @return string
      */
@@ -610,7 +612,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'expand' => false);
+        $defaults = array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false);
         $options = $options + $defaults;
 
         $width = $this->__data[$this->__current]['width'];
@@ -636,7 +638,7 @@ class UploaderComponent extends Object {
             }
         }
 
-        $append = $newWidth .'x'. $newHeight;
+        $append = '_'. $newWidth .'x'. $newHeight;
         if ($options['append'] !== null) {
             $append = $options['append'];
         }
@@ -644,7 +646,7 @@ class UploaderComponent extends Object {
         $transform = array(
             'width'		=> round($newWidth),
             'height'	=> round($newHeight),
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $append, false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
             'quality'	=> $options['quality']
         );
 
@@ -662,6 +664,7 @@ class UploaderComponent extends Object {
      * @param array $options
      * - percent: What percentage should the image be scaled to, defaults to %50 (.5)
      * - append: What should be appended to the end of the filename
+     * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return string
      */
@@ -670,13 +673,13 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $defaults = array('percent' => .5, 'quality' => 100, 'append' => null);
+        $defaults = array('percent' => .5, 'quality' => 100, 'append' => null, 'prepend' => null);
         $options = $options + $defaults;
 
         $width = round($this->__data[$this->__current]['width'] * $options['percent']);
         $height = round($this->__data[$this->__current]['height'] * $options['percent']);
 
-        $append = 'scaled_'. $width .'x'. $height;
+        $append = '_scaled_'. $width .'x'. $height;
         if ($options['append'] !== null) {
             $append = $options['append'];
         }
@@ -684,7 +687,7 @@ class UploaderComponent extends Object {
         $transform = array(
             'width'		=> $width,
             'height'	=> $height,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $append, false),
+            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, array('append' => $append, 'prepend' => $options['prepend']), false),
             'quality'	=> $options['quality']
         );
 
@@ -917,23 +920,25 @@ class UploaderComponent extends Object {
      * @access protected
      * @param string $name
      * @param boolean $overwrite
-     * @param string $append
+     * @param array $options
      * @param boolean $update
      * @return string
      */
-    protected function _destination($name = '', $overwrite = false, $append = '', $update = true) {
-        $name = $this->_filename($name, $append);
+    protected function _destination($name = '', $overwrite = false, $options = array(), $update = true) {
+        $append = isset($options['append']) ? $options['append'] : '';
+        $prepend = isset($options['prepend']) ? $options['prepend'] : '';
+        $name = $this->_filename($name, $append, $prepend);
         $dest = $this->finalDir . $name;
 
         if (file_exists($dest) && $overwrite === false) {
             if (empty($append)) {
                 $no = 1;
-                while (file_exists($this->finalDir . $this->_filename($name, $no))) {
+                while (file_exists($this->finalDir . $this->_filename($name, $no, $prepend))) {
                     $no++;
                 }
-                $name = $this->_filename($name, $no);
+                $name = $this->_filename($name, $no, $prepend);
             } else {
-                $name = $this->_filename($name, $append);
+                $name = $this->_filename($name, $append, $prepend);
             }
 
             $dest = $this->finalDir . $name;
@@ -953,10 +958,11 @@ class UploaderComponent extends Object {
      * @access protected
      * @param string $name
      * @param string $append
-     * @param boolean $update
+     * @param string $prepend
+     * @param boolean $truncate
      * @return void
      */
-    protected function _filename($name = '', $append = '', $truncate = true) {
+    protected function _filename($name = '', $append = '', $prepend = '', $truncate = true) {
         if (empty($name)) {
             $name = $this->__data[$this->__current]['name'];
         }
@@ -975,9 +981,17 @@ class UploaderComponent extends Object {
             }
         }
 
-        if (!empty($append) && (is_string($append) || is_numeric($append))) {
+        $append = (string)$append;
+        $prepend = (string)$prepend;
+
+        if (!empty($append)) {
             $append = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $append);
-            $name = $name .'_'. $append;
+            $name = $name . $append;
+        }
+
+        if (!empty($prepend)) {
+            $prepend = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $prepend);
+            $name = $prepend . $name;
         }
 
         $name = $name .'.'. $ext;
