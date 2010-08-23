@@ -9,14 +9,14 @@
 */
 
 /**
-    CREATE TABLE IF NOT EXISTS `uploads` (
-        `id` int(11) NOT NULL AUTO_INCREMENT,
-        `caption` varchar(255) NOT NULL,
-        `path` varchar(255) NOT NULL,
-        `path_alt` varchar(255) NOT NULL,
-        `created` datetime DEFAULT NULL,
-        PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+CREATE TABLE IF NOT EXISTS `uploads` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `caption` varchar(255) NOT NULL,
+    `path` varchar(255) NOT NULL,
+    `path_alt` varchar(255) NOT NULL,
+    `created` datetime DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 */
 
 class Upload extends AppModel {
@@ -43,23 +43,28 @@ class Upload extends AppModel {
                     'error' => 'Only gif, jpg and jpeg images are allowed!'
                 ),
                 'minWidth' => 500,
-                'maxHeight' => 500,
-                'required' => false
+                'minHeight' => 500,
+                'required' => true
             )
         ),
         'Uploader.Attachment' => array(
             'file' => array(
-                'uploadDir' 	=> '/files/uploads/',
-                'dbColumn'		=> 'path',
-                'maxNameLength'	=> 30,
-                'overwrite'		=> true,
-                'transforms' 	=> array(
+                'uploadDir' => '/files/uploads/',
+                'dbColumn' => 'path',
+                'maxNameLength' => 30,
+                'overwrite' => true,
+                'transforms' => array(
+                    // Save additional images in the databases after transforming
                     array(
                         'method' => 'resize',
                         'width' => 100,
                         'height' => 100,
                         'dbColumn' => 'path_alt'
                     )
+                ),
+                'metaColumns' => array(
+                    'size' => 'filesize',   // The size value will be saved to the filesize column
+                    'type' => 'type'        // And the same for the mimetype
                 )
             )
         )
