@@ -218,7 +218,9 @@ class AttachmentBehavior extends ModelBehavior {
 
                         if (!empty($attachment['metaColumns'])) {
                             foreach ($attachment['metaColumns'] as $field => $dbCol) {
-                                $Model->data[$Model->alias][$dbCol] = $fileData[$field];
+                                if (isset($fileData[$field])) {
+                                    $Model->data[$Model->alias][$dbCol] = $fileData[$field];
+                                }
                             }
                         }
                     } else {
