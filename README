@@ -1,6 +1,9 @@
 Uploader v2.5.5 - CakePHP Plugin
 ********************************
 
+Version(s) 2.5.1 and above are not backwards compatible with 2.5.0 and below.
+Check the commit log for changes and please update your code accordingly!
+
 Requirements
 ============
 

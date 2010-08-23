@@ -23,7 +23,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Test Case';
+        $this->set('title_for_layout', 'Upload: Test Case');
     }
 
     /**
@@ -39,7 +39,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Crop';
+        $this->set('title_for_layout', 'Upload: Crop');
         $this->render('index');
     }
 
@@ -49,7 +49,7 @@ class UploadController extends AppController {
     function dimensions() {
         debug($this->Uploader->dimensions($this->testPath));
 
-        $this->pageTitle = 'Upload: Dimensions';
+        $this->set('title_for_layout', 'Upload: Dimensions');
         $this->render('index');
     }
 
@@ -59,7 +59,7 @@ class UploadController extends AppController {
     function ext() {
         debug($this->Uploader->ext($this->testPath));
 
-        $this->pageTitle = 'Upload: Extension';
+        $this->set('title_for_layout', 'Upload: Extension');
         $this->render('index');
     }
 
@@ -76,7 +76,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Flip';
+        $this->set('title_for_layout', 'Upload: Flip');
         $this->render('index');
     }
 
@@ -93,7 +93,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Resize';
+        $this->set('title_for_layout', 'Upload: Resize');
         $this->render('index');
     }
 
@@ -110,7 +110,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Scale';
+        $this->set('title_for_layout', 'Upload: Scale');
         $this->render('index');
     }
 
@@ -124,7 +124,24 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Upload All';
+        $this->set('title_for_layout', 'Upload: Upload All');
+    }
+
+    /**
+     * Test case for uploading multiple images with validation.
+     */
+    function upload_all_validate() {
+        if (!empty($this->data)) {
+            $this->Upload->set($this->data);
+
+            if ($this->Upload->validates()) {
+                if ($data = $this->Uploader->uploadAll(array('file1', 'file2', 'file3'), true)) {
+                    debug($data);
+                }
+            }
+        }
+
+        $this->set('title_for_layout', 'Upload: Upload All with Validation');
     }
 
     /**
@@ -137,7 +154,7 @@ class UploadController extends AppController {
             }
         }
 
-        $this->pageTitle = 'Upload: Multiple Models';
+        $this->set('title_for_layout', 'Upload: Multiple Models');
     }
 
     /**
@@ -148,13 +165,13 @@ class UploadController extends AppController {
             $this->Upload->set($this->data);
 
             if ($this->Upload->validates()) {
-                if ($this->Upload->save($this->data, false, array('caption', 'path', 'path_alt'))) {
+                if ($this->Upload->save($this->data, false)) {
                     debug('Image uploaded and row saved!');
                 }
             }
         }
 
-        $this->pageTitle = 'Upload: Behavior Validation and Attachment Testing';
+        $this->set('title_for_layout', 'Upload: Behavior Validation and Attachment Testing');
     }
 
     /**
