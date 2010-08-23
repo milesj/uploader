@@ -49,6 +49,7 @@ class AttachmentBehavior extends ModelBehavior {
         'name'			=> null,
         'transforms'	=> array(),
         's3'			=> array(),
+        'skipSave'      => true,
         'metaColumns'   => array(
             'type' => '',
             'size' => '',
@@ -157,7 +158,11 @@ class AttachmentBehavior extends ModelBehavior {
                     }
 
                     if ($data['error'] == UPLOAD_ERR_NO_FILE) {
-                        continue;
+                        if (isset($attachment['skipSave']) && $attachment['skipSave']) {
+                            return false;
+                        } else {
+                            continue;
+                        }
                     }
 
                     // Upload file and attache to model data
