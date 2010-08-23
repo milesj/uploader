@@ -48,14 +48,15 @@ class AttachmentBehavior extends ModelBehavior {
         'overwrite'		=> true,
         'name'			=> null,
         'transforms'	=> array(),
-        's3'			=> array()
+        's3'			=> array(),
+        'metaColumns'   => true
     );
 
     /**
      * Initialize uploader and save attachments.
      *
      * @access public
-     * @uses UploaderComponent
+     * @uses UploaderComponent, S3TransferComponent
      * @param object $Model
      * @param array $settings
      * @return boolean
@@ -66,7 +67,7 @@ class AttachmentBehavior extends ModelBehavior {
 
         if (!empty($settings) && is_array($settings)) {
             foreach ($settings as $field => $attachment) {
-                $this->__attachments[$Model->alias][$field] = array_merge($this->__defaults, $attachment);
+                $this->__attachments[$Model->alias][$field] = $attachment + $this->__defaults;
             }
         }
     }
@@ -152,8 +153,8 @@ class AttachmentBehavior extends ModelBehavior {
                     }
 
                     // Upload file and attache to model data
-                    if ($data = $this->Uploader->upload($file, $options)) {
-                        $basePath = $data['path'];
+                    if ($fileData = $this->Uploader->upload($file, $options)) {
+                        $basePath = $fileData['path'];
 
                         if ($s3 === true) {
                             $basePath = $this->S3Transfer->transfer($basePath);
@@ -200,6 +201,10 @@ class AttachmentBehavior extends ModelBehavior {
                                     }
                                 }
                             }
+                        }
+
+                        if ($attachment['metaColumns']) {
+                            $Model->data[$Model->alias] = $Model->data[$Model->alias] + $fileData;
                         }
                     } else {
                         $Model->validationErrors[$file] = __('There was an error attaching this file!', true);
