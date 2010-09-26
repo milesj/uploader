@@ -348,7 +348,7 @@ class UploaderComponent extends Object {
 
         $append = '_cropped_'. $newWidth .'x'. $newHeight;
 
-        if (isset($options['append']) && $options['append'] !== false) {
+        if (!isset($options['append']) || $options['append'] !== false) {
             $options['append'] = $append;
         }
 
@@ -508,7 +508,7 @@ class UploaderComponent extends Object {
 
         $append = '_flip_'. $adir;
 
-        if (isset($options['append']) && $options['append'] !== false) {
+        if (!isset($options['append']) || $options['append'] !== false) {
             $options['append'] = $append;
         }
 
@@ -636,7 +636,7 @@ class UploaderComponent extends Object {
 
         $append = '_'. $newWidth .'x'. $newHeight;
 
-        if (isset($options['append']) && $options['append'] !== false) {
+        if (!isset($options['append']) || $options['append'] !== false) {
             $options['append'] = $append;
         }
 
@@ -676,7 +676,7 @@ class UploaderComponent extends Object {
 
         $append = '_scaled_'. $width .'x'. $height;
         
-        if (isset($options['append']) && $options['append'] !== false) {
+        if (!isset($options['append']) || $options['append'] !== false) {
             $options['append'] = $append;
         }
 
