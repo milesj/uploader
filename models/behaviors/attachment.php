@@ -118,6 +118,13 @@ class AttachmentBehavior extends ModelBehavior {
         if (!empty($Model->data[$Model->alias])) {
             foreach ($Model->data[$Model->alias] as $file => $data) {
                 if (isset($this->__attachments[$Model->alias][$file])) {
+
+					// Let the save work even if the image is empty.
+					// If the image should be required, use the FileValidation behavior.
+					if (empty($data['tmp_name'])) {
+						continue;
+					}
+					
                     $attachment = $this->__attachments[$Model->alias][$file];
                     $options = array();
                     $s3 = false;
