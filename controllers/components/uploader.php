@@ -285,7 +285,7 @@ class UploaderComponent extends Object {
      * @param array $options
      * - location: Which area of the image should be grabbed for the crop: center, left, right, top, bottom
      * - width, height: The width and height to resize the image to before cropping
-     * - append: What should be appended to the end of the filename
+     * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return mixed
@@ -348,7 +348,7 @@ class UploaderComponent extends Object {
 
         $append = '_cropped_'. $newWidth .'x'. $newHeight;
 
-        if (!isset($options['append']) || $options['append'] !== false) {
+        if (!isset($options['append'])) {
             $options['append'] = $append;
         }
 
@@ -464,7 +464,7 @@ class UploaderComponent extends Object {
      * @access public
      * @param array $options
      * - dir: The direction the image should be flipped
-     * - append: What should be appended to the end of the filename
+     * - append: What should be appended to the end of the filename (defaults to flip direction if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return string
@@ -508,7 +508,7 @@ class UploaderComponent extends Object {
 
         $append = '_flip_'. $adir;
 
-        if (!isset($options['append']) || $options['append'] !== false) {
+        if (!isset($options['append'])) {
             $options['append'] = $append;
         }
 
@@ -600,7 +600,7 @@ class UploaderComponent extends Object {
      * @param array $options
      * - width, height: The width and height to resize the image to
      * - quality: The quality of the image
-     * - append: What should be appended to the end of the filename
+     * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - expand: Should the image be resized if the dimension is greater than the original dimension
      * @return string
@@ -636,7 +636,7 @@ class UploaderComponent extends Object {
 
         $append = '_'. $newWidth .'x'. $newHeight;
 
-        if (!isset($options['append']) || $options['append'] !== false) {
+        if (!isset($options['append'])) {
             $options['append'] = $append;
         }
 
@@ -660,7 +660,7 @@ class UploaderComponent extends Object {
      * @access public
      * @param array $options
      * - percent: What percentage should the image be scaled to, defaults to %50 (.5)
-     * - append: What should be appended to the end of the filename
+     * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
      * @return string
@@ -676,9 +676,9 @@ class UploaderComponent extends Object {
 
         $append = '_scaled_'. $width .'x'. $height;
         
-        if (!isset($options['append']) || $options['append'] !== false) {
+        if (!isset($options['append'])) {
             $options['append'] = $append;
-        }
+		}
 
         $transform = array(
             'width'		=> $width,
