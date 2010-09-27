@@ -5,7 +5,7 @@
 * A CakePHP Component that will upload a wide range of file types. Each file will be uploaded into app/webroot/<upload dir> (the path your provide). 
 * Security and type checking have been integrated to only allow valid files. Additionally, images have the option of transforming an image.
 *
-* @author      Miles Johnson - www.milesj.me
+* @author      Miles Johnson - http://milesj.me
 * @copyright   Copyright 2006-2010, Miles Johnson, Inc.
 * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
 * @link        http://milesj.me/resources/script/uploader-plugin
