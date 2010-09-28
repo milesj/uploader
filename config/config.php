@@ -13,7 +13,7 @@
 /**
  * Current version: http://milesj.me/resources/logs/uploader-plugin
  */
-$config['Uploader']['version'] = '2.5.8';
+$config['Uploader']['version'] = '2.5.9';
 
 /**
  * The accepted file/mime types.

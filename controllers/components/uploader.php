@@ -288,9 +288,10 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
+	 * @param boolean $explicit
      * @return mixed
      */
-    public function crop($options = array()) {
+    public function crop($options = array(), $explicit = false) {
         if ($this->__data[$this->__current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -366,7 +367,7 @@ class UploaderComponent extends Object {
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], $append);
+            return $this->_return($transform, $append, $explicit);
         }
 
         return false;
@@ -467,9 +468,10 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to flip direction if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
+	 * @param boolean $explicit
      * @return string
      */
-    public function flip($options = array()) {
+    public function flip($options = array(), $explicit = false) {
         if ($this->__data[$this->__current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -524,7 +526,7 @@ class UploaderComponent extends Object {
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], $append);
+            return $this->_return($transform, $append, $explicit);
         }
 
         return false;
@@ -603,9 +605,10 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - expand: Should the image be resized if the dimension is greater than the original dimension
+	 * @param boolean $explicit
      * @return string
      */
-    public function resize($options) {
+    public function resize($options, $explicit = false) {
         if ($this->__data[$this->__current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -648,7 +651,7 @@ class UploaderComponent extends Object {
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], $append);
+            return $this->_return($transform, $append, $explicit);
         }
 
         return false;
@@ -663,9 +666,10 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
+	 * @param boolean $explicit
      * @return string
      */
-    public function scale($options = array()) {
+    public function scale($options = array(), $explicit = false) {
         if ($this->__data[$this->__current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -688,7 +692,7 @@ class UploaderComponent extends Object {
         );
 
         if ($this->transform($transform)) {
-            return $this->_return($transform['target'], $append);
+            return $this->_return($transform, $append, $explicit);
         }
 
         return false;
@@ -997,19 +1001,28 @@ class UploaderComponent extends Object {
      * Formates and returns the data array.
      *
      * @access protected
-     * @param string $target
+     * @param array $data
      * @param string $append
+	 * @param boolean $explicit
      * @return array
      */
-    protected function _return($target = '', $append = '') {
-        $root = WWW_ROOT;
+    protected function _return($data = '', $append = '', $explicit = false) {
+        if (!empty($data) && !empty($append)) {
+            $this->__data[$this->__current]['path_'. $append] = $data['target'];
+            $this->__logs[$this->__current]['path_'. $append] = $data['target'];
 
-        if (!empty($target) && !empty($append)) {
-            $this->__data[$this->__current]['path_'. $append] = $target;
-            $this->__logs[$this->__current]['path_'. $append] = $target;
-            chmod($target, 0777);
+            chmod($data['target'], 0777);
+            $path = str_replace(WWW_ROOT, '/', $data['target']);
 
-            return str_replace($root, '/', $target);
+			if ($explicit) {
+				return array(
+					'path' => $path,
+					'width' => $data['width'],
+					'height' => $data['height']
+				);
+			} else {
+				return $path;
+			}
 
         } else {
             $data = $this->__data[$this->__current];
@@ -1017,7 +1030,7 @@ class UploaderComponent extends Object {
 
             foreach ($data as $key => $value) {
                 if (strpos($key, 'path') !== false) {
-                    $data[$key] = str_replace($root, '/', $data[$key]);
+                    $data[$key] = str_replace(WWW_ROOT, '/', $data[$key]);
                 }
             }
 
@@ -1099,7 +1112,7 @@ class UploaderComponent extends Object {
         }
 
         // Requires the ClamAV module to be installed
-        // http://www.clamav.net/
+        // http://clamav.net/
         if ($this->scanFile === true) {
             if (!extension_loaded('clamav')) {
                 @dl('clamav.'. PHP_SHLIB_SUFFIX);
