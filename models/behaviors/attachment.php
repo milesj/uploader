@@ -42,23 +42,24 @@ class AttachmentBehavior extends ModelBehavior {
      * @var array
      */
     private $__defaults = array(
-        'uploadDir' 	=> null,
-        'dbColumn'		=> 'uploadPath',
-        'maxNameLength' => null,
-        'overwrite'		=> true,
-        'name'			=> null,
-        'transforms'	=> array(),
-        's3'			=> array(),
-        'skipSave'      => true,
-        'metaColumns'   => array(
-            'type' => '',
-            'size' => '',
-            'filesize' => '',
-            'ext' => '',
-            'group' => '',
-            'width' => '',
-            'height' => ''
-        )
+		'uploadDir' 	=> '',
+		'dbColumn'		=> 'uploadPath',
+		'defaultPath'	=> '',
+		'name'			=> null,
+		'maxNameLength' => null,
+		'overwrite'		=> true,
+		'skipSave'      => true,
+		'transforms'	=> array(),
+		's3'			=> array(),
+		'metaColumns'   => array(
+			'type' => '',
+			'size' => '',
+			'filesize' => '',
+			'ext' => '',
+			'group' => '',
+			'width' => '',
+			'height' => ''
+		)
     );
 
     /**
@@ -118,16 +119,28 @@ class AttachmentBehavior extends ModelBehavior {
         if (!empty($Model->data[$Model->alias])) {
             foreach ($Model->data[$Model->alias] as $file => $data) {
                 if (isset($this->__attachments[$Model->alias][$file])) {
+                    $attachment = $this->__attachments[$Model->alias][$file];
+                    $options = array();
+                    $s3 = false;
 
 					// Let the save work even if the image is empty.
 					// If the image should be required, use the FileValidation behavior.
 					if (empty($data['tmp_name'])) {
+						if (!empty($attachment['defaultPath'])) {
+							$Model->data[$Model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
+						}
+
 						continue;
 					}
-					
-                    $attachment = $this->__attachments[$Model->alias][$file];
-                    $options = array();
-                    $s3 = false;
+
+					// Should we continue if a file errord during upload?
+					if ($data['error'] == UPLOAD_ERR_NO_FILE) {
+                        if ($attachment['skipSave']) {
+                            return false;
+                        } else {
+                            continue;
+                        }
+                    }
 
                     // S3
                     if (!empty($attachment['s3'])) {
@@ -162,14 +175,6 @@ class AttachmentBehavior extends ModelBehavior {
 
                     if (!empty($attachment['name'])) {
                         $options['name'] = $attachment['name'];
-                    }
-
-                    if ($data['error'] == UPLOAD_ERR_NO_FILE) {
-                        if (isset($attachment['skipSave']) && $attachment['skipSave']) {
-                            return false;
-                        } else {
-                            continue;
-                        }
                     }
 
                     // Upload file and attache to model data
