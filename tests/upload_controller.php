@@ -165,13 +165,9 @@ class UploadController extends AppController {
      */
     public function behaviors() {
         if (!empty($this->data)) {
-            $this->Upload->set($this->data);
-
-            if ($this->Upload->validates()) {
-                if ($this->Upload->save($this->data, false)) {
-                    debug('Image uploaded and row saved!');
-                }
-            }
+			if ($this->Upload->save($this->data)) {
+				debug('Image uploaded and row saved!');
+			}
         }
 
         $this->set('title_for_layout', 'Upload: Behavior Validation and Attachment Testing');

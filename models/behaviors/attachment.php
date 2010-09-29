@@ -42,16 +42,16 @@ class AttachmentBehavior extends ModelBehavior {
      * @var array
      */
     private $__defaults = array(
-		'uploadDir' 	=> '',
+		'uploadDir'		=> '',
 		'dbColumn'		=> 'uploadPath',
 		'defaultPath'	=> '',
-		'name'			=> null,
-		'maxNameLength' => null,
+		'name'			=> '',
+		'maxNameLength'	=> null,
 		'overwrite'		=> true,
-		'skipSave'      => true,
+		'skipSave'		=> true,
 		'transforms'	=> array(),
 		's3'			=> array(),
-		'metaColumns'   => array(
+		'metaColumns'	=> array(
 			'type' => '',
 			'size' => '',
 			'filesize' => '',
@@ -135,12 +135,12 @@ class AttachmentBehavior extends ModelBehavior {
 
 					// Should we continue if a file errord during upload?
 					if ($data['error'] == UPLOAD_ERR_NO_FILE) {
-                        if ($attachment['skipSave']) {
-                            return false;
-                        } else {
-                            continue;
-                        }
-                    }
+						if ($attachment['skipSave']) {
+							return false;
+						} else {
+							continue;
+						}
+					}
 
                     // S3
                     if (!empty($attachment['s3'])) {
@@ -235,6 +235,7 @@ class AttachmentBehavior extends ModelBehavior {
                                 }
                             }
                         }
+						
                     } else {
                         $Model->validationErrors[$file] = __('There was an error attaching this file!', true);
                         return false;
