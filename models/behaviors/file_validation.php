@@ -265,7 +265,7 @@ class FileValidationBehavior extends ModelBehavior {
                 foreach ($rules as $rule => $setting) {
                     $set = $this->__validations[$rule];
 
-                    if (is_array($setting)) {
+                    if (is_array($setting) && !isset($setting[0])) {
                         if (!empty($setting['error'])) {
                             $set['message'] = $setting['error'];
                         }
