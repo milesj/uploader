@@ -385,7 +385,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-		if (!$this->useFullPath) {
+        if (strpos($path, WWW_ROOT) === false) {
             $path = WWW_ROOT . $path;
         }
 
@@ -561,13 +561,8 @@ class UploaderComponent extends Object {
      * @return boolean
      */
     public function move($origPath, $destPath, $overwrite = false) {
-		if ($this->useFullPath) {
-			$destFull = $destPath;
-			$origFull = $origPath;
-		} else {
         $destFull = WWW_ROOT . $destPath;
         $origFull = WWW_ROOT . $origPath;
-		}
 
         if (($origPath === $destPath) || (!file_exists($origFull)) || (!is_writable(dirname($destFull)))) {
             return false;
@@ -896,23 +891,15 @@ class UploaderComponent extends Object {
             $this->Folder = new Folder();
         }
 
-		if (mb_substr($this->uploadDir, -1) != '/' && $this->uploadDir != '') {
-			$this->uploadDir .'/';
-		}
-
-		if (!$this->useFullPath) {
-        	if (mb_substr($this->uploadDir, 0, 1) == '/') {
-            	$this->uploadDir = mb_substr($this->uploadDir, 1);
-        	}
-
-			$fullUploadDir = WWW_ROOT . $this->uploadDir;
-		} else {
-			if (mb_substr($this->uploadDir, 0, 1) != '/') {
-				$this->uploadDir = '/'. $this->uploadDir;
+        if (mb_substr($this->uploadDir, 0, 1) == '/') {
+            $this->uploadDir = mb_substr($this->uploadDir, 1);
         }
 
-			$fullUploadDir = $this->uploadDir;
-		}
+        if (mb_substr($this->uploadDir, -1) != '/' && $this->uploadDir != '') {
+            $this->uploadDir .'/';
+        }
+
+        $fullUploadDir = WWW_ROOT . $this->uploadDir;
 
         if (!is_dir($fullUploadDir)) {
             $this->Folder->create($fullUploadDir, 0777);
