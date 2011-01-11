@@ -121,6 +121,13 @@ class UploaderComponent extends Object {
     public $tempDir = TMP;
 
     /**
+     * Whether to allow a full path instead of default app/webroot/
+     * @access public
+     * @var boolean
+     */
+    public $useFullPath = false;
+
+    /**
      * Destination upload directory within app/webroot/.
      *
      * @access public
@@ -288,7 +295,7 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
-	 * @param boolean $explicit
+     * @param boolean $explicit
      * @return mixed
      */
     public function crop($options = array(), $explicit = false) {
@@ -297,10 +304,10 @@ class UploaderComponent extends Object {
         }
 
         $options = $options + array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null, 'prepend' => null);
-        $width 	= $this->__data[$this->__current]['width'];
+        $width     = $this->__data[$this->__current]['width'];
         $height = $this->__data[$this->__current]['height'];
-        $src_x 	= 0;
-        $src_y 	= 0;
+        $src_x     = 0;
+        $src_y     = 0;
         $dest_w = $width;
         $dest_h = $height;
         $location = $options['location'];
@@ -354,16 +361,16 @@ class UploaderComponent extends Object {
         }
 
         $transform = array(
-            'width'		=> $newWidth,
-            'height'	=> $newHeight,
-            'source_x'	=> $src_x,
-            'source_y'	=> $src_y,
-            'source_w'	=> $width,
-            'source_h'	=> $height,
-            'dest_w'	=> $dest_w,
-            'dest_h'	=> $dest_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
-            'quality'	=> $options['quality']
+            'width'        => $newWidth,
+            'height'    => $newHeight,
+            'source_x'    => $src_x,
+            'source_y'    => $src_y,
+            'source_w'    => $width,
+            'source_h'    => $height,
+            'dest_w'    => $dest_w,
+            'dest_h'    => $dest_h,
+            'target'    => $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
+            'quality'    => $options['quality']
         );
 
         if ($this->transform($transform)) {
@@ -385,7 +392,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-		if (!$this->useFullPath) {
+        if (!$this->useFullPath) {
             $path = WWW_ROOT . $path;
         }
 
@@ -426,9 +433,9 @@ class UploaderComponent extends Object {
             $image = @imagecreatefromstring($data);
 
             $dim = array(
-                'width' 	=> @imagesx($image),
-                'height' 	=> @imagesy($image),
-                'type'		=> function_exists('mime_content_type') ? mime_content_type($path) : null
+                'width'     => @imagesx($image),
+                'height'     => @imagesy($image),
+                'type'        => function_exists('mime_content_type') ? mime_content_type($path) : null
             );
 
             if (empty($dim['type'])) {
@@ -468,7 +475,7 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to flip direction if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
-	 * @param boolean $explicit
+     * @param boolean $explicit
      * @return string
      */
     public function flip($options = array(), $explicit = false) {
@@ -477,12 +484,12 @@ class UploaderComponent extends Object {
         }
 
         $options = $options + array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null, 'prepend' => null);
-        $width 	= $this->__data[$this->__current]['width'];
+        $width     = $this->__data[$this->__current]['width'];
         $height = $this->__data[$this->__current]['height'];
-        $src_x	= 0;
-        $src_y	= 0;
-        $src_w	= $width;
-        $src_h 	= $height;
+        $src_x    = 0;
+        $src_y    = 0;
+        $src_w    = $width;
+        $src_h     = $height;
 
         switch ($options['dir']) {
             // vertical
@@ -515,14 +522,14 @@ class UploaderComponent extends Object {
         }
 
         $transform = array(
-            'width'		=> $width,
-            'height'	=> $height,
-            'source_x'	=> $src_x,
-            'source_y'	=> $src_y,
-            'source_w'	=> $src_w,
-            'source_h'	=> $src_h,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
-            'quality'	=> $options['quality']
+            'width'        => $width,
+            'height'    => $height,
+            'source_x'    => $src_x,
+            'source_y'    => $src_y,
+            'source_w'    => $src_w,
+            'source_h'    => $src_h,
+            'target'    => $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
+            'quality'    => $options['quality']
         );
 
         if ($this->transform($transform)) {
@@ -561,13 +568,13 @@ class UploaderComponent extends Object {
      * @return boolean
      */
     public function move($origPath, $destPath, $overwrite = false) {
-		if ($this->useFullPath) {
-			$destFull = $destPath;
-			$origFull = $origPath;
-		} else {
-        $destFull = WWW_ROOT . $destPath;
-        $origFull = WWW_ROOT . $origPath;
-		}
+        if ($this->useFullPath) {
+            $destFull = $destPath;
+            $origFull = $origPath;
+        } else {
+            $destFull = WWW_ROOT . $destPath;
+            $origFull = WWW_ROOT . $origPath;
+        }
 
         if (($origPath === $destPath) || (!file_exists($origFull)) || (!is_writable(dirname($destFull)))) {
             return false;
@@ -610,7 +617,7 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - expand: Should the image be resized if the dimension is greater than the original dimension
-	 * @param boolean $explicit
+     * @param boolean $explicit
      * @return string
      */
     public function resize($options, $explicit = false) {
@@ -649,10 +656,10 @@ class UploaderComponent extends Object {
         }
 
         $transform = array(
-            'width'		=> round($newWidth),
-            'height'	=> round($newHeight),
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
-            'quality'	=> $options['quality']
+            'width'        => round($newWidth),
+            'height'    => round($newHeight),
+            'target'    => $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
+            'quality'    => $options['quality']
         );
 
         if ($this->transform($transform)) {
@@ -671,7 +678,7 @@ class UploaderComponent extends Object {
      * - append: What should be appended to the end of the filename (defaults to dimensions if not set)
      * - prepend: What should be prepended to the front of the filename
      * - quality: The quality of the image
-	 * @param boolean $explicit
+     * @param boolean $explicit
      * @return string
      */
     public function scale($options = array(), $explicit = false) {
@@ -687,13 +694,13 @@ class UploaderComponent extends Object {
         
         if (!isset($options['append'])) {
             $options['append'] = $append;
-		}
+        }
 
         $transform = array(
-            'width'		=> $width,
-            'height'	=> $height,
-            'target'	=> $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
-            'quality'	=> $options['quality']
+            'width'        => $width,
+            'height'    => $height,
+            'target'    => $this->_destination($this->__data[$this->__current]['name'], true, $options, false),
+            'quality'    => $options['quality']
         );
 
         if ($this->transform($transform)) {
@@ -783,9 +790,9 @@ class UploaderComponent extends Object {
      * @access public
      * @param string $file
      * @param array $options
-     *	- name: What should the filename be changed to
-     *	- overwrite: Should we overwrite the existant file with the same name?
-     *	- multiple: Is this method being called from uploadAll()
+     *    - name: What should the filename be changed to
+     *    - overwrite: Should we overwrite the existant file with the same name?
+     *    - multiple: Is this method being called from uploadAll()
      * @return mixed - Array on success, false on failure
      */
     public function upload($file, $options = array()) {
@@ -896,23 +903,23 @@ class UploaderComponent extends Object {
             $this->Folder = new Folder();
         }
 
-		if (mb_substr($this->uploadDir, -1) != '/' && $this->uploadDir != '') {
-			$this->uploadDir .'/';
-		}
-
-		if (!$this->useFullPath) {
-        	if (mb_substr($this->uploadDir, 0, 1) == '/') {
-            	$this->uploadDir = mb_substr($this->uploadDir, 1);
-        	}
-
-			$fullUploadDir = WWW_ROOT . $this->uploadDir;
-		} else {
-			if (mb_substr($this->uploadDir, 0, 1) != '/') {
-				$this->uploadDir = '/'. $this->uploadDir;
+        if (mb_substr($this->uploadDir, -1) != '/' && $this->uploadDir != '') {
+            $this->uploadDir .'/';
         }
 
-			$fullUploadDir = $this->uploadDir;
-		}
+        if (!$this->useFullPath) {
+            if (mb_substr($this->uploadDir, 0, 1) == '/') {
+                $this->uploadDir = mb_substr($this->uploadDir, 1);
+            }
+
+            $fullUploadDir = WWW_ROOT . $this->uploadDir;
+        } else {
+            if (mb_substr($this->uploadDir, 0, 1) != '/') {
+                $this->uploadDir = '/'. $this->uploadDir;
+            }
+
+            $fullUploadDir = $this->uploadDir;
+        }
 
         if (!is_dir($fullUploadDir)) {
             $this->Folder->create($fullUploadDir, 0777);
@@ -1016,7 +1023,7 @@ class UploaderComponent extends Object {
      * @access protected
      * @param array $data
      * @param string $append
-	 * @param boolean $explicit
+     * @param boolean $explicit
      * @return array
      */
     protected function _return($data = '', $append = '', $explicit = false) {
@@ -1027,15 +1034,15 @@ class UploaderComponent extends Object {
             chmod($data['target'], 0777);
             $path = str_replace(WWW_ROOT, '/', $data['target']);
 
-			if ($explicit) {
-				return array(
-					'path' => $path,
-					'width' => $data['width'],
-					'height' => $data['height']
-				);
-			} else {
-				return $path;
-			}
+            if ($explicit) {
+                return array(
+                    'path' => $path,
+                    'width' => $data['width'],
+                    'height' => $data['height']
+                );
+            } else {
+                return $path;
+            }
 
         } else {
             $data = $this->__data[$this->__current];
