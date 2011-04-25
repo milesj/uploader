@@ -427,14 +427,17 @@ class UploaderComponent extends Object {
         }
 
         $dim = array();
-		$path = $this->_formatPath($path);
-        $data = @getimagesize($path);
 
-        if (!empty($data) && is_array($data)) {
-            $dim = array('width' => $data[0], 'height' => $data[1], 'type' => $data['mime']);
-            unset($data);
+		foreach (array($path, $this->_formatPath($path)) as $newPath) {
+			$data = @getimagesize($path);
 
-        } else {
+			if (!empty($data) && is_array($data)) {
+				$dim = array('width' => $data[0], 'height' => $data[1], 'type' => $data['mime']);
+				unset($data);
+			}
+		}
+
+        if (empty($dim)) {
 			$Http = new HttpSocket();
             $data = $Http->request($path);
             $image = @imagecreatefromstring($data);
