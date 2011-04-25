@@ -916,10 +916,17 @@ class UploaderComponent extends Object {
      */
     protected function _directory() {
         $Folder = new Folder();
-		$finalDir = $this->_formatPath(trim($this->uploadDir, '/') .'/');
+		$uploadDir = trim($this->uploadDir, '/');
+		$finalDir = $this->_formatPath($uploadDir .'/');
 
         if (!is_dir($finalDir)) {
-			$Folder->create($finalDir, 0777);
+			$dirParts = explode('/', $uploadDir);
+			$dirCurrent = $this->baseDir;
+
+			foreach ($dirParts as $part) {
+				$Folder->create($dirCurrent . DS . $part, 0777);
+				$dirCurrent .= DS . $part;
+			}
 
         } else if (!is_writable($finalDir)) {
             $Folder->chmod($finalDir, 0777, false);
@@ -1020,6 +1027,10 @@ class UploaderComponent extends Object {
 	 * @return string
 	 */
 	protected function _formatPath($path) {
+		if (substr($this->baseDir, -1) != '/') {
+			$this->baseDir .= '/';
+		}
+		
 		if (strpos($path, $this->baseDir) === false) {
             $path = $this->baseDir . $path;
         }
