@@ -10,7 +10,11 @@
 * @link        http://milesj.me/resources/script/uploader-plugin
 */
 
-App::import('Vendor', 'Uploader.S3');
+App::import(array(
+    'type' => 'Vendor',
+    'name' => 'Uploader.S3',
+    'file' => 'S3.php'
+));
 
 class S3TransferComponent extends Object {
 
