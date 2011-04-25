@@ -186,8 +186,8 @@ class AttachmentBehavior extends ModelBehavior {
                         $options['overwrite'] = $attachment['overwrite'];
                     }
 
-                    if (!empty($attachment['name'])) {
-                        $options['name'] = $attachment['name'];
+                    if (!empty($attachment['name']) && method_exists($Model, $attachment['name'])) {
+                        $options['name'] = $Model->{$attachment['name']}($data['name']);
                     }
 
                     // Upload file and attache to model data
@@ -227,8 +227,12 @@ class AttachmentBehavior extends ModelBehavior {
                                         $Model->data[$Model->alias][$options['dbColumn']] = $path;
                                         $this->_attached[$file][$options['dbColumn']] = $path;
 
-                                        // Delete original if same column name
-                                        if ($options['dbColumn'] == $attachment['dbColumn']) {
+                                        // Delete original if same column name and are not the same file
+										// Which can happen if 'append' => '' is defined in the options
+                                        if (
+											$options['dbColumn'] == $attachment['dbColumn'] &&
+											$basePath != $Model->data[$Model->alias][$attachment['dbColumn']]
+										) {
                                             if ($s3) {
                                                 $this->S3Transfer->delete($basePath);
                                             } else {
