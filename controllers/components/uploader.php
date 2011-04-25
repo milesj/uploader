@@ -192,7 +192,7 @@ class UploaderComponent extends Object {
 			
             if (!@dl($prefix .'gd.'. PHP_SHLIB_SUFFIX)) {
 				$this->enableUpload = false;
-				trigger_error('UploaderComponent::initialize(): GD image library is not installed.', E_USER_NOTICE);
+				trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_NOTICE);
 			}
         }
 

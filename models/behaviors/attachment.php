@@ -5,7 +5,7 @@
 * A CakePHP Behavior that attaches a file to a model, and uploads automatically, then stores a value in the database.
 *
 * @author      Miles Johnson - http://milesj.me
-* @copyright   Copyright 2006-2010, Miles Johnson, Inc.
+* @copyright   Copyright 2006-2011, Miles Johnson, Inc.
 * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
 * @link        http://milesj.me/resources/script/uploader-plugin
 */
@@ -20,45 +20,46 @@ class AttachmentBehavior extends ModelBehavior {
     const AS3_DOMAIN = 's3.amazonaws.com';
 
     /**
-     * Files that have been uploaded / attached; used for fallback functions.
+     * Files that have been uploaded or attached; used for rollback functions.
      *
-     * @access private
+     * @access protected
      * @var array
      */
-    private $__attached = array();
+    protected $_attached = array();
 
     /**
      * All user defined attachments; images => model.
      *
-     * @access private
+     * @access protected
      * @var array
      */
-    private $__attachments = array();
+    protected $_attachments = array();
 
     /**
      * The default settings for attachments.
      *
-     * @access private
+     * @access protected
      * @var array
      */
-    private $__defaults = array(
+    protected $_defaults = array(
+		'baseDir'		=> '',
 		'uploadDir'		=> '',
 		'dbColumn'		=> 'uploadPath',
 		'defaultPath'	=> '',
 		'name'			=> '',
 		'maxNameLength'	=> null,
 		'overwrite'		=> true,
-		'skipSave'		=> true,
+		'stopSave'		=> true,
 		'transforms'	=> array(),
 		's3'			=> array(),
 		'metaColumns'	=> array(
+			'ext' => '',
 			'type' => '',
 			'size' => '',
-			'filesize' => '',
-			'ext' => '',
 			'group' => '',
 			'width' => '',
-			'height' => ''
+			'height' => '',
+			'filesize' => ''
 		)
     );
 
@@ -71,13 +72,17 @@ class AttachmentBehavior extends ModelBehavior {
      * @param array $settings
      * @return boolean
      */
-    public function setup(&$Model, $settings = array()) {
+    public function setup($Model, $settings = array()) {
         $this->Uploader = new UploaderComponent();
         $this->S3Transfer = new S3TransferComponent();
 
         if (!empty($settings) && is_array($settings)) {
             foreach ($settings as $field => $attachment) {
-                $this->__attachments[$Model->alias][$field] = $attachment + $this->__defaults;
+				if (isset($attachment['skipSave'])) {
+					$attachment['stopSave'] = $attachment['skipSave'];
+				}
+				
+                $this->_attachments[$Model->alias][$field] = $attachment + $this->_defaults;
             }
         }
     }
@@ -89,14 +94,18 @@ class AttachmentBehavior extends ModelBehavior {
      * @param object $Model
      * @return boolean
      */
-    public function beforeDelete(&$Model) {
+    public function beforeDelete($Model) {
+		if (empty($Model->id)) {
+			return false;
+		}
+		
         $data = $Model->read(null, $Model->id);
 
         if (!empty($data[$Model->alias])) {
             foreach ($data[$Model->alias] as $field => $value) {
-                if ($this->__isAS3($value)) {
+                if (strpos($value, self::AS3_DOMAIN) !== false) {
                     $this->S3Transfer->delete($value);
-                } else if (is_file(WWW_ROOT . $value)) {
+                } else if (file_exists($value)) {
                     $this->Uploader->delete($value);
                 }
             }
@@ -112,14 +121,14 @@ class AttachmentBehavior extends ModelBehavior {
      * @param object $Model
      * @return boolean
      */
-    public function beforeSave(&$Model) {
+    public function beforeSave($Model) {
         $this->Uploader->initialize($Model);
         $this->Uploader->startup($Model);
 
         if (!empty($Model->data[$Model->alias])) {
             foreach ($Model->data[$Model->alias] as $file => $data) {
-                if (isset($this->__attachments[$Model->alias][$file])) {
-                    $attachment = $this->__attachments[$Model->alias][$file];
+                if (isset($this->_attachments[$Model->alias][$file])) {
+                    $attachment = $this->_attachments[$Model->alias][$file];
                     $options = array();
                     $s3 = false;
 
@@ -133,9 +142,9 @@ class AttachmentBehavior extends ModelBehavior {
 						continue;
 					}
 
-					// Should we continue if a file errord during upload?
+					// Should we continue if a file error'd during upload?
 					if ($data['error'] == UPLOAD_ERR_NO_FILE) {
-						if ($attachment['skipSave']) {
+						if ($attachment['stopSave']) {
 							return false;
 						} else {
 							continue;
@@ -161,6 +170,10 @@ class AttachmentBehavior extends ModelBehavior {
                     }
 
                     // Uploader
+                    if (!empty($attachment['baseDir'])) {
+                        $this->Uploader->baseDir = $attachment['baseDir'];
+                    }
+
                     if (!empty($attachment['uploadDir'])) {
                         $this->Uploader->uploadDir = $attachment['uploadDir'];
                     }
@@ -178,7 +191,9 @@ class AttachmentBehavior extends ModelBehavior {
                     }
 
                     // Upload file and attache to model data
-                    if ($fileData = $this->Uploader->upload($file, $options)) {
+					$fileData = $this->Uploader->upload($file, $options);
+
+                    if (!empty($fileData)) {
                         $basePath = $fileData['path'];
 
                         if ($s3) {
@@ -186,7 +201,7 @@ class AttachmentBehavior extends ModelBehavior {
                         }
 
                         $Model->data[$Model->alias][$attachment['dbColumn']] = $basePath;
-                        $this->__attached[$file][$attachment['dbColumn']] = $basePath;
+                        $this->_attached[$file][$attachment['dbColumn']] = $basePath;
 
                         // Apply transformations
                         if (!empty($attachment['transforms'])) {
@@ -202,13 +217,15 @@ class AttachmentBehavior extends ModelBehavior {
                                         return false;
                                     }
 
-                                    if ($path = $this->Uploader->$method($options)) {
+									$path = $this->Uploader->{$method}($options);
+
+                                    if (!empty($path)) {
                                         if ($s3) {
                                             $path = $this->S3Transfer->transfer($path);
                                         }
 
                                         $Model->data[$Model->alias][$options['dbColumn']] = $path;
-                                        $this->__attached[$file][$options['dbColumn']] = $path;
+                                        $this->_attached[$file][$options['dbColumn']] = $path;
 
                                         // Delete original if same column name
                                         if ($options['dbColumn'] == $attachment['dbColumn']) {
@@ -220,7 +237,7 @@ class AttachmentBehavior extends ModelBehavior {
                                         }
 
                                     } else {
-                                        $this->__deleteAttached($file);
+                                        $this->deleteAttached($file);
                                         $Model->validationErrors[$file] = sprintf(__('An error occured during "%s" transformation!', true), $method);
                                         return false;
                                     }
@@ -247,6 +264,25 @@ class AttachmentBehavior extends ModelBehavior {
         return true;
     }
 
+	/**
+     * Delete all attached images if attaching fails midway.
+     *
+     * @access public
+     * @param string $file
+     * @return void
+     */
+    public function deleteAttached($file) {
+        if (!empty($this->_attached[$file])) {
+            foreach ($this->_attached[$file] as $column => $path) {
+                if (strpos($path, self::AS3_DOMAIN) !== false) {
+                    $this->S3Transfer->delete($path);
+                } else {
+                    $this->Uploader->delete($path);
+                }
+            }
+        }
+    }
+
     /**
      * Applies dynamic settings to an attachment.
      *
@@ -257,39 +293,9 @@ class AttachmentBehavior extends ModelBehavior {
      * @return void
      */
     public function update($model, $file, $settings) {
-        if (isset($this->__attachments[$model][$file])) {
-            $this->__attachments[$model][$file] = $settings + $this->__attachments[$model][$file];
+        if (isset($this->_attachments[$model][$file])) {
+            $this->_attachments[$model][$file] = $settings + $this->_attachments[$model][$file];
         }
-    }
-
-    /**
-     * Delete all attached images if attaching fails midway.
-     *
-     * @access private
-     * @param string $file
-     * @return void
-     */
-    private function __deleteAttached($file) {
-        if (!empty($this->__attached[$file])) {
-            foreach ($this->__attached[$file] as $column => $path) {
-                if ($this->__isAS3($path)) {
-                    $this->S3Transfer->delete($path);
-                } else {
-                    $this->Uploader->delete($path);
-                }
-            }
-        }
-    }
-
-    /**
-      * Check to see if a path is from AS3.
-      *
-      * @access private
-      * @param string $string
-      * @return boolean
-      */
-    private function __isAS3($string) {
-        return (strpos($string, AttachmentBehavior::AS3_DOMAIN) !== false);
     }
 
 }
