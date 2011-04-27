@@ -710,6 +710,58 @@ class UploaderComponent extends Object {
 	}
 
 	/**
+     * Import a file from an external remote URL. Must be an absolute URL.
+     *
+     * @access public
+     * @uses HttpSocket
+     * @param string $path
+     * @param array $options
+     *		- name: What should the filename be changed to
+     *		- overwrite: Should we overwrite the existant file with the same name?
+     * @return mixed - Array on success, false on failure
+     */
+	public function importRemote($url, array $options = array()) {
+		if (!$this->enableUpload) {
+			return false;
+		} else {
+            $this->checkDirectory();
+        }
+
+		$options = $options + array('name' => null, 'overwrite' => false);
+		
+		$this->_current = basename($url);
+		$this->_data[$this->_current]['path'] = $url;
+		$this->_data[$this->_current]['type'] = $this->mimeType($url);
+		$this->_data[$this->_current]['ext'] = $this->ext($url);
+
+        // Validate everything
+        if (!$this->_validates(true)) {
+            return false;
+        }
+
+		// Make a copy of the remote file
+		$dest = $this->setDestination($options['name'], $options['overwrite']);
+		$Http = new HttpSocket();
+
+        if (file_put_contents($dest, $Http->request($url))) {
+            $this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
+			$this->_data[$this->_current]['filesize'] = $this->bytes(filesize($dest));
+
+			if ($this->_data[$this->_current]['group'] == 'image') {
+                $dimensions = $this->dimensions($dest);
+
+                $this->_data[$this->_current]['width'] = $dimensions['width'];
+                $this->_data[$this->_current]['height'] = $dimensions['height'];
+            }
+        } else {
+            return false;
+        }
+
+        chmod($dest, 0777);
+        return $this->_returnData();
+	}
+
+	/**
 	 * Returns the mimetype of a given file.
 	 *
 	 * @access public
@@ -717,7 +769,7 @@ class UploaderComponent extends Object {
 	 * @return string
 	 */
 	public function mimeType($path) {
-		if (function_exists('mime_content_type')) {
+		if (function_exists('mime_content_type') && is_file($path)) {
 			return mime_content_type($path);
 		}
 
@@ -729,6 +781,10 @@ class UploaderComponent extends Object {
 				$type = $this->_mimeTypes[$group][$ext];
 				break;
 			}
+		}
+
+		if (is_array($type)) {
+			$type = $type[0];
 		}
 
 		return $type;
