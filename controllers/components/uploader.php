@@ -447,7 +447,7 @@ class UploaderComponent extends Object {
 	 * @param string $path
 	 * @return boolean
 	 */
-	public function delete() {
+	public function delete($path) {
 		$path = $this->formatPath($path);
 
 		if (is_file($path)) {
@@ -732,7 +732,7 @@ class UploaderComponent extends Object {
 		$this->_data[$this->_current]['path'] = $url;
 		$this->_data[$this->_current]['type'] = $this->mimeType($url);
 		$this->_data[$this->_current]['ext'] = $this->ext($url);
-
+		
 		// Validate everything
 		if (!$this->_validates(true)) {
 			return false;
@@ -1264,7 +1264,9 @@ class UploaderComponent extends Object {
 		if ($validExt && $validMime) {
 			$this->_data[$this->_current]['group'] = $grouping;
 		} else {
-			return false;
+			if (!$import) {
+				return false;
+			}
 		}
 
 		// Only validate uploaded files, not imported

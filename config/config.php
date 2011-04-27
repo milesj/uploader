@@ -11,13 +11,13 @@
  */
 
 /**
-* Current version: http://milesj.me/resources/logs/uploader-plugin
-*/
-$config['Uploader']['version'] = '2.6.4';
+ * Current version: http://milesj.me/resources/logs/uploader-plugin
+ */
+$config['Uploader']['version'] = '2.6.5';
 
 /**
-* The accepted file/mime types.
-*/
+ * The accepted file/mime types.
+ */
 $config['Uploader']['mimeTypes'] = array(
 	'image' => array(
 		'bmp'	=> 'image/bmp',
