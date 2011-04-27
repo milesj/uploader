@@ -684,7 +684,7 @@ class UploaderComponent extends Object {
 		$this->_data[$this->_current]['type'] = $this->mimeType($path);
 		$this->_data[$this->_current]['ext'] = $this->ext($path);
 
-        // Valid everything
+        // Validate everything
         if ($this->_validates(true)) {
             if ($this->_data[$this->_current]['group'] == 'image') {
                 $dimensions = $this->dimensions($path);
@@ -1011,6 +1011,8 @@ class UploaderComponent extends Object {
      * @return mixed - Array on success, false on failure
      */
     public function upload($file, $options = array()) {
+		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
+
         if (!$options['multiple']) {
             if (!$this->enableUpload) {
                 return false;
@@ -1018,8 +1020,6 @@ class UploaderComponent extends Object {
                 $this->checkDirectory();
             }
         }
-
-		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
 
         if (isset($this->_data[$file])) {
             $this->_current = $file;
@@ -1029,7 +1029,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        // Valid everything
+        // Validate everything
         if ($this->_validates()) {
             if ($this->_data[$this->_current]['group'] == 'image') {
                 $dimensions = $this->dimensions($this->_data[$this->_current]['tmp_name']);

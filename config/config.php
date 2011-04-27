@@ -5,7 +5,7 @@
  * A config class that holds all the settings and default mimetypes.
  *
  * @author      Miles Johnson - http://milesj.me
- * @copyright   Copyright 2006-2010, Miles Johnson, Inc.
+ * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
  * @link        http://milesj.me/resources/script/uploader-plugin
  */
@@ -13,7 +13,7 @@
 /**
  * Current version: http://milesj.me/resources/logs/uploader-plugin
  */
-$config['Uploader']['version'] = '2.6.1';
+$config['Uploader']['version'] = '2.6.3';
 
 /**
  * The accepted file/mime types.

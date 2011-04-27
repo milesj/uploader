@@ -1,4 +1,4 @@
-# Uploader v2.6.2 #
+# Uploader v2.6.3 #
 
 A CakePHP plugin that will upload multiple types of files. Adds support for file validation and attachments within the model layer. Also has minor support for Amazon S3.
 
