@@ -252,6 +252,27 @@ class UploaderComponent extends Object {
 			$Folder = new Folder();
             $Folder->chmod($this->tempDir, 0777, false);
         }
+
+		$this->baseDir = str_replace('\\', '/', $this->baseDir);
+    }
+
+    /**
+     * Adds a mime type to the list of allowed types.
+     *
+     * @access public
+     * @param string $group
+     * @param string $ext
+     * @param string $type
+     * @return void
+     */
+    public function addMimeType($group = '', $ext = '', $type = '') {
+        if (empty($group)) {
+            $group = 'misc';
+        }
+
+        if (!empty($ext) && !empty($type)) {
+            $this->_mimeTypes[$group][$ext] = $type;
+        }
     }
 
     /**
@@ -310,7 +331,7 @@ class UploaderComponent extends Object {
 
         if (!is_dir($finalDir)) {
 			$dirParts = explode('/', $uploadDir);
-			$dirCurrent = $this->baseDir;
+			$dirCurrent = rtrim($this->baseDir, '/');
 
 			foreach ($dirParts as $part) {
 				$Folder->create($dirCurrent . DS . $part, 0777);
@@ -330,7 +351,8 @@ class UploaderComponent extends Object {
      * @access public
      * @param array $options
      *		- location: Which area of the image should be grabbed for the crop: center, left, right, top, bottom
-     *		- width, height: The width and height to resize the image to before cropping
+     *		- width,
+	 *		- height: The width and height to resize the image to before cropping
      *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
      *		- prepend: What should be prepended to the front of the filename
      *		- quality: The quality of the image
@@ -426,11 +448,7 @@ class UploaderComponent extends Object {
      * @param string $path
      * @return boolean
      */
-    public function delete($path = '') {
-        if (empty($path)) {
-            return false;
-        }
-
+    public function delete() {
         $path = $this->formatPath($path);
 
         if (file_exists($path)) {
@@ -460,8 +478,11 @@ class UploaderComponent extends Object {
 			$data = @getimagesize($path);
 
 			if (!empty($data) && is_array($data)) {
-				$dim = array('width' => $data[0], 'height' => $data[1], 'type' => $data['mime']);
-				unset($data);
+				$dim = array(
+					'width' => $data[0],
+					'height' => $data[1],
+					'type' => $data['mime']
+				);
 			}
 		}
 
@@ -471,23 +492,10 @@ class UploaderComponent extends Object {
             $image = @imagecreatefromstring($data);
 
             $dim = array(
-                'width'		=> @imagesx($image),
-                'height'	=> @imagesy($image),
-                'type'		=> function_exists('mime_content_type') ? mime_content_type($path) : null
+                'width' => @imagesx($image),
+                'height' => @imagesy($image),
+                'type' => $this->mimeType($path)
             );
-
-            if (empty($dim['type'])) {
-                $ext = $this->ext($path);
-
-                foreach ($this->_mimeTypes as $group => $mimes) {
-                    if (in_array($ext, array_keys($mimes))) {
-                        $dim['type'] = $this->_mimeTypes[$group][$ext];
-                        break;
-                    }
-                }
-            }
-
-            unset($image, $data, $ext);
         }
 
         return $dim;
@@ -650,24 +658,85 @@ class UploaderComponent extends Object {
 		return $path;
 	}
 
-    /**
-     * Adds a mime type to the list of allowed types.
+	/**
+     * Import a file from the local filesystem and create a copy of it. Requires a full absolute path.
      *
      * @access public
-     * @param string $group
-     * @param string $ext
-     * @param string $type
-     * @return void
+     * @param string $path
+     * @param array $options
+     *		- name: What should the filename be changed to
+     *		- overwrite: Should we overwrite the existant file with the same name?
+	 *		- delete: Delete the original file after importing
+     * @return mixed - Array on success, false on failure
      */
-    public function mime($group = '', $ext = '', $type = '') {
-        if (empty($group)) {
-            $group = 'misc';
+	public function import($path, $options = array()) {
+		if (!$this->enableUpload || !is_file($path)) {
+			return false;
+		} else {
+            $this->checkDirectory();
         }
 
-        if (!empty($ext) && !empty($type)) {
-            $this->_mimeTypes[$group][$ext] = $type;
+		$options = $options + array('name' => null, 'overwrite' => false, 'delete' => false);
+
+		$this->_current = basename($path);
+		$this->_data[$this->_current]['path'] = $path;
+		$this->_data[$this->_current]['filesize'] = $this->bytes(filesize($path));
+		$this->_data[$this->_current]['type'] = $this->mimeType($path);
+		$this->_data[$this->_current]['ext'] = $this->ext($path);
+
+        // Valid everything
+        if ($this->_validates(true)) {
+            if ($this->_data[$this->_current]['group'] == 'image') {
+                $dimensions = $this->dimensions($path);
+
+                $this->_data[$this->_current]['width'] = $dimensions['width'];
+                $this->_data[$this->_current]['height'] = $dimensions['height'];
+            }
+        } else {
+            return false;
         }
-    }
+
+		// Make a copy of the local file
+		$dest = $this->setDestination($options['name'], $options['overwrite']);
+		
+        if (copy($path, $dest)) {
+            $this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
+
+			if ($options['delete']) {
+				@unlink($path);
+			}
+        } else {
+            return false;
+        }
+
+        chmod($dest, 0777);
+        return $this->_returnData();
+	}
+
+	/**
+	 * Returns the mimetype of a given file.
+	 *
+	 * @access public
+	 * @param string $path
+	 * @return string
+	 */
+	public function mimeType($path) {
+		if (function_exists('mime_content_type')) {
+			return mime_content_type($path);
+		}
+
+		$ext = $this->ext($path);
+		$type = null;
+
+		foreach ($this->_mimeTypes as $group => $mimes) {
+			if (in_array($ext, array_keys($mimes))) {
+				$type = $this->_mimeTypes[$group][$ext];
+				break;
+			}
+		}
+
+		return $type;
+	}
 
     /**
      * Move a file to another destination.
@@ -718,7 +787,8 @@ class UploaderComponent extends Object {
      *
      * @access public
      * @param array $options
-     *		- width, height: The width and height to resize the image to
+     *		- width,
+	 *		- height: The width and height to resize the image to
      *		- quality: The quality of the image
      *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
      *		- prepend: What should be prepended to the front of the filename
@@ -941,8 +1011,6 @@ class UploaderComponent extends Object {
      * @return mixed - Array on success, false on failure
      */
     public function upload($file, $options = array()) {
-        $options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
-
         if (!$options['multiple']) {
             if (!$this->enableUpload) {
                 return false;
@@ -950,6 +1018,8 @@ class UploaderComponent extends Object {
                 $this->checkDirectory();
             }
         }
+
+		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
 
         if (isset($this->_data[$file])) {
             $this->_current = $file;
@@ -1078,8 +1148,8 @@ class UploaderComponent extends Object {
      */
     protected function _returnData($data = '', $append = '', $explicit = false) {
         if (!empty($data) && !empty($append)) {
-            $this->_data[$this->_current]['path_'. $append] = $data['target'];
-            $this->_logs[$this->_current]['path_'. $append] = $data['target'];
+            $this->_data[$this->_current]['path_'. trim($append, '_')] = $data['target'];
+            $this->_logs[$this->_current]['path_'. trim($append, '_')] = $data['target'];
 
             chmod($data['target'], 0777);
             $path = str_replace($this->baseDir, '/', $data['target']);
@@ -1113,9 +1183,10 @@ class UploaderComponent extends Object {
      * Does validation on the current upload.
      *
      * @access protected
+	 * @param boolean $import
      * @return boolean
      */
-    protected function _validates() {
+    protected function _validates($import = false) {
         $validExt = false;
         $validMime = false;
 
@@ -1145,29 +1216,32 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        // Correctly uploaded?
-        if (
-            ($this->_data[$this->_current]['error'] > 0) ||
-            (!is_uploaded_file($this->_data[$this->_current]['tmp_name'])) ||
-            (!is_file($this->_data[$this->_current]['tmp_name'])))
-        {
-            return false;
-        }
+        // Only validate uploaded files, not imported
+		if (!$import) {
+			if (
+				($this->_data[$this->_current]['error'] > 0) ||
+				(!is_uploaded_file($this->_data[$this->_current]['tmp_name'])) ||
+				(!is_file($this->_data[$this->_current]['tmp_name'])))
+			{
+				return false;
+			}
 
-        // Requires the ClamAV module to be installed
-        if ($this->scanFile) {
-            if (!extension_loaded('clamav')) {
-                @dl('clamav.'. PHP_SHLIB_SUFFIX);
-            }
+			// Requires the ClamAV module to be installed
+			if ($this->scanFile) {
+				if (!extension_loaded('clamav')) {
+					$prefix = (PHP_SHLIB_SUFFIX == 'dll') ? 'php_' : '';
+					@dl($prefix .'clamav.'. PHP_SHLIB_SUFFIX);
+				}
 
-            if (extension_loaded('clamav')) {
-                cl_setlimits(5, 1000, 200, 0, 10485760);
+				if (extension_loaded('clamav')) {
+					cl_setlimits(5, 1000, 200, 0, 10485760);
 
-                if (cl_scanfile($this->_data[$this->_current]['tmp_name'])) {
-                    return false;
-                }
-            }
-        }
+					if (cl_scanfile($this->_data[$this->_current]['tmp_name'])) {
+						return false;
+					}
+				}
+			}
+		}
 
         return true;
     }
