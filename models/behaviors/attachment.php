@@ -72,7 +72,7 @@ class AttachmentBehavior extends ModelBehavior {
      * @param array $settings
      * @return boolean
      */
-    public function setup($Model, $settings = array()) {
+    public function setup($Model, array $settings = array()) {
         $this->Uploader = new UploaderComponent();
         $this->S3Transfer = new S3TransferComponent();
 

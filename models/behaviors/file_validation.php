@@ -91,7 +91,7 @@ class FileValidationBehavior extends ModelBehavior {
      * @param array $settings
      * @return void
      */
-    public function setup($Model, $settings = array()) {
+    public function setup($Model, array $settings = array()) {
         if (!empty($settings) && is_array($settings)) {
             foreach ($settings as $field => $options) {
                 $this->_settings[$Model->alias][$field] = $options + array('required' => true);
@@ -187,7 +187,7 @@ class FileValidationBehavior extends ModelBehavior {
      * @param array $allowed
      * @return boolean
      */
-    public function extension($Model, $data, $allowed = array()) {
+    public function extension($Model, $data, array $allowed = array()) {
         foreach ($data as $fieldName => $field) {
             if (!$this->_settings[$Model->alias][$fieldName]['required'] && empty($field['tmp_name'])) {
                 return true;
@@ -197,7 +197,7 @@ class FileValidationBehavior extends ModelBehavior {
                 $ext = mb_strtolower(trim(mb_strrchr($field['name'], '.'), '.'));
             }
 
-            if (!empty($allowed) && is_array($allowed)) {
+            if (!empty($allowed)) {
                 return in_array($ext, $allowed);
             } else {
                 if (empty($this->_mimeTypes)) {

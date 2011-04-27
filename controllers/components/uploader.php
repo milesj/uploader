@@ -184,7 +184,7 @@ class UploaderComponent extends Object {
      * @param array $settings
      * @return void
      */
-    public function initialize($Controller, $settings = array()) {
+    public function initialize($Controller, array $settings = array()) {
         $this->_mimeTypes = Configure::read('Uploader.mimeTypes');
 
         if (!extension_loaded('gd')) {
@@ -211,7 +211,7 @@ class UploaderComponent extends Object {
      * @param object $Controller
      * @return void
      */
-    public function startup(&$Controller) {
+    public function startup($Controller) {
         $fileUploads = ini_get('file_uploads');
 		
         if (!$fileUploads) {
@@ -265,7 +265,7 @@ class UploaderComponent extends Object {
      * @param string $type
      * @return void
      */
-    public function addMimeType($group = '', $ext = '', $type = '') {
+    public function addMimeType($group = null, $ext = null, $type = null) {
         if (empty($group)) {
             $group = 'misc';
         }
@@ -283,7 +283,7 @@ class UploaderComponent extends Object {
      * @param string $return
      * @return string
      */
-    public function bytes($size, $return = '') {
+    public function bytes($size, $return = null) {
         if (!is_numeric($size)) {
             $byte = preg_replace('/[^0-9]/i', '', $size);
             $last = mb_strtoupper(preg_replace('/[^a-zA-Z]/i', '', $size));
@@ -359,7 +359,7 @@ class UploaderComponent extends Object {
      * @param boolean $explicit
      * @return mixed
      */
-    public function crop($options = array(), $explicit = false) {
+    public function crop(array $options = array(), $explicit = false) {
         if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -467,11 +467,7 @@ class UploaderComponent extends Object {
      * @param string $path
      * @return array
      */
-    public function dimensions($path = '') {
-        if (empty($path)) {
-            return null;
-        }
-
+    public function dimensions($path) {
         $dim = array();
 
 		foreach (array($path, $this->formatPath($path)) as $newPath) {
@@ -524,7 +520,7 @@ class UploaderComponent extends Object {
      * @param boolean $explicit
      * @return string
      */
-    public function flip($options = array(), $explicit = false) {
+    public function flip(array $options = array(), $explicit = false) {
         if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -669,7 +665,7 @@ class UploaderComponent extends Object {
 	 *		- delete: Delete the original file after importing
      * @return mixed - Array on success, false on failure
      */
-	public function import($path, $options = array()) {
+	public function import($path, array $options = array()) {
 		if (!$this->enableUpload || !is_file($path)) {
 			return false;
 		} else {
@@ -796,7 +792,7 @@ class UploaderComponent extends Object {
      * @param boolean $explicit
      * @return string
      */
-    public function resize($options, $explicit = false) {
+    public function resize(array $options, $explicit = false) {
         if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -859,7 +855,7 @@ class UploaderComponent extends Object {
      * @param boolean $explicit
      * @return string
      */
-    public function scale($options = array(), $explicit = false) {
+    public function scale(array $options = array(), $explicit = false) {
         if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
             return false;
         }
@@ -898,7 +894,7 @@ class UploaderComponent extends Object {
      * @param boolean $update
      * @return string
      */
-    public function setDestination($name = '', $overwrite = false, $options = array(), $update = true) {
+    public function setDestination($name = '', $overwrite = false, array $options = array(), $update = true) {
         $append = isset($options['append']) ? $options['append'] : '';
         $prepend = isset($options['prepend']) ? $options['prepend'] : '';
         $name = $this->formatFilename($name, $append, $prepend);
@@ -930,7 +926,7 @@ class UploaderComponent extends Object {
      * @param array $options
      * @return boolean
      */
-    public function transform($options) {
+    public function transform(array $options) {
         $options = $options + array('dest_x' => 0, 'dest_y' => 0, 'source_x' => 0, 'source_y' => 0, 'dest_w' => null, 'dest_h' => null, 'source_w' => $this->_data[$this->_current]['width'], 'source_h' => $this->_data[$this->_current]['height'], 'quality' => 100);
         $original = $this->_data[$this->_current]['path'];
         $mimeType = $this->_data[$this->_current]['type'];
@@ -1010,7 +1006,7 @@ class UploaderComponent extends Object {
      *		- multiple: Is this method being called from uploadAll()
      * @return mixed - Array on success, false on failure
      */
-    public function upload($file, $options = array()) {
+    public function upload($file, array $options = array()) {
 		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
 
         if (!$options['multiple']) {
@@ -1067,7 +1063,7 @@ class UploaderComponent extends Object {
      * @param boolean $rollback
      * @return array
      */
-    public function uploadAll($fields = array(), $overwrite = false, $rollback = true) {
+    public function uploadAll(array $fields = array(), $overwrite = false, $rollback = true) {
         if (!$this->enableUpload) {
             return false;
         } else {

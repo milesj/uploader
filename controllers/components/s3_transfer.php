@@ -73,7 +73,7 @@ class S3TransferComponent extends Object {
      * @param object $Controller
      * @return boolean
      */
-    public function startup(&$Controller) {
+    public function startup($Controller) {
         if (empty($this->accessKey) && empty($this->secretKey)) {
             trigger_error('Uploader.S3Transfer::setup(): You must enter an Amazon S3 access key and secret key.', E_USER_WARNING);
 
