@@ -105,8 +105,10 @@ class AttachmentBehavior extends ModelBehavior {
             foreach ($data[$Model->alias] as $field => $value) {
                 if (strpos($value, self::AS3_DOMAIN) !== false) {
                     $this->S3Transfer->delete($value);
-                } else if (file_exists($value)) {
-                    $this->Uploader->delete($value);
+                } else {
+					if (!$this->Uploader->delete($value)) {
+						@unlink($value);
+					}
                 }
             }
         }
@@ -187,10 +189,10 @@ class AttachmentBehavior extends ModelBehavior {
                     }
 
                     if (!empty($attachment['name']) && method_exists($Model, $attachment['name'])) {
-                        $options['name'] = $Model->{$attachment['name']}($data['name']);
+                        $options['name'] = $Model->{$attachment['name']}($data['name'], $file, $data);
                     }
 
-                    // Upload file and attache to model data
+                    // Upload file and attach to model data
 					$fileData = $this->Uploader->upload($file, $options);
 
                     if (!empty($fileData)) {
