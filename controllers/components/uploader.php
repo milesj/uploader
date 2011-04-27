@@ -297,6 +297,34 @@ class UploaderComponent extends Object {
     }
 
     /**
+     * Check the destination folder. If it does not exist or isn't writable, fix it!
+     *
+     * @access public
+     * @uses Folder
+     * @return void
+     */
+    public function checkDirectory() {
+        $Folder = new Folder();
+		$uploadDir = trim($this->uploadDir, '/');
+		$finalDir = $this->formatPath($uploadDir .'/');
+
+        if (!is_dir($finalDir)) {
+			$dirParts = explode('/', $uploadDir);
+			$dirCurrent = $this->baseDir;
+
+			foreach ($dirParts as $part) {
+				$Folder->create($dirCurrent . DS . $part, 0777);
+				$dirCurrent .= DS . $part;
+			}
+
+        } else if (!is_writable($finalDir)) {
+            $Folder->chmod($finalDir, 0777, false);
+        }
+
+        $this->finalDir = $finalDir;
+    }
+
+    /**
      * Crops a photo, resizes first depending on which side is larger.
      *
      * @access public
@@ -380,7 +408,7 @@ class UploaderComponent extends Object {
             'source_h'	=> $height,
             'dest_w'	=> $dest_w,
             'dest_h'	=> $dest_h,
-            'target'	=> $this->_destination($this->_data[$this->_current]['name'], true, $options, false),
+            'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
@@ -403,7 +431,7 @@ class UploaderComponent extends Object {
             return false;
         }
 
-        $path = $this->_formatPath($path);
+        $path = $this->formatPath($path);
 
         if (file_exists($path)) {
             clearstatcache();
@@ -428,7 +456,7 @@ class UploaderComponent extends Object {
 
         $dim = array();
 
-		foreach (array($path, $this->_formatPath($path)) as $newPath) {
+		foreach (array($path, $this->formatPath($path)) as $newPath) {
 			$data = @getimagesize($path);
 
 			if (!empty($data) && is_array($data)) {
@@ -542,7 +570,7 @@ class UploaderComponent extends Object {
             'source_y'	=> $src_y,
             'source_w'	=> $src_w,
             'source_h'	=> $src_h,
-            'target'	=> $this->_destination($this->_data[$this->_current]['name'], true, $options, false),
+            'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
@@ -552,6 +580,75 @@ class UploaderComponent extends Object {
 
         return false;
     }
+
+
+    /**
+     * Determines the name of the file.
+     *
+     * @access public
+     * @param string $name
+     * @param string $append
+     * @param string $prepend
+     * @param boolean $truncate
+     * @return void
+     */
+    public function formatFilename($name = '', $append = '', $prepend = '', $truncate = true) {
+        if (empty($name)) {
+            $name = $this->_data[$this->_current]['name'];
+        }
+
+        $ext = $this->ext($name);
+
+        if (empty($ext)) {
+            $ext = $this->_data[$this->_current]['ext'];
+        }
+
+        $name = str_replace('.'. $ext, '', $name);
+        $name = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $name);
+
+        if (is_numeric($this->maxNameLength) && $truncate) {
+            if (mb_strlen($name) > $this->maxNameLength) {
+                $name = mb_substr($name, 0, $this->maxNameLength);
+            }
+        }
+
+        $append = (string)$append;
+        $prepend = (string)$prepend;
+
+        if (!empty($append)) {
+            $append = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $append);
+            $name = $name . $append;
+        }
+
+        if (!empty($prepend)) {
+            $prepend = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $prepend);
+            $name = $prepend . $name;
+        }
+
+        $name = $name .'.'. $ext;
+        $name = trim($name, '/');
+
+        return $name;
+    }
+
+	/**
+	 * Return the path with the base directory if it is absent.
+	 *
+	 * @access public
+	 * @param string $path
+	 * @return string
+	 */
+	public function formatPath($path) {
+		if (substr($this->baseDir, -1) != '/') {
+			$this->baseDir .= '/';
+		}
+
+		if (strpos($path, $this->baseDir) === false) {
+            $path = $this->baseDir . $path;
+        }
+
+		return $path;
+	}
 
     /**
      * Adds a mime type to the list of allowed types.
@@ -582,8 +679,8 @@ class UploaderComponent extends Object {
      * @return boolean
      */
     public function move($origPath, $destPath, $overwrite = false) {
-		$destFull = $this->_formatPath($destPath);
-		$origFull = $this->_formatPath($origPath);
+		$destFull = $this->formatPath($destPath);
+		$origFull = $this->formatPath($origPath);
 
         if (($origPath === $destPath) || !file_exists($origFull) || !is_writable(dirname($destFull))) {
             return false;
@@ -595,7 +692,7 @@ class UploaderComponent extends Object {
             }
         } else {
             if (file_exists($destFull)) {
-                $destination = $this->_destination(basename($destPath), false, array('append' => '_moved'), false);
+                $destination = $this->setDestination(basename($destPath), false, array('append' => '_moved'), false);
                 rename($destFull, $destination);
             }
         }
@@ -669,7 +766,7 @@ class UploaderComponent extends Object {
         $transform = array(
             'width'		=> $newWidth,
             'height'	=> $newHeight,
-            'target'	=> $this->_destination($this->_data[$this->_current]['name'], true, $options, false),
+            'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
@@ -710,7 +807,7 @@ class UploaderComponent extends Object {
         $transform = array(
             'width'		=> $width,
             'height'	=> $height,
-            'target'	=> $this->_destination($this->_data[$this->_current]['name'], true, $options, false),
+            'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
             'quality'	=> $options['quality']
         );
 
@@ -719,6 +816,41 @@ class UploaderComponent extends Object {
         }
 
         return false;
+    }
+	
+    /**
+     * Determine the filename and path of the file.
+     *
+     * @access public
+     * @param string $name
+     * @param boolean $overwrite
+     * @param array $options
+     * @param boolean $update
+     * @return string
+     */
+    public function setDestination($name = '', $overwrite = false, $options = array(), $update = true) {
+        $append = isset($options['append']) ? $options['append'] : '';
+        $prepend = isset($options['prepend']) ? $options['prepend'] : '';
+        $name = $this->formatFilename($name, $append, $prepend);
+        $dest = $this->finalDir . $name;
+
+        if (file_exists($dest) && !$overwrite) {
+			$no = 1;
+
+			while (file_exists($this->finalDir . $this->formatFilename($name, $append . $no, $prepend))) {
+				$no++;
+			}
+
+			$name = $this->formatFilename($name, $append . $no, $prepend);
+            $dest = $this->finalDir . $name;
+        }
+
+        if ($update) {
+            $this->_data[$this->_current]['name'] = $name;
+            $this->_data[$this->_current]['path'] = $dest;
+        }
+
+        return $dest;
     }
 
     /**
@@ -815,7 +947,7 @@ class UploaderComponent extends Object {
             if (!$this->enableUpload) {
                 return false;
             } else {
-                $this->_directory();
+                $this->checkDirectory();
             }
         }
 
@@ -840,7 +972,7 @@ class UploaderComponent extends Object {
         }
 
         // Upload! Try both functions, one should work!
-        $dest = $this->_destination($options['name'], $options['overwrite']);
+        $dest = $this->setDestination($options['name'], $options['overwrite']);
 
         if (move_uploaded_file($this->_data[$this->_current]['tmp_name'], $dest)) {
             $this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
@@ -869,7 +1001,7 @@ class UploaderComponent extends Object {
         if (!$this->enableUpload) {
             return false;
         } else {
-            $this->_directory();
+            $this->checkDirectory();
         }
 
         if (empty($fields) || !$fields) {
@@ -907,136 +1039,6 @@ class UploaderComponent extends Object {
         return $data;
     }
 
-    /**
-     * Check the destination folder.
-     *
-     * @access protected
-     * @uses Folder
-     * @return void
-     */
-    protected function _directory() {
-        $Folder = new Folder();
-		$uploadDir = trim($this->uploadDir, '/');
-		$finalDir = $this->_formatPath($uploadDir .'/');
-
-        if (!is_dir($finalDir)) {
-			$dirParts = explode('/', $uploadDir);
-			$dirCurrent = $this->baseDir;
-
-			foreach ($dirParts as $part) {
-				$Folder->create($dirCurrent . DS . $part, 0777);
-				$dirCurrent .= DS . $part;
-			}
-
-        } else if (!is_writable($finalDir)) {
-            $Folder->chmod($finalDir, 0777, false);
-        }
-
-        $this->finalDir = $finalDir;
-    }
-
-    /**
-     * Determine the filename and path of the file.
-     *
-     * @access protected
-     * @param string $name
-     * @param boolean $overwrite
-     * @param array $options
-     * @param boolean $update
-     * @return string
-     */
-    protected function _destination($name = '', $overwrite = false, $options = array(), $update = true) {
-        $append = isset($options['append']) ? $options['append'] : '';
-        $prepend = isset($options['prepend']) ? $options['prepend'] : '';
-        $name = $this->_formatFilename($name, $append, $prepend);
-        $dest = $this->finalDir . $name;
-
-        if (file_exists($dest) && !$overwrite) {
-			$no = 1;
-
-			while (file_exists($this->finalDir . $this->_formatFilename($name, $append . $no, $prepend))) {
-				$no++;
-			}
-
-			$name = $this->_formatFilename($name, $append . $no, $prepend);
-            $dest = $this->finalDir . $name;
-        }
-
-        if ($update) {
-            $this->_data[$this->_current]['name'] = $name;
-            $this->_data[$this->_current]['path'] = $dest;
-        }
-
-        return $dest;
-    }
-
-    /**
-     * Determines the name of the file.
-     *
-     * @access protected
-     * @param string $name
-     * @param string $append
-     * @param string $prepend
-     * @param boolean $truncate
-     * @return void
-     */
-    protected function _formatFilename($name = '', $append = '', $prepend = '', $truncate = true) {
-        if (empty($name)) {
-            $name = $this->_data[$this->_current]['name'];
-        }
-
-        $ext = $this->ext($name);
-		
-        if (empty($ext)) {
-            $ext = $this->_data[$this->_current]['ext'];
-        }
-
-        $name = str_replace('.'. $ext, '', $name);
-        $name = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $name);
-
-        if (is_numeric($this->maxNameLength) && $truncate) {
-            if (mb_strlen($name) > $this->maxNameLength) {
-                $name = mb_substr($name, 0, $this->maxNameLength);
-            }
-        }
-
-        $append = (string)$append;
-        $prepend = (string)$prepend;
-
-        if (!empty($append)) {
-            $append = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $append);
-            $name = $name . $append;
-        }
-
-        if (!empty($prepend)) {
-            $prepend = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $prepend);
-            $name = $prepend . $name;
-        }
-
-        $name = $name .'.'. $ext;
-        $name = trim($name, '/');
-
-        return $name;
-    }
-
-	/**
-	 * Return the path with the base directory if it is absent.
-	 *
-	 * @access protected
-	 * @param string $path
-	 * @return string
-	 */
-	protected function _formatPath($path) {
-		if (substr($this->baseDir, -1) != '/') {
-			$this->baseDir .= '/';
-		}
-		
-		if (strpos($path, $this->baseDir) === false) {
-            $path = $this->baseDir . $path;
-        }
-
-		return $path;
-	}
 
     /**
      * Parses the controller data to only grab $_FILES related data.
