@@ -13,7 +13,7 @@
 /**
  * Current version: http://milesj.me/resources/logs/uploader-plugin
  */
-$config['Uploader']['version'] = '2.6.5';
+$config['Uploader']['version'] = '2.6.6';
 
 /**
  * The accepted file/mime types.
@@ -117,6 +117,6 @@ $config['Uploader']['mimeTypes'] = array(
 		'ai' 	=> 'application/postscript',
 		'eps' 	=> 'application/postscript',
 		'ps' 	=> 'application/postscript',
-		'swf'	=> 'application/ x-shockwave-flash'
+		'swf'	=> 'application/x-shockwave-flash'
 	)
 );

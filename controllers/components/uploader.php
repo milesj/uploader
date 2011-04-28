@@ -187,13 +187,9 @@ class UploaderComponent extends Object {
 	public function initialize($Controller, array $settings = array()) {
 		$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
 
-		if (!extension_loaded('gd')) {
-			$prefix = (PHP_SHLIB_SUFFIX == 'dll') ? 'php_' : '';
-
-			if (!@dl($prefix .'gd.'. PHP_SHLIB_SUFFIX)) {
-				$this->enableUpload = false;
-				trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_NOTICE);
-			}
+		if (!$this->_loadExtension('gd')) {
+			$this->enableUpload = false;
+			trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_WARNING);
 		}
 
 		$data = $Controller->data;
@@ -342,6 +338,39 @@ class UploaderComponent extends Object {
 		}
 
 		$this->finalDir = $finalDir;
+	}
+
+	/**
+	 * Check the extension and mimetype against hte supported list. If found, return the grouping.
+	 *
+	 * @access public
+	 * @param string $ext
+	 * @param string $type
+	 * @return mixed
+	 */
+	public function checkMimeType($ext, $type) {
+		$validExt = false;
+		$validMime = false;
+		$currType = mb_strtolower($type);
+
+		foreach ($this->_mimeTypes as $grouping => $mimes) {
+			if (isset($mimes[$ext])) {
+				$validExt = true;
+			}
+
+			foreach ($mimes as $mimeExt => $mimeType) {
+				if (($currType == $mimeType) || (is_array($mimeType) && in_array($currType, $mimeType))) {
+					$validMime = true;
+					break 2;
+				}
+			}
+		}
+
+		if ($validExt && $validMime) {
+			return $grouping;
+		}
+
+		return false;
 	}
 
 	/**
@@ -1160,6 +1189,20 @@ class UploaderComponent extends Object {
 		return $data;
 	}
 
+	/**
+	 * Attempt to load a missing extension.
+	 *
+	 * @access protected
+	 * @param string $name
+	 * @return boolean
+	 */
+	protected function _loadExtension($name) {
+		if (!extension_loaded($name)) {
+			@dl((PHP_SHLIB_SUFFIX == 'dll' ? 'php_' : '') . $name .'.'. PHP_SHLIB_SUFFIX);
+		}
+
+		return extension_loaded($name);
+	}
 
 	/**
 	 * Parses the controller data to only grab $_FILES related data.
@@ -1238,60 +1281,28 @@ class UploaderComponent extends Object {
 	 * @return boolean
 	 */
 	protected function _validates($import = false) {
-		$validExt = false;
-		$validMime = false;
+		$current = $this->_data[$this->_current];
+		$grouping = $this->checkMimeType($current['ext'], $current['type']);
 
-		// Check valid mime type!
-		if (!isset($this->_data[$this->_current]['group'])) {
-			$this->_data[$this->_current]['group'] = '';
-		}
-
-		foreach ($this->_mimeTypes as $grouping => $mimes) {
-			if (isset($mimes[$this->_data[$this->_current]['ext']])) {
-				$validExt = true;
-			}
-
-			$currType = mb_strtolower($this->_data[$this->_current]['type']);
-
-			foreach ($mimes as $mimeExt => $mimeType) {
-				if (($currType == $mimeType) || (is_array($mimeType) && in_array($currType, $mimeType))) {
-					$validMime = true;
-					break 2;
-				}
-			}
-		}
-
-		if ($validExt && $validMime) {
+		if ($grouping) {
 			$this->_data[$this->_current]['group'] = $grouping;
-		} else {
-			if (!$import) {
-				return false;
-			}
+			
+		} else if (!$import) {
+			return false;
 		}
 
 		// Only validate uploaded files, not imported
 		if (!$import) {
-			if (
-				($this->_data[$this->_current]['error'] > 0) ||
-				(!is_uploaded_file($this->_data[$this->_current]['tmp_name'])) ||
-				(!is_file($this->_data[$this->_current]['tmp_name']))
-			) {
+			if (($current['error'] > 0) || !is_uploaded_file($current['tmp_name']) || !is_file($current['tmp_name'])) {
 				return false;
 			}
 
 			// Requires the ClamAV module to be installed
-			if ($this->scanFile) {
-				if (!extension_loaded('clamav')) {
-					$prefix = (PHP_SHLIB_SUFFIX == 'dll') ? 'php_' : '';
-					@dl($prefix .'clamav.'. PHP_SHLIB_SUFFIX);
-				}
+			if ($this->scanFile && $this->_loadExtension('clamav')) {
+				cl_setlimits(5, 1000, 200, 0, 10485760);
 
-				if (extension_loaded('clamav')) {
-					cl_setlimits(5, 1000, 200, 0, 10485760);
-
-					if (cl_scanfile($this->_data[$this->_current]['tmp_name'])) {
-						return false;
-					}
+				if (cl_scanfile($current['tmp_name'])) {
+					return false;
 				}
 			}
 		}

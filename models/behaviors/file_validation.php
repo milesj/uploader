@@ -10,17 +10,10 @@
  * @link        http://milesj.me/resources/script/uploader-plugin
  */
 
+App::import('Component', 'Uploader.Uploader');
 Configure::load('Uploader.config');
 
 class FileValidationBehavior extends ModelBehavior {
-
-	/**
-	 * The accepted file mime types; imported from config.
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $_mimeTypes = array();
 
 	/**
 	 * Current settings.
@@ -29,22 +22,6 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @var array
 	 */
 	protected $_settings = array();
-
-	/**
-	 * Default settings.
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $__defaults = array(
-		'minWidth'  => null,
-		'minHeight' => null,
-		'maxWidth'  => null,
-		'maxHeight' => null,
-		'filesize'  => null,
-		'extension' => null,
-		'required'  => true
-	);
 
 	/**
 	 * Default list of validation sets.
@@ -92,6 +69,9 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	public function setup($Model, array $settings = array()) {
+		$this->Uploader = new UploaderComponent();
+		$this->Uploader->initialize($Model);
+
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $options) {
 				$this->_settings[$Model->alias][$field] = $options + array('required' => true);
@@ -194,32 +174,11 @@ class FileValidationBehavior extends ModelBehavior {
 			} else if (empty($field['tmp_name'])) {
 				return false;
 			} else {
-				$ext = mb_strtolower(trim(mb_strrchr($field['name'], '.'), '.'));
+				$ext = $this->Uploader->ext($field['name']);
 			}
 
-			if (!empty($allowed)) {
-				return in_array($ext, $allowed);
-			} else {
-				if (empty($this->_mimeTypes)) {
-					$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
-				}
-
-				$validExt = false;
-				$validMime = false;
-
-				foreach ($this->_mimeTypes as $grouping => $mimes) {
-					if (isset($mimes[mb_strtolower($ext)])) {
-						$validExt = true;
-					}
-
-					if (in_array(mb_strtolower($ext), $mimes)) {
-						$validMime = true;
-					}
-				}
-
-				if (!$validExt && !$validMime) {
-					return false;
-				}
+			if (!$this->Uploader->checkMimeType($ext, $field['type']) || (!empty($allowed) && !in_array($ext, $allowed))) {
+				return false;
 			}
 		}
 
