@@ -42,11 +42,12 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @var array
 	 */
 	protected $_defaults = array(
+		'name'			=> '',
 		'baseDir'		=> '',
 		'uploadDir'		=> '',
 		'dbColumn'		=> 'uploadPath',
+		'importFrom'	=> '',
 		'defaultPath'	=> '',
-		'name'			=> '',
 		'maxNameLength'	=> null,
 		'overwrite'		=> true,
 		'stopSave'		=> true,
@@ -142,7 +143,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Let the save work even if the image is empty.
 			// If the image should be required, use the FileValidation behavior.
-			if (empty($data['tmp_name'])) {
+			if (empty($data['tmp_name']) && empty($attachment['importFrom'])) {
 				if (!empty($attachment['defaultPath'])) {
 					$Model->data[$Model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
 				}
@@ -198,8 +199,15 @@ class AttachmentBehavior extends ModelBehavior {
 				$options['name'] = $Model->{$attachment['name']}($data['name'], $file, $data);
 			}
 
-			// Upload file and attach to model data
-			$fileData = $this->Uploader->upload($file, $options);
+			// Upload or import the file and attach to model data
+			if (
+				!empty($attachment['importFrom']) &&
+				(is_file($attachment['importFrom']) || strpos($attachment['importFrom'], 'http://') !== false)
+			) {
+				$fileData = $this->Uploader->import($attachment['importFrom'], $options);
+			} else {
+				$fileData = $this->Uploader->upload($file, $options);
+			}
 
 			if (!empty($fileData)) {
 				$basePath = $fileData['path'];
