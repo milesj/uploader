@@ -132,27 +132,24 @@ class AttachmentBehavior extends ModelBehavior {
 		$this->Uploader->initialize($Model);
 		$this->Uploader->startup($Model);
 
-		foreach ($Model->data[$Model->alias] as $file => $data) {
-			if (!isset($this->_attachments[$Model->alias][$file])) {
+		foreach ($Model->data[$Model->alias] as $field => $file) {
+			if (empty($this->_attachments[$Model->alias][$field])) {
 				continue;
 			}
 
-			$attachment = $this->_attachments[$Model->alias][$file];
+			$attachment = $this->_attachments[$Model->alias][$field];
 			$options = array();
 			$s3 = false;
 
 			// Let the save work even if the image is empty.
 			// If the image should be required, use the FileValidation behavior.
-			if (empty($data['tmp_name']) && empty($attachment['importFrom'])) {
-				if (!empty($attachment['defaultPath'])) {
-					$Model->data[$Model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
-				}
-
+			if ($this->isEmpty($file, $attachment)) {
+				$Model->data[$Model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
 				continue;
 			}
 
 			// Should we continue if a file error'd during upload?
-			if ($data['error'] == UPLOAD_ERR_NO_FILE) {
+			if (isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) {
 				if ($attachment['stopSave']) {
 					return false;
 				} else {
@@ -160,15 +157,15 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 			}
 
-			// S3
+			// Amazon S3
 			if (!empty($attachment['s3'])) {
 				if (!empty($attachment['s3']['bucket']) && !empty($attachment['s3']['accessKey']) && !empty($attachment['s3']['secretKey'])) {
 					$this->S3Transfer->bucket = $attachment['s3']['bucket'];
 					$this->S3Transfer->accessKey = $attachment['s3']['accessKey'];
 					$this->S3Transfer->secretKey = $attachment['s3']['secretKey'];
 
-					if (isset($attachment['s3']['useSsl']) && is_bool($attachment['s3']['useSsl'])) {
-						$this->S3Transfer->useSsl = $attachment['s3']['useSsl'];
+					if (isset($attachment['s3']['useSsl'])) {
+						$this->S3Transfer->useSsl = (bool)$attachment['s3']['useSsl'];
 					}
 
 					$this->S3Transfer->startup($Model);
@@ -196,83 +193,67 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			if (!empty($attachment['name']) && method_exists($Model, $attachment['name'])) {
-				$options['name'] = $Model->{$attachment['name']}($data['name'], $file, $data);
+				$options['name'] = $Model->{$attachment['name']}($file['name'], $field, $file);
+			}
+
+			if (is_string($file)) {
+				$attachment['importFrom'] = $file;
 			}
 
 			// Upload or import the file and attach to model data
-			if (
-				!empty($attachment['importFrom']) &&
-				(is_file($attachment['importFrom']) || strpos($attachment['importFrom'], 'http://') !== false)
-			) {
-				$fileData = $this->Uploader->import($attachment['importFrom'], $options);
-			} else {
-				$fileData = $this->Uploader->upload($file, $options);
-			}
-
-			if (!empty($fileData)) {
-				$basePath = $fileData['path'];
-
-				if ($s3) {
-					$basePath = $this->S3Transfer->transfer($basePath);
-				}
+			if ($upload = $this->upload($field, $attachment, $options)) {
+				$basePath = ($s3) ? $this->S3Transfer->transfer($upload['path']) : $upload['path'];
 
 				$Model->data[$Model->alias][$attachment['dbColumn']] = $basePath;
-				$this->_attached[$file][$attachment['dbColumn']] = $basePath;
+				$this->_attached[$field][$attachment['dbColumn']] = $basePath;
 
 				// Apply transformations
 				if (!empty($attachment['transforms'])) {
 					foreach ($attachment['transforms'] as $method => $options) {
-						if (is_array($options) && isset($options['dbColumn'])) {
-							if (isset($options['method'])) {
-								$method = $options['method'];
-								unset($options['method']);
+						if (isset($options['method'])) {
+							$method = $options['method'];
+							unset($options['method']);
+						}
+
+						if (!method_exists($this->Uploader, $method)) {
+							trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method.', E_USER_WARNING);
+							return false;
+						}
+
+						if ($path = $this->Uploader->{$method}($options)) {
+							if ($s3) {
+								$path = $this->S3Transfer->transfer($path);
 							}
 
-							if (!method_exists($this->Uploader, $method)) {
-								trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method.', E_USER_WARNING);
-								return false;
-							}
+							$Model->data[$Model->alias][$options['dbColumn']] = $path;
+							$this->_attached[$field][$options['dbColumn']] = $path;
 
-							$path = $this->Uploader->{$method}($options);
-
-							if (!empty($path)) {
+							// Delete original if same column name and are not the same file
+							// Which can happen if 'append' => '' is defined in the options
+							if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $Model->data[$Model->alias][$attachment['dbColumn']]) {
 								if ($s3) {
-									$path = $this->S3Transfer->transfer($path);
+									$this->S3Transfer->delete($basePath);
+								} else {
+									$this->Uploader->delete($basePath);
 								}
-
-								$Model->data[$Model->alias][$options['dbColumn']] = $path;
-								$this->_attached[$file][$options['dbColumn']] = $path;
-
-								// Delete original if same column name and are not the same file
-								// Which can happen if 'append' => '' is defined in the options
-								if (
-									$options['dbColumn'] == $attachment['dbColumn'] &&
-									$basePath != $Model->data[$Model->alias][$attachment['dbColumn']]
-								) {
-									if ($s3) {
-										$this->S3Transfer->delete($basePath);
-									} else {
-										$this->Uploader->delete($basePath);
-									}
-								}
-							} else {
-								$this->deleteAttached($file);
-								$Model->validationErrors[$file] = sprintf(__('An error occured during "%s" transformation!', true), $method);
-								return false;
 							}
+						} else {
+							$this->deleteAttached($field);
+							$Model->validationErrors[$field] = sprintf(__('An error occured during "%s" transformation!', true), $method);
+							return false;
 						}
 					}
 				}
 
 				if (!empty($attachment['metaColumns'])) {
 					foreach ($attachment['metaColumns'] as $field => $dbCol) {
-						if (isset($fileData[$field])) {
-							$Model->data[$Model->alias][$dbCol] = $fileData[$field];
+						if (isset($upload[$field])) {
+							$Model->data[$Model->alias][$dbCol] = $upload[$field];
 						}
 					}
 				}
 			} else {
-				$Model->validationErrors[$file] = __('There was an error attaching this file!', true);
+				$Model->validationErrors[$field] = __('There was an error attaching this file!', true);
 				return false;
 			}
 		}
@@ -300,6 +281,18 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 
 	/**
+	 * Check if the file is an empty upload or import.
+	 *
+	 * @access public
+	 * @param array|string $data
+	 * @param array $attachment
+	 * @return boolean
+	 */
+	public function isEmpty($data, $attachment) {
+		return ((is_array($data) && empty($data['tmp_name'])) || (empty($attachment['importFrom']) && empty($data)));
+	}
+
+	/**
 	 * Applies dynamic settings to an attachment.
 	 *
 	 * @access public
@@ -312,6 +305,28 @@ class AttachmentBehavior extends ModelBehavior {
 		if (isset($this->_attachments[$model][$file])) {
 			$this->_attachments[$model][$file] = $settings + $this->_attachments[$model][$file];
 		}
+	}
+
+	/**
+	 * Attempt to upload a file via remote import, file system import or standard upload.
+	 *
+	 * @access public
+	 * @param string $field
+	 * @param array $attachment
+	 * @param array $options
+	 * @return array
+	 */
+	public function upload($field, $attachment, $options) {
+		if (!empty($attachment['importFrom'])) {
+			if (preg_match('/(http|https)/', $attachment['importFrom'])) {
+				return $this->Uploader->importRemote($attachment['importFrom'], $options);
+
+			} else {
+				return $this->Uploader->import($attachment['importFrom'], $options);
+			}
+		}
+
+		return $this->Uploader->upload($field, $options);
 	}
 
 }

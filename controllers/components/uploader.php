@@ -341,7 +341,7 @@ class UploaderComponent extends Object {
 	}
 
 	/**
-	 * Check the extension and mimetype against hte supported list. If found, return the grouping.
+	 * Check the extension and mimetype against the supported list. If found, return the grouping.
 	 *
 	 * @access public
 	 * @param string $ext
