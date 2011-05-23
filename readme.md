@@ -1,17 +1,12 @@
-# Uploader v2.6.7 #
+# Uploader v2.7 #
 
-A CakePHP plugin that will upload multiple types of files. Adds support for file validation and attachments within the model layer. Also has minor support for Amazon S3.
-
-### Not Backwards Compatible ###
-
-Version(s) 2.5.1 and above are not backwards compatible with 2.5.0 and below.
-Check the commit log for changes and please update your code accordingly!
+A CakePHP plugin that will upload multiple types of files. Adds support for file validation and attachments within the model layer, the ability to transform image files (crop, resize, scale, etc) and minor support for Amazon S3 transfers.
 
 ## Requirements ##
 
 * CakePHP 1.2.x., 1.3.x
 * PHP 5.2.x, 5.3.x
-* ClamAV module (for virus detection)
+* ClamAV module (for virus detection) - http://sourceforge.net/projects/php-clamav/
 
 ## Features ##
 
@@ -31,7 +26,7 @@ Check the commit log for changes and please update your code accordingly!
 
 ## Documentation ##
 
-Thorough documentation can be found here: http://milesj.me/resources/script/uploader-plugin
+Thorough documentation can be found here: http://milesj.me/code/cakephp/uploader
 
 ## Installation ##
 

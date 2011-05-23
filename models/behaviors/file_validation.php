@@ -7,7 +7,7 @@
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/resources/script/uploader-plugin
+ * @link        http://milesj.me/code/cakephp/uploader
  */
 
 App::import('Component', 'Uploader.Uploader');
@@ -26,10 +26,10 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Default list of validation sets.
 	 *
-	 * @access private
+	 * @access protected
 	 * @var array
 	 */
-	private $__validations = array(
+	protected $_validations = array(
 		'minWidth' => array(
 			'rule' => array('minWidth'),
 			'message' => 'Your image width is too small'
@@ -222,7 +222,7 @@ class FileValidationBehavior extends ModelBehavior {
 				$validations = array();
 
 				foreach ($rules as $rule => $setting) {
-					$set = $this->__validations[$rule];
+					$set = $this->_validations[$rule];
 
 					if (is_array($setting) && !isset($setting[0])) {
 						if (!empty($setting['error'])) {

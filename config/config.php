@@ -7,13 +7,13 @@
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/resources/script/uploader-plugin
+ * @link        http://milesj.me/code/cakephp/uploader
  */
 
 /**
- * Current version: http://milesj.me/resources/logs/uploader-plugin
+ * Current version.
  */
-$config['Uploader']['version'] = '2.6.7';
+$config['Uploader']['version'] = '2.7';
 
 /**
  * The accepted file/mime types.

@@ -5,7 +5,7 @@
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/resources/script/uploader-plugin
+ * @link        http://milesj.me/code/cakephp/uploader
  */
 
 class UploadController extends AppController {

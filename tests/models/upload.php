@@ -5,7 +5,7 @@
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/resources/script/uploader-plugin
+ * @link        http://milesj.me/code/cakephp/uploader
  */
 
 /**
@@ -49,6 +49,7 @@ class Upload extends AppModel {
 		),
 		'Uploader.Attachment' => array(
 			'file' => array(
+				'name' => 'formatFileName',
 				'uploadDir' => '/files/uploads/',
 				'dbColumn' => 'path',
 				'maxNameLength' => 30,
@@ -69,5 +70,19 @@ class Upload extends AppModel {
 			)
 		)
 	);
+	
+	/**
+	 * Format the filename a specific way before uploading and attaching.
+	 * 
+	 * @access public
+	 * @param string $name	- The current filename without extension
+	 * @param string $ext	- The file extension
+	 * @param string $field	- The form field name
+	 * @param array $file	- The $_FILES data
+	 * @return string
+	 */
+	public function formatFileName($name, $ext, $field, $file) {
+		return md5($name) .'.'. $ext;
+	}
 
 }
