@@ -143,6 +143,14 @@ class UploaderComponent extends Object {
 	 * @var string
 	 */
 	public $finalDir;
+	
+	/**
+	 * The field name used during AJAX file uploading.
+	 * 
+	 * @access public
+	 * @var string
+	 */
+	public $ajaxField = '';
 
 	/**
 	 * The accepted file/mime types; imported from config.
@@ -1212,23 +1220,28 @@ class UploaderComponent extends Object {
 		$data = array();
 		$count = 0;
 		
-		if (isset($files['data'])) {
-			$files = $files['data'];
-		}
-		
 		if (!empty($files)) {
-			foreach ($files as $key => $file) {
-				$count = count($file);
-				
-				foreach ($file as $model => $fields) {
-					foreach ($fields as $field => $value) {
-						if ($count > 1) {
-							$data[$model .'.'. $field][$key] = $value;
-						} else {
-							$data[$field][$key] = $value;
+			// via CakePHP
+			if (isset($files['data'])) {
+				$files = $files['data'];
+
+				foreach ($files['data'] as $key => $file) {
+					$count = count($file);
+
+					foreach ($file as $model => $fields) {
+						foreach ($fields as $field => $value) {
+							if ($count > 1) {
+								$data[$model .'.'. $field][$key] = $value;
+							} else {
+								$data[$field][$key] = $value;
+							}
 						}
 					}
 				}
+			
+			// via normal form or AJAX
+			} else {
+				$data = $files;
 			}
 		}
 		
