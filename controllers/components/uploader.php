@@ -199,7 +199,7 @@ class UploaderComponent extends Object {
 			$this->enableUpload = false;
 			trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_WARNING);
 		}
-
+		
 		$this->_set($settings);
 		$this->_parseData();
 	}
@@ -1108,19 +1108,21 @@ class UploaderComponent extends Object {
 
 		if (isset($this->_data[$file])) {
 			$this->_current = $file;
-			$this->_data[$this->_current]['filesize'] = $this->bytes($this->_data[$this->_current]['size']);
-			$this->_data[$this->_current]['ext'] = $this->ext($this->_data[$this->_current]['name']);
+			
+			$current =& $this->_data[$this->_current];
+			$current['filesize'] = $this->bytes($current['size']);
+			$current['ext'] = $this->ext($current['name']);
 		} else {
 			return false;
 		}
 
 		// Validate everything
 		if ($this->_validates()) {
-			if ($this->_data[$this->_current]['group'] == 'image') {
-				$dimensions = $this->dimensions($this->_data[$this->_current]['tmp_name']);
+			if ($current['group'] == 'image' && !isset($current['stream'])) {
+				$dimensions = $this->dimensions($current['tmp_name']);
 
-				$this->_data[$this->_current]['width'] = $dimensions['width'];
-				$this->_data[$this->_current]['height'] = $dimensions['height'];
+				$current['width'] = $dimensions['width'];
+				$current['height'] = $dimensions['height'];
 			}
 		} else {
 			return false;
@@ -1129,17 +1131,32 @@ class UploaderComponent extends Object {
 		// Upload! Try both functions, one should work!
 		$dest = $this->setDestination($options['name'], $options['overwrite']);
 
-		if (move_uploaded_file($this->_data[$this->_current]['tmp_name'], $dest)) {
-			$this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
-
-		} else if (copy($this->_data[$this->_current]['tmp_name'], $dest)) {
-			$this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
-
+		// Uploaded via stream / AJAX
+		if (isset($current['stream'])) {
+			$target = fopen($dest, 'w');        
+			fseek($current['tmp_name'], 0, SEEK_SET);
+			
+			if (stream_copy_to_stream($current['tmp_name'], $target)) {
+				$current['uploaded'] = date('Y-m-d H:i:s');
+			}
+			
+			fclose($target);
+		
+		// Uploaded via POST
 		} else {
-			return false;
+			if (move_uploaded_file($current['tmp_name'], $dest)) {
+				$current['uploaded'] = date('Y-m-d H:i:s');
+
+			} else if (copy($current['tmp_name'], $dest)) {
+				$current['uploaded'] = date('Y-m-d H:i:s');
+
+			} else {
+				return false;
+			}
 		}
 
 		chmod($dest, 0777);
+		
 		return $this->_returnData();
 	}
 
@@ -1216,16 +1233,15 @@ class UploaderComponent extends Object {
 	 * @return void
 	 */
 	protected function _parseData() {
-		$files = $_FILES;
 		$data = array();
 		$count = 0;
-		
-		if (!empty($files)) {
-			// via CakePHP
-			if (isset($files['data'])) {
-				$files = $files['data'];
 
-				foreach ($files['data'] as $key => $file) {
+		// Form uploaidng
+		if (!empty($_FILES)) {
+			
+			// via CakePHP
+			if (isset($_FILES['data'])) {
+				foreach ($_FILES['data'] as $key => $file) {
 					$count = count($file);
 
 					foreach ($file as $model => $fields) {
@@ -1239,9 +1255,41 @@ class UploaderComponent extends Object {
 					}
 				}
 			
-			// via normal form or AJAX
+			// via normal form or AJAX iframe
 			} else {
-				$data = $files;
+				$data = $_FILES;
+			}
+			
+		// AJAX uploading
+		} else if (isset($_GET[$this->ajaxField])) {
+			$mime = null;
+			$name = $_GET[$this->ajaxField];
+			$ext = $this->ext($name);
+			
+			foreach ($this->_mimeTypes as $grouping => $mimes) {
+				if (isset($mimes[$ext])) {
+					if (is_array($mimes[$ext])) {
+						$mime = $mimes[$ext][0];
+					} else {
+						$mime = $mimes[$ext];
+					}
+				}
+			}
+
+			if ($mime) {
+				$input = fopen("php://input", "r");
+				$temp = tmpfile();
+
+				$data[$this->ajaxField] = array(
+					'name' => $name,
+					'type' => $mime,
+					'stream' => true,
+					'tmp_name' => $temp,
+					'error' => 0,
+					'size' => stream_copy_to_stream($input, $temp)
+				);
+				
+				fclose($input);
 			}
 		}
 		
@@ -1309,7 +1357,7 @@ class UploaderComponent extends Object {
 		}
 
 		// Only validate uploaded files, not imported
-		if (!$import) {
+		if (!$import && !isset($current['stream'])) {
 			if (($current['error'] > 0) || !is_uploaded_file($current['tmp_name']) || !is_file($current['tmp_name'])) {
 				return false;
 			}
