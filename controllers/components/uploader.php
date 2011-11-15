@@ -192,11 +192,8 @@ class UploaderComponent extends Object {
 			trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_WARNING);
 		}
 
-		$data = $Controller->data;
-		unset($data['_Token']);
-
 		$this->_set($settings);
-		$this->_parseData($data, null, count($data));
+		$this->_parseData();
 	}
 
 	/**
@@ -1205,30 +1202,37 @@ class UploaderComponent extends Object {
 	}
 
 	/**
-	 * Parses the controller data to only grab $_FILES related data.
+	 * Parse the upload data out of $_FILES.
 	 *
 	 * @access protected
-	 * @param array $data
-	 * @param string $model
-	 * @param int $count
 	 * @return void
 	 */
-	protected function _parseData($data, $model = null, $count = 1) {
-		if (is_array($data)) {
-			foreach ($data as $field => $value) {
-				if (is_array($value) && isset($value['tmp_name'])) {
-					if ($count == 1) {
-						$slug = $field;
-					} else {
-						$slug = $model .'.'. $field;
+	protected function _parseData() {
+		$files = $_FILES;
+		$data = array();
+		$count = 0;
+		
+		if (isset($files['data'])) {
+			$files = $files['data'];
+		}
+		
+		if (!empty($files)) {
+			foreach ($files as $key => $file) {
+				$count = count($file);
+				
+				foreach ($file as $model => $fields) {
+					foreach ($fields as $field => $value) {
+						if ($count > 1) {
+							$data[$model .'.'. $field][$key] = $value;
+						} else {
+							$data[$field][$key] = $value;
+						}
 					}
-
-					$this->_data[$slug] = $value;
-				} else {
-					$this->_parseData($value, $field, $count);
 				}
 			}
 		}
+		
+		$this->_data = $data;
 	}
 
 	/**
