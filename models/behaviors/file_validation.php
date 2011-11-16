@@ -70,7 +70,6 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function setup($Model, array $settings = array()) {
 		$this->Uploader = new UploaderComponent();
-		$this->Uploader->initialize($Model);
 
 		if (!empty($settings) && is_array($settings)) {
 			foreach ($settings as $field => $options) {

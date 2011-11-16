@@ -193,13 +193,11 @@ class UploaderComponent extends Object {
 	 * @return void
 	 */
 	public function initialize($Controller, array $settings = array()) {
-		$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
-
 		if (!$this->_loadExtension('gd')) {
 			$this->enableUpload = false;
 			trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_WARNING);
 		}
-		
+
 		$this->_set($settings);
 		$this->_parseData();
 	}
@@ -354,6 +352,10 @@ class UploaderComponent extends Object {
 	 * @return mixed
 	 */
 	public function checkMimeType($ext, $type) {
+		if (empty($this->_mimeTypes)) {
+			$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
+		}
+		
 		$validExt = false;
 		$validMime = false;
 		$currType = mb_strtolower($type);
