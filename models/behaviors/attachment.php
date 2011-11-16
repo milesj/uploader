@@ -184,21 +184,16 @@ class AttachmentBehavior extends ModelBehavior {
 				$this->Uploader->uploadDir = $attachment['uploadDir'];
 			}
 
-			if (is_numeric($attachment['maxNameLength'])) {
+			if (is_numeric($attachment['maxNameLength']) && $attachment['maxNameLength'] > 0) {
 				$this->Uploader->maxNameLength = $attachment['maxNameLength'];
 			}
 
-			if (is_bool($attachment['overwrite'])) {
+			if (!empty($attachment['overwrite'])) {
 				$options['overwrite'] = $attachment['overwrite'];
 			}
 
-			if (!empty($attachment['name']) && method_exists($Model, $attachment['name'])) {
-				$options['name'] = $Model->{$attachment['name']}(
-					substr($file['name'], 0, strpos($file['name'], '.')), 
-					$this->Uploader->ext($file['name']), 
-					$field, 
-					$file
-				);
+			if (!empty($attachment['name'])) {
+				$options['name'] = $attachment['name'];
 			}
 
 			if (is_string($file)) {

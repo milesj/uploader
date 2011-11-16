@@ -644,6 +644,15 @@ class UploaderComponent extends Object {
 			$ext = $this->_data[$this->_current]['ext'];
 		}
 
+		// Run the formatter function
+		if (function_exists($name)) {
+			$name = $name(
+				$this->_data[$this->_current]['name'],
+				$this->_current, 
+				$this->_data[$this->_current]
+			);
+		}
+		
 		$name = str_replace('.'. $ext, '', $name);
 		$name = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $name);
 
