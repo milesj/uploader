@@ -199,7 +199,7 @@ class UploaderComponent extends Object {
 		}
 
 		$this->_set($settings);
-		$this->_parseData();
+		$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
 	}
 
 	/**
@@ -211,6 +211,8 @@ class UploaderComponent extends Object {
 	 * @return void
 	 */
 	public function startup($Controller) {
+		$this->_parseData();
+		
 		$fileUploads = ini_get('file_uploads');
 
 		if (!$fileUploads) {
