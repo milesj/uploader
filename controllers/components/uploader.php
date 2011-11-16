@@ -721,7 +721,7 @@ class UploaderComponent extends Object {
 		$options = $options + array('name' => null, 'overwrite' => false, 'delete' => false);
 
 		$this->_current = basename($path);
-		$this->_data[$this->_current]['name'] = basename($url);
+		$this->_data[$this->_current]['name'] = $this->_current;
 		$this->_data[$this->_current]['path'] = $path;
 		$this->_data[$this->_current]['type'] = $this->mimeType($path);
 		$this->_data[$this->_current]['ext'] = $this->ext($path);
@@ -777,7 +777,7 @@ class UploaderComponent extends Object {
 		$options = $options + array('name' => null, 'overwrite' => false);
 
 		$this->_current = basename($url);
-		$this->_data[$this->_current]['name'] = basename($url);
+		$this->_data[$this->_current]['name'] = $this->_current;
 		$this->_data[$this->_current]['path'] = $url;
 		$this->_data[$this->_current]['type'] = $this->mimeType($url);
 		$this->_data[$this->_current]['ext'] = $this->ext($url);
@@ -1105,7 +1105,7 @@ class UploaderComponent extends Object {
 	 * @access public
 	 * @param string $file
 	 * @param array $options
-	 *		- name: What should the filename be changed to
+	 *		- name: What should the filename be changed to OR the name of a function to do the formatting
 	 *		- overwrite: Should we overwrite the existant file with the same name?
 	 *		- multiple: Is this method being called from uploadAll()
 	 * @return mixed - Array on success, false on failure
@@ -1277,19 +1277,8 @@ class UploaderComponent extends Object {
 			
 		// AJAX uploading
 		} else if (isset($_GET[$this->ajaxField])) {
-			$mime = null;
 			$name = $_GET[$this->ajaxField];
-			$ext = $this->ext($name);
-			
-			foreach ($this->_mimeTypes as $grouping => $mimes) {
-				if (isset($mimes[$ext])) {
-					if (is_array($mimes[$ext])) {
-						$mime = $mimes[$ext][0];
-					} else {
-						$mime = $mimes[$ext];
-					}
-				}
-			}
+			$mime = $this->mimeType($name);
 
 			if ($mime) {
 				$input = fopen("php://input", "r");

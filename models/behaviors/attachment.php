@@ -146,7 +146,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Should we continue if a file error'd during upload?
-			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || empty($attachment['importFrom'])) {
+			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || (is_string($file) && empty($attachment['importFrom']))) {
 				if ($attachment['stopSave']) {
 					return false;
 				} else {
