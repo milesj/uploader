@@ -140,19 +140,17 @@ class AttachmentBehavior extends ModelBehavior {
 			$attachment = $this->_attachments[$Model->alias][$field];
 			$options = array();
 			$s3 = false;
-
-			// Let the save work even if the image is empty.
-			// If the image should be required, use the FileValidation behavior.
-			if ($this->isEmpty($file, $attachment)) {
-				$Model->data[$Model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
-				continue;
+			
+			if (is_string($file) && !empty($file)) {
+				$attachment['importFrom'] = $file;
 			}
 
 			// Should we continue if a file error'd during upload?
-			if (isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) {
+			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || empty($attachment['importFrom'])) {
 				if ($attachment['stopSave']) {
 					return false;
 				} else {
+					unset($Model->data[$Model->alias][$attachment['dbColumn']]);
 					continue;
 				}
 			}
@@ -194,10 +192,6 @@ class AttachmentBehavior extends ModelBehavior {
 
 			if (!empty($attachment['name'])) {
 				$options['name'] = $attachment['name'];
-			}
-
-			if (is_string($file)) {
-				$attachment['importFrom'] = $file;
 			}
 
 			// Upload or import the file and attach to model data
@@ -278,18 +272,6 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Check if the file is an empty upload or import.
-	 *
-	 * @access public
-	 * @param array|string $data
-	 * @param array $attachment
-	 * @return boolean
-	 */
-	public function isEmpty($data, $attachment) {
-		return ((is_array($data) && empty($data['tmp_name'])) || (empty($attachment['importFrom']) && empty($data)));
 	}
 
 	/**

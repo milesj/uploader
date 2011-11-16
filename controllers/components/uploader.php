@@ -721,6 +721,7 @@ class UploaderComponent extends Object {
 		$options = $options + array('name' => null, 'overwrite' => false, 'delete' => false);
 
 		$this->_current = basename($path);
+		$this->_data[$this->_current]['name'] = basename($url);
 		$this->_data[$this->_current]['path'] = $path;
 		$this->_data[$this->_current]['type'] = $this->mimeType($path);
 		$this->_data[$this->_current]['ext'] = $this->ext($path);
@@ -776,6 +777,7 @@ class UploaderComponent extends Object {
 		$options = $options + array('name' => null, 'overwrite' => false);
 
 		$this->_current = basename($url);
+		$this->_data[$this->_current]['name'] = basename($url);
 		$this->_data[$this->_current]['path'] = $url;
 		$this->_data[$this->_current]['type'] = $this->mimeType($url);
 		$this->_data[$this->_current]['ext'] = $this->ext($url);
