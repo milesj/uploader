@@ -45,15 +45,19 @@ class Upload extends AppModel {
 				'minWidth' => 500,
 				'minHeight' => 500,
 				'required' => true
+			),
+			'import' => array(
+				'required' => false
 			)
 		),
 		'Uploader.Attachment' => array(
 			'file' => array(
-				'name' => 'formatFileName',
+				'name' => 'uploaderFilename',
 				'uploadDir' => '/files/uploads/',
 				'dbColumn' => 'path',
 				'maxNameLength' => 30,
 				'overwrite' => true,
+				'stopSave' => false,
 				'transforms' => array(
 					// Save additional images in the databases after transforming
 					array(
@@ -67,22 +71,22 @@ class Upload extends AppModel {
 					'size' => 'filesize',   // The size value will be saved to the filesize column
 					'type' => 'type'        // And the same for the mimetype
 				)
-			)
+			),
+			'import' => array(
+                'uploadDir' => '/files/uploads/',
+				'name' => 'uploaderFilename',
+                'dbColumn' => 'path',
+                'overwrite' => true,
+				'stopSave' => false,
+                'transforms' => array(
+                    array(
+                        'method' => 'scale',
+                        'percent' => .5,
+                        'dbColumn' => 'path'
+                    )
+                )
+            )
 		)
 	);
-	
-	/**
-	 * Format the filename a specific way before uploading and attaching.
-	 * 
-	 * @access public
-	 * @param string $name	- The current filename without extension
-	 * @param string $ext	- The file extension
-	 * @param string $field	- The form field name
-	 * @param array $file	- The $_FILES data
-	 * @return string
-	 */
-	public function formatFileName($name, $ext, $field, $file) {
-		return md5($name) .'.'. $ext;
-	}
 
 }

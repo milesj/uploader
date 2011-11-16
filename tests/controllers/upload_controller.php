@@ -5,8 +5,22 @@
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/code/cakephp/uploader
+ * @link        http://milesj.me/resources/script/uploader-plugin
  */
+
+/**
+ * Custom global function to handle filename formatting; works within the component or behavior.
+ * Simply pass the function name to the the name option.
+ * 
+ * @access public
+ * @param string $name
+ * @param string $field
+ * @param array $data
+ * @return string 
+ */
+function uploaderFilename($name, $field, $data) {
+	return md5($name);
+}
 
 class UploadController extends AppController {
 
@@ -21,7 +35,7 @@ class UploadController extends AppController {
 	 */
 	public function index() {
 		if (!empty($this->data)) {
-			if ($data = $this->Uploader->upload('file', array('name' => 'default', 'overwrite' => true))) {
+			if ($data = $this->Uploader->upload('file', array('name' => 'uploaderFilename', 'overwrite' => true))) {
 				debug($data);
 			}
 		}
@@ -158,9 +172,22 @@ class UploadController extends AppController {
 	}
 
 	/**
-	 * Test case for checking the behavior validation.
+	 * Test case for checking the behavior validation and upload for form submitted files.
 	 */
 	public function behaviors() {
+		if (!empty($this->data)) {
+			if ($this->Upload->save($this->data)) {
+				debug('Image uploaded and row saved!');
+			}
+		}
+
+		$this->set('title_for_layout', 'Upload: Behavior Validation and Attachment Testing');
+	}
+
+	/**
+	 * Test case for checking the behavior validation and upload for imported files (remote URLs).
+	 */
+	public function behaviors_import() {
 		if (!empty($this->data)) {
 			if ($this->Upload->save($this->data)) {
 				debug('Image uploaded and row saved!');
@@ -211,11 +238,35 @@ class UploadController extends AppController {
 		$this->set('title_for_layout', 'Upload: Import Remote File');
 		$this->render('import');
 	}
+	
+	/**
+	 * Test case for uploading files via XHR or AJAX iframe hack.
+	 */
+	public function ajax() {
+		$this->set('title_for_layout', 'Upload: AJAX File Upload');
+		$this->render('ajax');
+	}
+	
+	/**
+	 * URL to handle the AJAX call.
+	 */
+	public function ajax_upload() {
+		$this->autoLayout = $this->autoRender = false;
+		
+		if ($data = $this->Uploader->upload($this->Uploader->ajaxField, array('overwrite' => true))) {
+			header('Content-Type: application/json');
+			echo json_encode(array('success' => true, 'data' => $data));
+		}
+	}
 
 	/**
 	 * Set the test path.
 	 */
 	public function beforeFilter() {
+		// qqfile comes from the fileuploader.js script
+		// Customize for your application
+		$this->Uploader->ajaxField = 'qqfile';
+		
 		$this->testPath = $this->Uploader->baseDir . $this->Uploader->uploadDir;
 	}
 
