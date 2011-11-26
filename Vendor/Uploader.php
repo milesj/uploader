@@ -1,9 +1,9 @@
 <?php 
 /** 
- * Uploader Component
+ * Uploader
  *
- * A CakePHP Component that will upload a wide range of file types. Each file will be uploaded into app/webroot/<upload dir> (the path your provide).
- * Security and type checking have been integrated to only allow valid files. Additionally, images have the option of transforming an image.
+ * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files. 
+ * The class can also handle advanced image transforming.
  *
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
@@ -11,10 +11,10 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
-App::import('Core', array('Folder', 'HttpSocket'));
+App::uses('HttpSocket', 'Network/Http');
 Configure::load('Uploader.config');
 
-class UploaderComponent extends Object {
+class Uploader {
 
 	/**
 	 * The direction to flip: vertical.
@@ -185,32 +185,24 @@ class UploaderComponent extends Object {
 	protected $_current;
 
 	/**
-	 * Load the controllers file data into the component.
+	 * Parse the $_FILES data and setup ini settings.
 	 *
 	 * @access public
-	 * @param object $Controller
 	 * @param array $settings
 	 * @return void
 	 */
-	public function initialize($Controller, array $settings = array()) {
+	public function __construct(array $settings = array()) {
+		if (!empty($settings)) {
+			foreach ($settings as $key => $value) {
+				$this->{$key} = $value;
+			}
+		}
+		
 		if (!$this->_loadExtension('gd')) {
 			$this->enableUpload = false;
-			trigger_error('Uploader.Uploader::initialize(): GD image library is not installed.', E_USER_WARNING);
+			trigger_error('Uploader.Uploader::__construct(): GD image library is not installed.', E_USER_WARNING);
 		}
-
-		$this->_set($settings);
-		$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
-	}
-
-	/**
-	 * Set our ini settings for future use.
-	 *
-	 * @access public
-	 * @uses Folder
-	 * @param object $Controller
-	 * @return void
-	 */
-	public function startup($Controller) {
+		
 		$this->_parseData();
 		
 		$fileUploads = ini_get('file_uploads');
@@ -250,8 +242,7 @@ class UploaderComponent extends Object {
 		ini_set('max_input_time', ($execTime * 10));
 
 		if (!is_writable($this->tempDir)) {
-			$Folder = new Folder();
-			$Folder->chmod($this->tempDir, 0777, false);
+			chmod($this->tempDir, 0777);
 		}
 
 		$this->baseDir = str_replace('\\', '/', $this->baseDir);
@@ -322,24 +313,17 @@ class UploaderComponent extends Object {
 	 * Check the destination folder. If it does not exist or isn't writable, fix it!
 	 *
 	 * @access public
-	 * @uses Folder
 	 * @return void
 	 */
 	public function checkDirectory() {
-		$Folder = new Folder();
 		$uploadDir = trim($this->uploadDir, '/');
 		$finalDir = $this->formatPath($uploadDir .'/');
 
-		if (!is_dir($finalDir)) {
-			$dirParts = explode('/', $uploadDir);
-			$dirCurrent = rtrim($this->baseDir, '/');
-
-			foreach ($dirParts as $part) {
-				$Folder->create($dirCurrent . DS . $part, 0777);
-				$dirCurrent .= DS . $part;
-			}
+		if (!file_exists($finalDir)) {
+			mkdir($finalDir, 0777, true);
+			
 		} else if (!is_writable($finalDir)) {
-			$Folder->chmod($finalDir, 0777, false);
+			chmod($finalDir, 0777);
 		}
 
 		$this->finalDir = $finalDir;
@@ -516,6 +500,8 @@ class UploaderComponent extends Object {
 					'height' => $data[1],
 					'type' => $data['mime']
 				);
+				
+				break;
 			}
 		}
 
@@ -753,6 +739,7 @@ class UploaderComponent extends Object {
 		}
 
 		chmod($dest, 0777);
+		
 		return $this->_returnData();
 	}
 
@@ -806,6 +793,7 @@ class UploaderComponent extends Object {
 		}
 
 		chmod($dest, 0777);
+		
 		return $this->_returnData();
 	}
 
@@ -1096,6 +1084,7 @@ class UploaderComponent extends Object {
 		// Clear memory
 		imagedestroy($source);
 		imagedestroy($target);
+		
 		return true;
 	}
 
