@@ -157,8 +157,9 @@ class Uploader {
 	 *
 	 * @access protected
 	 * @var array
+	 * @static
 	 */
-	protected $_mimeTypes = array();
+	protected static $_mimeTypes = array();
 
 	/**
 	 * Holds the current $_FILES data.
@@ -218,7 +219,7 @@ class Uploader {
 		}
 
 		$byte = preg_replace('/[^0-9]/i', '', $this->maxFileSize);
-		$last = $this->bytes($this->maxFileSize, 'byte');
+		$last = self::bytes($this->maxFileSize, 'byte');
 
 		if ($last == 'T' || $last == 'TB') {
 			$multiplier = 1;
@@ -256,14 +257,15 @@ class Uploader {
 	 * @param string $ext
 	 * @param string $type
 	 * @return void
+	 * @static
 	 */
-	public function addMimeType($group = null, $ext = null, $type = null) {
+	public static function addMimeType($group = null, $ext = null, $type = null) {
 		if (empty($group)) {
 			$group = 'misc';
 		}
 
 		if (!empty($ext) && !empty($type)) {
-			$this->_mimeTypes[$group][$ext] = $type;
+			self::$_mimeTypes[$group][$ext] = $type;
 		}
 	}
 
@@ -274,8 +276,9 @@ class Uploader {
 	 * @param int $size
 	 * @param string $return
 	 * @return string
+	 * @static
 	 */
-	public function bytes($size, $return = null) {
+	public static function bytes($size, $return = null) {
 		if (!is_numeric($size)) {
 			$byte = preg_replace('/[^0-9]/i', '', $size);
 			$last = mb_strtoupper(preg_replace('/[^a-zA-Z]/i', '', $size));
@@ -336,17 +339,18 @@ class Uploader {
 	 * @param string $ext
 	 * @param string $type
 	 * @return mixed
+	 * @static
 	 */
-	public function checkMimeType($ext, $type) {
-		if (empty($this->_mimeTypes)) {
-			$this->_mimeTypes = Configure::read('Uploader.mimeTypes');
+	public static function checkMimeType($ext, $type) {
+		if (empty(self::$_mimeTypes)) {
+			self::$_mimeTypes = Configure::read('Uploader.mimeTypes');
 		}
 		
 		$validExt = false;
 		$validMime = false;
 		$currType = mb_strtolower($type);
 
-		foreach ($this->_mimeTypes as $grouping => $mimes) {
+		foreach (self::$_mimeTypes as $grouping => $mimes) {
 			if (isset($mimes[$ext])) {
 				$validExt = true;
 			}
@@ -513,7 +517,7 @@ class Uploader {
 			$dim = array(
 				'width' => @imagesx($image),
 				'height' => @imagesy($image),
-				'type' => $this->mimeType($path)
+				'type' => self::mimeType($path)
 			);
 		}
 
@@ -526,8 +530,9 @@ class Uploader {
 	 * @access public
 	 * @param string $file
 	 * @return string
+	 * @static
 	 */
-	public function ext($file) {
+	public static function ext($file) {
 		return mb_strtolower(trim(mb_strrchr($file, '.'), '.'));
 	}
 
@@ -624,7 +629,7 @@ class Uploader {
 			$name = $this->_data[$this->_current]['name'];
 		}
 
-		$ext = $this->ext($name);
+		$ext = self::ext($name);
 
 		if (empty($ext)) {
 			$ext = $this->_data[$this->_current]['ext'];
@@ -648,8 +653,8 @@ class Uploader {
 			}
 		}
 
-		$append = (string)$append;
-		$prepend = (string)$prepend;
+		$append = (string) $append;
+		$prepend = (string) $prepend;
 
 		if (!empty($append)) {
 			$append = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $append);
@@ -709,8 +714,8 @@ class Uploader {
 		$this->_current = basename($path);
 		$this->_data[$this->_current]['name'] = $this->_current;
 		$this->_data[$this->_current]['path'] = $path;
-		$this->_data[$this->_current]['type'] = $this->mimeType($path);
-		$this->_data[$this->_current]['ext'] = $this->ext($path);
+		$this->_data[$this->_current]['type'] = self::mimeType($path);
+		$this->_data[$this->_current]['ext'] = self::ext($path);
 
 		// Validate everything
 		if ($this->_validates(true)) {
@@ -729,7 +734,7 @@ class Uploader {
 
 		if (copy($path, $dest)) {
 			$this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
-			$this->_data[$this->_current]['filesize'] = $this->bytes(filesize($path));
+			$this->_data[$this->_current]['filesize'] = self::bytes(filesize($path));
 
 			if ($options['delete']) {
 				@unlink($path);
@@ -766,8 +771,8 @@ class Uploader {
 		$this->_current = basename($url);
 		$this->_data[$this->_current]['name'] = $this->_current;
 		$this->_data[$this->_current]['path'] = $url;
-		$this->_data[$this->_current]['type'] = $this->mimeType($url);
-		$this->_data[$this->_current]['ext'] = $this->ext($url);
+		$this->_data[$this->_current]['type'] = self::mimeType($url);
+		$this->_data[$this->_current]['ext'] = self::ext($url);
 		
 		// Validate everything
 		if (!$this->_validates(true)) {
@@ -780,7 +785,7 @@ class Uploader {
 
 		if (file_put_contents($dest, $Http->request($url))) {
 			$this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
-			$this->_data[$this->_current]['filesize'] = $this->bytes(filesize($dest));
+			$this->_data[$this->_current]['filesize'] = self::bytes(filesize($dest));
 
 			if ($this->_data[$this->_current]['group'] == 'image') {
 				$dimensions = $this->dimensions($dest);
@@ -803,18 +808,19 @@ class Uploader {
 	 * @access public
 	 * @param string $path
 	 * @return string
+	 * @static
 	 */
-	public function mimeType($path) {
+	public static function mimeType($path) {
 		if (function_exists('mime_content_type') && is_file($path)) {
 			return mime_content_type($path);
 		}
 
-		$ext = $this->ext($path);
+		$ext = self::ext($path);
 		$type = null;
 
-		foreach ($this->_mimeTypes as $group => $mimes) {
+		foreach (self::$_mimeTypes as $group => $mimes) {
 			if (in_array($ext, array_keys($mimes))) {
-				$type = $this->_mimeTypes[$group][$ext];
+				$type = self::$_mimeTypes[$group][$ext];
 				break;
 			}
 		}
@@ -1114,8 +1120,8 @@ class Uploader {
 			$this->_current = $file;
 			
 			$current =& $this->_data[$this->_current];
-			$current['filesize'] = $this->bytes($current['size']);
-			$current['ext'] = $this->ext($current['name']);
+			$current['filesize'] = self::bytes($current['size']);
+			$current['ext'] = self::ext($current['name']);
 		} else {
 			return false;
 		}
@@ -1267,7 +1273,7 @@ class Uploader {
 		// AJAX uploading
 		} else if (isset($_GET[$this->ajaxField])) {
 			$name = $_GET[$this->ajaxField];
-			$mime = $this->mimeType($name);
+			$mime = self::mimeType($name);
 
 			if ($mime) {
 				$input = fopen("php://input", "r");
@@ -1340,7 +1346,7 @@ class Uploader {
 	 */
 	protected function _validates($import = false) {
 		$current = $this->_data[$this->_current];
-		$grouping = $this->checkMimeType($current['ext'], $current['type']);
+		$grouping = self::checkMimeType($current['ext'], $current['type']);
 
 		if ($grouping) {
 			$this->_data[$this->_current]['group'] = $grouping;

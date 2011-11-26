@@ -10,7 +10,8 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
-App::import('Component', array('Uploader.Uploader', 'Uploader.S3Transfer'));
+App::import('Component', 'Uploader.S3Transfer');
+App::import('Vendor', 'Uploader.Uploader');
 
 class AttachmentBehavior extends ModelBehavior {
 
@@ -69,12 +70,12 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @uses UploaderComponent, S3TransferComponent
-	 * @param object $Model
+	 * @param Model $model
 	 * @param array $settings
 	 * @return boolean
 	 */
-	public function setup($Model, array $settings = array()) {
-		$this->Uploader = new UploaderComponent();
+	public function setup($model, array $settings = array()) {
+		$this->uploader = new Uploader();
 		$this->S3Transfer = new S3TransferComponent();
 
 		if (!empty($settings) && is_array($settings)) {
@@ -83,7 +84,7 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
 
-				$this->_attachments[$Model->alias][$field] = $attachment + $this->_defaults;
+				$this->_attachments[$model->alias][$field] = $attachment + $this->_defaults;
 			}
 		}
 	}
@@ -92,22 +93,23 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Deletes any files that have been attached to this model.
 	 *
 	 * @access public
-	 * @param object $Model
+	 * @param Model $model
 	 * @return boolean
 	 */
-	public function beforeDelete($Model) {
-		if (empty($Model->id)) {
+	public function beforeDelete($model) {
+		if (empty($model->id)) {
 			return false;
 		}
 
-		$data = $Model->read(null, $Model->id);
+		$data = $model->read(null, $model->id);
 
-		if (!empty($data[$Model->alias])) {
-			foreach ($data[$Model->alias] as $field => $value) {
+		if (!empty($data[$model->alias])) {
+			foreach ($data[$model->alias] as $field => $value) {
 				if (strpos($value, self::AS3_DOMAIN) !== false) {
 					$this->S3Transfer->delete($value);
+					
 				} else {
-					if (!$this->Uploader->delete($value)) {
+					if (!$this->uploader->delete($value)) {
 						@unlink($value);
 					}
 				}
@@ -121,23 +123,20 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Before saving the data, try uploading the image, if successful save to database.
 	 *
 	 * @access public
-	 * @param object $Model
+	 * @param Model $model
 	 * @return boolean
 	 */
-	public function beforeSave($Model) {
-		if (empty($Model->data[$Model->alias])) {
+	public function beforeSave($model) {
+		if (empty($model->data[$model->alias])) {
 			return true;
 		}
 
-		$this->Uploader->initialize($Model);
-		$this->Uploader->startup($Model);
-
-		foreach ($Model->data[$Model->alias] as $field => $file) {
-			if (empty($this->_attachments[$Model->alias][$field])) {
+		foreach ($model->data[$model->alias] as $field => $file) {
+			if (empty($this->_attachments[$model->alias][$field])) {
 				continue;
 			}
 
-			$attachment = $this->_attachments[$Model->alias][$field];
+			$attachment = $this->_attachments[$model->alias][$field];
 			$options = array();
 			$s3 = false;
 			
@@ -150,7 +149,7 @@ class AttachmentBehavior extends ModelBehavior {
 				if ($attachment['stopSave']) {
 					return false;
 				} else {
-					unset($Model->data[$Model->alias][$attachment['dbColumn']]);
+					unset($model->data[$model->alias][$attachment['dbColumn']]);
 					continue;
 				}
 			}
@@ -166,7 +165,7 @@ class AttachmentBehavior extends ModelBehavior {
 						$this->S3Transfer->useSsl = (bool)$attachment['s3']['useSsl'];
 					}
 
-					$this->S3Transfer->startup($Model);
+					$this->S3Transfer->startup($model);
 					$s3 = true;
 				} else {
 					trigger_error('Uploader.Attachment::beforeSave(): To use the S3 transfer, you must supply an accessKey, secretKey and bucket.', E_USER_WARNING);
@@ -175,15 +174,15 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Uploader
 			if (!empty($attachment['baseDir'])) {
-				$this->Uploader->baseDir = $attachment['baseDir'];
+				$this->uploader->baseDir = $attachment['baseDir'];
 			}
 
 			if (!empty($attachment['uploadDir'])) {
-				$this->Uploader->uploadDir = $attachment['uploadDir'];
+				$this->uploader->uploadDir = $attachment['uploadDir'];
 			}
 
 			if (is_numeric($attachment['maxNameLength']) && $attachment['maxNameLength'] > 0) {
-				$this->Uploader->maxNameLength = $attachment['maxNameLength'];
+				$this->uploader->maxNameLength = $attachment['maxNameLength'];
 			}
 
 			if (!empty($attachment['overwrite'])) {
@@ -198,7 +197,7 @@ class AttachmentBehavior extends ModelBehavior {
 			if ($upload = $this->upload($field, $attachment, $options)) {
 				$basePath = ($s3) ? $this->S3Transfer->transfer($upload['path']) : $upload['path'];
 
-				$Model->data[$Model->alias][$attachment['dbColumn']] = $basePath;
+				$model->data[$model->alias][$attachment['dbColumn']] = $basePath;
 				$this->_attached[$field][$attachment['dbColumn']] = $basePath;
 
 				// Apply transformations
@@ -209,31 +208,31 @@ class AttachmentBehavior extends ModelBehavior {
 							unset($options['method']);
 						}
 
-						if (!method_exists($this->Uploader, $method)) {
-							trigger_error('Uploader.Attachment::beforeSave(): "'. $method .'" is not a defined transformation method.', E_USER_WARNING);
+						if (!method_exists($this->uploader, $method)) {
+							trigger_error(sprintf('Uploader.Attachment::beforeSave(): "%s" is not a defined transformation method.', $method), E_USER_WARNING);
 							return false;
 						}
 
-						if ($path = $this->Uploader->{$method}($options)) {
+						if ($path = $this->uploader->{$method}($options)) {
 							if ($s3) {
 								$path = $this->S3Transfer->transfer($path);
 							}
 
-							$Model->data[$Model->alias][$options['dbColumn']] = $path;
+							$model->data[$model->alias][$options['dbColumn']] = $path;
 							$this->_attached[$field][$options['dbColumn']] = $path;
 
 							// Delete original if same column name and are not the same file
 							// Which can happen if 'append' => '' is defined in the options
-							if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $Model->data[$Model->alias][$attachment['dbColumn']]) {
+							if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $model->data[$model->alias][$attachment['dbColumn']]) {
 								if ($s3) {
 									$this->S3Transfer->delete($basePath);
 								} else {
-									$this->Uploader->delete($basePath);
+									$this->uploader->delete($basePath);
 								}
 							}
 						} else {
 							$this->deleteAttached($field);
-							$Model->validationErrors[$field] = sprintf(__('An error occured during "%s" transformation!', true), $method);
+							$model->validationErrors[$field] = sprintf(__('An error occured during "%s" transformation!', true), $method);
 							return false;
 						}
 					}
@@ -242,12 +241,12 @@ class AttachmentBehavior extends ModelBehavior {
 				if (!empty($attachment['metaColumns'])) {
 					foreach ($attachment['metaColumns'] as $field => $dbCol) {
 						if (isset($upload[$field])) {
-							$Model->data[$Model->alias][$dbCol] = $upload[$field];
+							$model->data[$model->alias][$dbCol] = $upload[$field];
 						}
 					}
 				}
 			} else {
-				$Model->validationErrors[$field] = __('There was an error attaching this file!', true);
+				$model->validationErrors[$field] = __('There was an error attaching this file!', true);
 				return false;
 			}
 		}
@@ -268,7 +267,7 @@ class AttachmentBehavior extends ModelBehavior {
 				if (strpos($path, self::AS3_DOMAIN) !== false) {
 					$this->S3Transfer->delete($path);
 				} else {
-					$this->Uploader->delete($path);
+					$this->uploader->delete($path);
 				}
 			}
 		}
@@ -301,14 +300,14 @@ class AttachmentBehavior extends ModelBehavior {
 	public function upload($field, $attachment, $options) {
 		if (!empty($attachment['importFrom'])) {
 			if (preg_match('/(http|https)/', $attachment['importFrom'])) {
-				return $this->Uploader->importRemote($attachment['importFrom'], $options);
+				return $this->uploader->importRemote($attachment['importFrom'], $options);
 
 			} else {
-				return $this->Uploader->import($attachment['importFrom'], $options);
+				return $this->uploader->import($attachment['importFrom'], $options);
 			}
 		}
 
-		return $this->Uploader->upload($field, $options);
+		return $this->uploader->upload($field, $options);
 	}
 
 }
