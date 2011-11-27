@@ -27,6 +27,14 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @var array
 	 */
 	protected $_attachments = array();
+	
+	/**
+	 * Mapping of database columns to form fields.
+	 * 
+	 * @access protected
+	 * @var array
+	 */
+	protected $_columns = array();
 
 	/**
 	 * The default settings for attachments.
@@ -71,8 +79,18 @@ class AttachmentBehavior extends ModelBehavior {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
+				
+				$attachment = $attachment + $this->_defaults;
+				$columns = array($attachment['dbColumn'] => $field);
+				
+				if (!empty($attachment['transforms'])) {
+					foreach ($attachment['transforms'] as $transform) {
+						$columns[$transform['dbColumn']] = $field;
+					}
+				}
 
-				$this->_attachments[$model->alias][$field] = $attachment + $this->_defaults;
+				$this->_attachments[$model->alias][$field] = $attachment;
+				$this->_columns[$model->alias] = $columns;
 			}
 		}
 	}
@@ -90,16 +108,18 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		$data = $model->read(null, $model->id);
+		$columns = $this->_columns[$model->alias];
 
 		if (!empty($data[$model->alias])) {
-			foreach ($data[$model->alias] as $field => $value) {
-				if (strpos($value, self::AS3_DOMAIN) !== false && !empty($this->_attachments[$model->alias][$field]['s3'])) {
-					$s3 = $this->_attachments[$model->alias][$field]['s3'];
-					
-					$this->getS3($s3)->deleteObject($s3['bucket'], basename($value));
-					
-				} else {
-					@unlink($value);
+			foreach ($data[$model->alias] as $column => $value) {
+				if (isset($columns[$column])) {
+					$attachment = $this->_attachments[$model->alias][$columns[$column]];
+
+					if (strpos($value, self::AS3_DOMAIN) !== false && !empty($attachment['s3'])) {
+						$this->getS3($attachment['s3'])->deleteObject($attachment['s3']['bucket'], basename($value));
+					} else {
+						$this->getUploader($attachment, true)->delete($value);
+					}
 				}
 			}
 		}
@@ -256,9 +276,10 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 
 	 * @access public
 	 * @param array $settings
+	 * @param boolean $exit
 	 * @return Uploader 
 	 */
-	public function getUploader(array $settings) {
+	public function getUploader(array $settings, $exit = false) {
 		$clean = array();
 		
 		if (!empty($settings['baseDir'])) {
@@ -273,7 +294,7 @@ class AttachmentBehavior extends ModelBehavior {
 			$clean['maxNameLength'] = $settings['maxNameLength'];
 		}
 		
-		return new Uploader($clean);
+		return new Uploader($clean, $exit);
 	}
 
 	/**

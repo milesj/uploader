@@ -11,7 +11,6 @@
  */
 
 App::import('Vendor', 'Uploader.Uploader');
-Configure::load('Uploader.config');
 
 class FileValidationBehavior extends ModelBehavior {
 
@@ -177,9 +176,7 @@ class FileValidationBehavior extends ModelBehavior {
 				$ext = Uploader::ext($field['name']);
 			}
 
-			if (!Uploader::checkMimeType($ext, $field['type']) || (!empty($allowed) && !in_array($ext, $allowed))) {
-				return false;
-			}
+			return (Uploader::checkMimeType($ext, $field['type']) || in_array($ext, $allowed));
 		}
 
 		return true;
@@ -234,10 +231,10 @@ class FileValidationBehavior extends ModelBehavior {
 								$set['rule'] = array($rule);
 							break;
 							case 'extension':
-								$set['rule'] = array($rule, (array)$setting['value']);
+								$set['rule'] = array($rule, (array) $setting['value']);
 							break;
 							default:
-								$set['rule'] = array($rule, (int)$setting['value']);
+								$set['rule'] = array($rule, (int) $setting['value']);
 							break;
 						}
 					} else {

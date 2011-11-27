@@ -190,13 +190,18 @@ class Uploader {
 	 *
 	 * @access public
 	 * @param array $settings
+	 * @param boolean $exit
 	 * @return void
 	 */
-	public function __construct(array $settings = array()) {
+	public function __construct(array $settings = array(), $exit = false) {
 		if (!empty($settings)) {
 			foreach ($settings as $key => $value) {
 				$this->{$key} = $value;
 			}
+		}
+		
+		if ($exit) {
+			return;
 		}
 		
 		if (!$this->_loadExtension('gd')) {
