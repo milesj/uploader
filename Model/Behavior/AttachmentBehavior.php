@@ -10,7 +10,7 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
-App::import('Component', 'Uploader.S3Transfer');
+App::import('Vendor', 'Uploader.S3');
 App::import('Vendor', 'Uploader.Uploader');
 
 class AttachmentBehavior extends ModelBehavior {
@@ -19,14 +19,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * AS3 domain snippet.
 	 */
 	const AS3_DOMAIN = 's3.amazonaws.com';
-
-	/**
-	 * Files that have been uploaded or attached; used for rollback functions.
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $_attached = array();
 
 	/**
 	 * All user defined attachments; images => model.
@@ -64,21 +56,17 @@ class AttachmentBehavior extends ModelBehavior {
 			'filesize' => ''
 		)
 	);
-
+	
 	/**
 	 * Initialize uploader and save attachments.
 	 *
 	 * @access public
-	 * @uses UploaderComponent, S3TransferComponent
 	 * @param Model $model
 	 * @param array $settings
-	 * @return boolean
+	 * @return void
 	 */
 	public function setup($model, array $settings = array()) {
-		$this->uploader = new Uploader();
-		$this->S3Transfer = new S3TransferComponent();
-
-		if (!empty($settings) && is_array($settings)) {
+		if (!empty($settings)) {
 			foreach ($settings as $field => $attachment) {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
@@ -105,13 +93,13 @@ class AttachmentBehavior extends ModelBehavior {
 
 		if (!empty($data[$model->alias])) {
 			foreach ($data[$model->alias] as $field => $value) {
-				if (strpos($value, self::AS3_DOMAIN) !== false) {
-					$this->S3Transfer->delete($value);
+				if (strpos($value, self::AS3_DOMAIN) !== false && !empty($this->_attachments[$model->alias][$field]['s3'])) {
+					$s3 = $this->_attachments[$model->alias][$field]['s3'];
+					
+					$this->getS3($s3)->deleteObject($s3['bucket'], basename($value));
 					
 				} else {
-					if (!$this->uploader->delete($value)) {
-						@unlink($value);
-					}
+					@unlink($value);
 				}
 			}
 		}
@@ -135,16 +123,17 @@ class AttachmentBehavior extends ModelBehavior {
 			if (empty($this->_attachments[$model->alias][$field])) {
 				continue;
 			}
-
-			$attachment = $this->_attachments[$model->alias][$field];
-			$options = array();
-			$s3 = false;
 			
+			$attachment = $this->_attachments[$model->alias][$field];
+			$uploaded = array();
+			$data = array();
+			
+			// Not a form upload, so lets treat it as an import
 			if (is_string($file) && !empty($file)) {
 				$attachment['importFrom'] = $file;
 			}
 
-			// Should we continue if a file error'd during upload?
+			// Should we continue if a file threw errors during upload?
 			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || (is_string($file) && empty($attachment['importFrom']))) {
 				if ($attachment['stopSave']) {
 					return false;
@@ -154,99 +143,72 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 			}
 
-			// Amazon S3
-			if (!empty($attachment['s3'])) {
-				if (!empty($attachment['s3']['bucket']) && !empty($attachment['s3']['accessKey']) && !empty($attachment['s3']['secretKey'])) {
-					$this->S3Transfer->bucket = $attachment['s3']['bucket'];
-					$this->S3Transfer->accessKey = $attachment['s3']['accessKey'];
-					$this->S3Transfer->secretKey = $attachment['s3']['secretKey'];
+			// Get instances
+			$this->uploader = $this->getUploader($attachment);
+			$this->s3 = $this->getS3($attachment['s3']);
 
-					if (isset($attachment['s3']['useSsl'])) {
-						$this->S3Transfer->useSsl = (bool)$attachment['s3']['useSsl'];
-					}
-
-					$this->S3Transfer->startup($model);
-					$s3 = true;
-				} else {
-					trigger_error('Uploader.Attachment::beforeSave(): To use the S3 transfer, you must supply an accessKey, secretKey and bucket.', E_USER_WARNING);
-				}
-			}
-
-			// Uploader
-			if (!empty($attachment['baseDir'])) {
-				$this->uploader->baseDir = $attachment['baseDir'];
-			}
-
-			if (!empty($attachment['uploadDir'])) {
-				$this->uploader->uploadDir = $attachment['uploadDir'];
-			}
-
-			if (is_numeric($attachment['maxNameLength']) && $attachment['maxNameLength'] > 0) {
-				$this->uploader->maxNameLength = $attachment['maxNameLength'];
-			}
-
-			if (!empty($attachment['overwrite'])) {
-				$options['overwrite'] = $attachment['overwrite'];
-			}
-
-			if (!empty($attachment['name'])) {
-				$options['name'] = $attachment['name'];
-			}
+			// Gather options for uploading
+			$bucket = isset($attachment['s3']['bucket']) ? $attachment['s3']['bucket'] : null;
+			$baseOptions = array(
+				'overwrite' => $attachment['overwrite'],
+				'name' => $attachment['name']
+			);
 
 			// Upload or import the file and attach to model data
-			if ($upload = $this->upload($field, $attachment, $options)) {
-				$basePath = ($s3) ? $this->S3Transfer->transfer($upload['path']) : $upload['path'];
+			if ($uploadResponse = $this->upload($field, $attachment, $baseOptions)) {
+				$basePath = $this->transfer($uploadResponse['path'], $bucket);
 
-				$model->data[$model->alias][$attachment['dbColumn']] = $basePath;
-				$this->_attached[$field][$attachment['dbColumn']] = $basePath;
+				$data[$attachment['dbColumn']] = $basePath;
+				$uploaded[$attachment['dbColumn']] = $basePath;
 
-				// Apply transformations
+				// Apply image transformations
 				if (!empty($attachment['transforms'])) {
-					foreach ($attachment['transforms'] as $method => $options) {
-						if (isset($options['method'])) {
-							$method = $options['method'];
-							unset($options['method']);
-						}
+					foreach ($attachment['transforms'] as $transformOptions) {
+						$method = $transformOptions['method'];
 
 						if (!method_exists($this->uploader, $method)) {
 							trigger_error(sprintf('Uploader.Attachment::beforeSave(): "%s" is not a defined transformation method.', $method), E_USER_WARNING);
 							return false;
 						}
 
-						if ($path = $this->uploader->{$method}($options)) {
-							if ($s3) {
-								$path = $this->S3Transfer->transfer($path);
-							}
+						if ($transformPath = $this->uploader->{$method}($transformOptions)) {
+							$transformPath = $this->transfer($transformPath, $bucket);
 
-							$model->data[$model->alias][$options['dbColumn']] = $path;
-							$this->_attached[$field][$options['dbColumn']] = $path;
+							$data[$transformOptions['dbColumn']] = $transformPath;
+							$uploaded[$transformOptions['dbColumn']] = $transformPath;
 
 							// Delete original if same column name and are not the same file
 							// Which can happen if 'append' => '' is defined in the options
-							if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $model->data[$model->alias][$attachment['dbColumn']]) {
-								if ($s3) {
-									$this->S3Transfer->delete($basePath);
+							if ($transformOptions['dbColumn'] == $attachment['dbColumn'] && $basePath != $model->data[$model->alias][$attachment['dbColumn']]) {
+								if ($this->s3 !== null) {
+									$this->s3->deleteObject($bucket, basename($transformPath));
 								} else {
 									$this->uploader->delete($basePath);
 								}
 							}
 						} else {
-							$this->deleteAttached($field);
-							$model->validationErrors[$field] = sprintf(__('An error occured during "%s" transformation!', true), $method);
+							// Rollback attached files
+							$this->deleteAttached($uploaded, $bucket);
+							
+							$model->validationErrors[$field] = __d('uploader', 'An error occured during "%s" transformation!', $method);
 							return false;
 						}
 					}
 				}
 
+				// Apply meta columns
 				if (!empty($attachment['metaColumns'])) {
-					foreach ($attachment['metaColumns'] as $field => $dbCol) {
-						if (isset($upload[$field])) {
-							$model->data[$model->alias][$dbCol] = $upload[$field];
+					foreach ($attachment['metaColumns'] as $field => $column) {
+						if (isset($uploadResponse[$field])) {
+							$data[$column] = $uploadResponse[$field];
 						}
 					}
 				}
+				
+				$model->data[$model->alias] = $data + $model->data[$model->alias];
+				
 			} else {
-				$model->validationErrors[$field] = __('There was an error attaching this file!', true);
+				$model->validationErrors[$field] = __d('uploader', 'There was an error attaching this file!');
 				return false;
 			}
 		}
@@ -258,34 +220,60 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Delete all attached images if attaching fails midway.
 	 *
 	 * @access public
-	 * @param string $file
+	 * @param array $files
+	 * @param string $bucket
 	 * @return void
 	 */
-	public function deleteAttached($file) {
-		if (!empty($this->_attached[$file])) {
-			foreach ($this->_attached[$file] as $column => $path) {
-				if (strpos($path, self::AS3_DOMAIN) !== false) {
-					$this->S3Transfer->delete($path);
-				} else {
-					$this->uploader->delete($path);
-				}
+	public function deleteAttached($files, $bucket) {
+		foreach ($files as $column => $path) {
+			if (strpos($path, self::AS3_DOMAIN) !== false) {
+				$this->s3->deleteObject($bucket, basename($path));
+			} else {
+				$this->uploader->delete($path);
 			}
 		}
 	}
-
+	
 	/**
-	 * Applies dynamic settings to an attachment.
-	 *
+	 * Return an S3 instance.
+	 * 
 	 * @access public
-	 * @param string $model
-	 * @param string $file
 	 * @param array $settings
-	 * @return void
+	 * @return S3 
 	 */
-	public function update($model, $file, $settings) {
-		if (isset($this->_attachments[$model][$file])) {
-			$this->_attachments[$model][$file] = $settings + $this->_attachments[$model][$file];
+	public function getS3(array $settings) {
+		if (isset($settings['accessKey']) && isset($settings['accessKey'])) {
+			$ssl = isset($settings['useSsl']) ? $settings['useSsl'] : false;
+			
+			return new S3($settings['accessKey'], $settings['secretKey'], $ssl);
 		}
+		
+		return null;
+	}
+	
+	/**
+	 * Return an Uploader instance.
+	 * 
+	 * @access public
+	 * @param array $settings
+	 * @return Uploader 
+	 */
+	public function getUploader(array $settings) {
+		$clean = array();
+		
+		if (!empty($settings['baseDir'])) {
+			$clean['baseDir'] = $settings['baseDir'];
+		}
+
+		if (!empty($settings['uploadDir'])) {
+			$clean['uploadDir'] = $settings['uploadDir'];
+		}
+
+		if (is_numeric($settings['maxNameLength']) && $settings['maxNameLength'] > 0) {
+			$clean['maxNameLength'] = $settings['maxNameLength'];
+		}
+		
+		return new Uploader($clean);
 	}
 
 	/**
@@ -308,6 +296,28 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		return $this->uploader->upload($field, $options);
+	}
+
+	/**
+	 * Transfer an object to the S3 storage bucket.
+	 *
+	 * @access public
+	 * @param string $path
+	 * @param string $bucket
+	 * @return string
+	 */
+	public function transfer($path, $bucket) {
+		if ($this->s3 !== null) {
+			$name = basename($path);
+
+			if ($this->s3->putObjectFile($path, $bucket, $name, S3::ACL_PUBLIC_READ)) {
+				$this->uploader->delete($path);
+				
+				return sprintf('http://%s.s3.amazonaws.com/%s', $bucket, $name);
+			}
+		}
+		
+		return $path;
 	}
 
 }
