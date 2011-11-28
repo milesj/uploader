@@ -799,6 +799,10 @@ class Uploader {
 		if (function_exists('mime_content_type') && file_exists($path)) {
 			return mime_content_type($path);
 		}
+		
+		if (empty(self::$_mimeTypes)) {
+			self::$_mimeTypes = Configure::read('Uploader.mimeTypes');
+		}
 
 		$ext = self::ext($path);
 		$type = null;
@@ -1020,7 +1024,7 @@ class Uploader {
 				} else if (in_array($key, array('maxFileSize', 'maxNameLength'))) {
 					$this->{$key} = (int) $value;
 					
-				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir'))) {
+				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir', 'ajaxField'))) {
 					$this->{$key} = (string) $value;
 				}
 			}

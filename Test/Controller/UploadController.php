@@ -8,6 +8,8 @@
  * @link        http://milesj.me/resources/script/uploader-plugin
  */
 
+App::import('Vendor', 'Uploader.Uploader');
+
 /**
  * Custom global function to handle filename formatting; works within the component or behavior.
  * Simply pass the function name to the the name option.
@@ -22,13 +24,16 @@ function uploaderFilename($name, $field, $data) {
 	return md5($name);
 }
 
+/**
+ * Test controller.
+ */
 class UploadController extends AppController {
 
 	/**
 	 * Include plugin.
 	 */
 	public $uses = array('Upload');
-	public $components = array('Uploader.Uploader', 'Security');
+	public $components = array('Security');
 
 	/**
 	 * Test case for uploading an image with no transformations.
@@ -51,9 +56,9 @@ class UploadController extends AppController {
 
 		debug($this->Uploader->dimensions($this->testPath));
 
-		debug($this->Uploader->mimeType($this->testPath));
+		debug(Uploader::mimeType($this->testPath));
 
-		debug($this->Uploader->ext($this->testPath));
+		debug(Uploader::ext($this->testPath));
 
 		$this->set('title_for_layout', 'Upload: Meta Data');
 		$this->render('index');
@@ -84,7 +89,7 @@ class UploadController extends AppController {
 			if ($data = $this->Uploader->upload('file', array('name' => 'flip', 'overwrite' => true))) {
 				debug($data);
 
-				$flip = $this->Uploader->flip(array('dir' => UploaderComponent::DIR_BOTH));
+				$flip = $this->Uploader->flip(array('dir' => Uploader::DIR_BOTH));
 				debug($flip);
 			}
 		}
@@ -230,7 +235,7 @@ class UploadController extends AppController {
 				$crop = $this->Uploader->crop(array('width' => 100, 'height' => 100));
 				debug($crop);
 
-				$flip = $this->Uploader->flip(array('dir' => UploaderComponent::DIR_BOTH));
+				$flip = $this->Uploader->flip(array('dir' => Uploader::DIR_BOTH));
 				debug($flip);
 			}
 		}
@@ -263,10 +268,10 @@ class UploadController extends AppController {
 	 * Set the test path.
 	 */
 	public function beforeFilter() {
-		// qqfile comes from the fileuploader.js script
-		// Customize for your application
-		$this->Uploader->ajaxField = 'qqfile';
-		
+		$this->Uploader = new Uploader(array(
+			'ajaxField' => 'qqfile'
+		));
+
 		$this->testPath = $this->Uploader->baseDir . $this->Uploader->uploadDir;
 	}
 
