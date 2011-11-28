@@ -292,8 +292,7 @@ class Uploader {
 			$size /= 1024;
 		}
 
-		$bytes = round($size, 0) .' '. $sizes[$total];
-		return $bytes;
+		return round($size, 0) . ' ' . $sizes[$total];
 	}
 
 	/**
@@ -304,7 +303,7 @@ class Uploader {
 	 */
 	public function checkDirectory() {
 		$uploadDir = trim($this->uploadDir, '/');
-		$finalDir = $this->formatPath($uploadDir .'/');
+		$finalDir = $this->formatPath($uploadDir . '/');
 
 		if (!file_exists($finalDir)) {
 			mkdir($finalDir, 0777, true);
@@ -424,7 +423,7 @@ class Uploader {
 			}
 		}
 
-		$append = '_cropped_'. $newWidth .'x'. $newHeight;
+		$append = '_cropped_' . $newWidth . 'x' . $newHeight;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -570,7 +569,7 @@ class Uploader {
 			break;
 		}
 
-		$append = '_flip_'. $adir;
+		$append = '_flip_' . $adir;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -647,7 +646,7 @@ class Uploader {
 			$name = $prepend . $name;
 		}
 
-		$name = $name .'.'. $ext;
+		$name = $name . '.' . $ext;
 		$name = trim($name, '/');
 
 		return $name;
@@ -891,12 +890,15 @@ class Uploader {
 			if (is_numeric($maxWidth) && empty($maxHeight)) {
 				$newWidth = $maxWidth;
 				$newHeight = round(($height / $width) * $maxWidth);
+				
 			} else if (is_numeric($maxHeight) && empty($maxWidth)) {
 				$newWidth = round(($width / $height) * $maxHeight);
 				$newHeight = $maxHeight;
+				
 			} else if (is_numeric($maxHeight) && is_numeric($maxWidth)) {
 				$newWidth = $maxWidth;
 				$newHeight = $maxHeight;
+				
 			} else {
 				return false;
 			}
@@ -904,7 +906,7 @@ class Uploader {
 
 		$newWidth = round($newWidth);
 		$newHeight = round($newHeight);
-		$append = '_'. $newWidth .'x'. $newHeight;
+		$append = '_' . $newWidth . 'x' . $newHeight;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -945,7 +947,7 @@ class Uploader {
 		$width = round($this->_data[$this->_current]['width'] * $options['percent']);
 		$height = round($this->_data[$this->_current]['height'] * $options['percent']);
 
-		$append = '_scaled_'. $width .'x'. $height;
+		$append = '_scaled_' . $width . 'x' . $height;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -1015,10 +1017,10 @@ class Uploader {
 				if ($key == 'scanFile') {
 					$this->{$key} = (bool) $value;
 					
-				} else if (in_array($key, array('maxFileSize', 'maxNameLength'))) {
+				} else if ($key == 'maxNameLength') {
 					$this->{$key} = (int) $value;
 					
-				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir', 'ajaxField'))) {
+				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir', 'ajaxField', 'maxFileSize'))) {
 					$this->{$key} = (string) $value;
 				}
 			}
@@ -1240,7 +1242,7 @@ class Uploader {
 	 */
 	protected function _loadExtension($name) {
 		if (!extension_loaded($name)) {
-			@dl((PHP_SHLIB_SUFFIX == 'dll' ? 'php_' : '') . $name .'.'. PHP_SHLIB_SUFFIX);
+			@dl((PHP_SHLIB_SUFFIX == 'dll' ? 'php_' : '') . $name . '.' . PHP_SHLIB_SUFFIX);
 		}
 
 		return extension_loaded($name);
@@ -1316,7 +1318,7 @@ class Uploader {
 	 */
 	protected function _returnData($data = '', $append = '', $explicit = false) {
 		if (!empty($data) && !empty($append)) {
-			$this->_data[$this->_current]['path_'. trim($append, '_')] = $data['target'];
+			$this->_data[$this->_current]['path_' . trim($append, '_')] = $data['target'];
 
 			chmod($data['target'], 0777);
 			$path = str_replace($this->baseDir, '/', $data['target']);
