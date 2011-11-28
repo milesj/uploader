@@ -10,8 +10,8 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
-App::import('Vendor', 'Uploader.S3');
-App::import('Vendor', 'Uploader.Uploader');
+App::uses('S3', 'Uploader/Vendor');
+App::uses('Uploader', 'Uploader/Vendor');
 
 class AttachmentBehavior extends ModelBehavior {
 
@@ -19,6 +19,10 @@ class AttachmentBehavior extends ModelBehavior {
 	 * AS3 domain snippet.
 	 */
 	const AS3_DOMAIN = 's3.amazonaws.com';
+	
+	public $uploader = null;
+	
+	public $s3 = null;
 
 	/**
 	 * All user defined attachments; images => model.
@@ -74,13 +78,15 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	public function setup($model, array $settings = array()) {
+		$this->uploader = new Uploader();
+		
 		if (!empty($settings)) {
 			foreach ($settings as $field => $attachment) {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
 				
-				$attachment = $attachment + $this->_defaults;
+				$attachment = array_merge_recursive($this->_defaults, $attachment);
 				$columns = array($attachment['dbColumn'] => $field);
 				
 				if (!empty($attachment['transforms'])) {
@@ -116,9 +122,13 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment = $this->_attachments[$model->alias][$columns[$column]];
 
 					if (strpos($value, self::AS3_DOMAIN) !== false && !empty($attachment['s3'])) {
-						$this->getS3($attachment['s3'])->deleteObject($attachment['s3']['bucket'], basename($value));
+						$this->s3 = $this->s3($attachment['s3']);
+						
+						if ($this->s3 !== null) {
+							$this->s3->deleteObject($attachment['s3']['bucket'], basename($value));
+						}
 					} else {
-						$this->getUploader($attachment, true)->delete($value);
+						$this->uploader->setup($attachment)->delete($value);
 					}
 				}
 			}
@@ -164,8 +174,8 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Get instances
-			$this->uploader = $this->getUploader($attachment);
-			$this->s3 = $this->getS3($attachment['s3']);
+			$this->uploader->setup($attachment);
+			$this->s3 = $this->s3($attachment['s3']);
 
 			// Gather options for uploading
 			$bucket = isset($attachment['s3']['bucket']) ? $attachment['s3']['bucket'] : null;
@@ -231,6 +241,9 @@ class AttachmentBehavior extends ModelBehavior {
 				$model->validationErrors[$field] = __d('uploader', 'There was an error attaching this file!');
 				return false;
 			}
+			
+			// Reset
+			$this->s3 = null;
 		}
 		
 		return true;
@@ -246,8 +259,9 @@ class AttachmentBehavior extends ModelBehavior {
 	 */
 	public function deleteAttached($files, $bucket) {
 		foreach ($files as $column => $path) {
-			if (strpos($path, self::AS3_DOMAIN) !== false) {
+			if (strpos($path, self::AS3_DOMAIN) !== false && $this->s3 !== null) {
 				$this->s3->deleteObject($bucket, basename($path));
+				
 			} else {
 				$this->uploader->delete($path);
 			}
@@ -261,40 +275,14 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param array $settings
 	 * @return S3 
 	 */
-	public function getS3(array $settings) {
-		if (isset($settings['accessKey']) && isset($settings['accessKey'])) {
+	public function s3(array $settings) {
+		if (isset($settings['accessKey']) && isset($settings['secretKey'])) {
 			$ssl = isset($settings['useSsl']) ? $settings['useSsl'] : false;
 			
-			return new S3($settings['accessKey'], $settings['secretKey'], $ssl);
+			return new S3($settings['accessKey'], $settings['secretKey'], (bool) $ssl);
 		}
 		
 		return null;
-	}
-	
-	/**
-	 * Return an Uploader instance.
-	 * 
-	 * @access public
-	 * @param array $settings
-	 * @param boolean $exit
-	 * @return Uploader 
-	 */
-	public function getUploader(array $settings, $exit = false) {
-		$clean = array();
-		
-		if (!empty($settings['baseDir'])) {
-			$clean['baseDir'] = $settings['baseDir'];
-		}
-
-		if (!empty($settings['uploadDir'])) {
-			$clean['uploadDir'] = $settings['uploadDir'];
-		}
-
-		if (is_numeric($settings['maxNameLength']) && $settings['maxNameLength'] > 0) {
-			$clean['maxNameLength'] = $settings['maxNameLength'];
-		}
-		
-		return new Uploader($clean, $exit);
 	}
 
 	/**
