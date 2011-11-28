@@ -168,7 +168,6 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 			
 			$attachment = $this->_attachments[$model->alias][$field];
-			$uploaded = array();
 			$data = array();
 			
 			// Not a form upload, so lets treat it as an import
@@ -186,78 +185,74 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 			}
 
-			// Get instances
+			// Setup instances
 			$this->uploader->setup($attachment);
 			$this->s3 = $this->s3($attachment['s3']);
 
-			// Gather options for uploading
-			$baseOptions = array(
+			// Upload or import the file and attach to model data
+			$uploadResponse = $this->upload($field, $attachment, array(
 				'overwrite' => $attachment['overwrite'],
 				'name' => $attachment['name']
-			);
-
-			// Upload or import the file and attach to model data
-			if ($uploadResponse = $this->upload($field, $attachment, $baseOptions)) {
-				$basePath = $this->transfer($uploadResponse['path']);
-
-				$data[$attachment['dbColumn']] = $basePath;
-				$uploaded[$attachment['dbColumn']] = $basePath;
-
-				// Apply image transformations
-				if (!empty($attachment['transforms'])) {
-					foreach ($attachment['transforms'] as $transformOptions) {
-						$method = $transformOptions['method'];
-
-						if (!method_exists($this->uploader, $method)) {
-							trigger_error(sprintf('Uploader.Attachment::beforeSave(): "%s" is not a defined transformation method.', $method), E_USER_WARNING);
-							return false;
-						}
-
-						if ($transformPath = $this->uploader->{$method}($transformOptions)) {
-							$transformPath = $this->transfer($transformPath);
-
-							$data[$transformOptions['dbColumn']] = $transformPath;
-							$uploaded[$transformOptions['dbColumn']] = $transformPath;
-
-							// Delete original if same column name and transform name are not the same file
-							if ($transformOptions['dbColumn'] == $attachment['dbColumn'] && $basePath != $data[$attachment['dbColumn']]) {
-								$this->delete($basePath);
-							}
-						} else {
-							// Rollback attached files
-							foreach ($uploaded as $column => $path) {
-								$this->delete($path);
-							}
-							
-							$model->validationErrors[$field] = __d('uploader', 'An error occured during "%s" transformation!', $method);
-							
-							return false;
-						}
-					}
-				}
-
-				// Apply meta columns
-				if (!empty($attachment['metaColumns'])) {
-					foreach ($attachment['metaColumns'] as $field => $column) {
-						if (isset($uploadResponse[$field])) {
-							$data[$column] = $uploadResponse[$field];
-						}
-					}
-				}
+			));
 			
-				// Reset
-				if ($this->s3 !== null) {
-					$this->delete($uploadResponse['path']);
-					$this->s3 = null;
+			if (empty($uploadResponse)) {
+				return $model->invalidate($field, __d('uploader', 'There was an error attaching this file!'));
+			}
+					
+			$basePath = $this->transfer($uploadResponse['path']);
+			$data[$attachment['dbColumn']] = $basePath;
+
+			// Apply image transformations
+			if (!empty($attachment['transforms'])) {
+				foreach ($attachment['transforms'] as $options) {
+					$method = $options['method'];
+
+					if (!method_exists($this->uploader, $method)) {
+						trigger_error(sprintf('Uploader.Attachment::beforeSave(): "%s" is not a defined transformation method.', $method), E_USER_WARNING);
+						return false;
+					}
+					
+					$transformResponse = $this->uploader->{$method}($options);
+					
+					// Rollback uploaded files if one fails
+					if (empty($transformResponse)) {
+						foreach ($data as $column => $path) {
+							$this->delete($path);
+						}
+
+						return $model->invalidate($field, __d('uploader', 'An error occured during "%s" transformation!', $method));
+					}
+					
+					// Transform successful
+					$data[$options['dbColumn']] = $this->transfer($transformResponse);
+
+					// Delete original if same column name and transform name are not the same file
+					if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $data[$options['dbColumn']]) {
+						$this->delete($basePath);
+					}
+				}
+			}
+
+			// Apply meta columns
+			if (!empty($attachment['metaColumns'])) {
+				foreach ($attachment['metaColumns'] as $field => $column) {
+					if (isset($uploadResponse[$field]) && !empty($column)) {
+						$data[$column] = $uploadResponse[$field];
+					}
+				}
+			}
+
+			// Reset S3 and delete original files
+			if ($this->s3 !== null) {
+				foreach ($this->s3->uploads as $path) {
+					$this->delete($path);
 				}
 				
-				$model->data[$model->alias] = $data + $model->data[$model->alias];
-				
-			} else {
-				$model->validationErrors[$field] = __d('uploader', 'There was an error attaching this file!');
-				
-				return false;
+				$this->s3 = null;
 			}
+
+			// Merge upload data with model data
+			$model->data[$model->alias] = $data + $model->data[$model->alias];
 		}
 		
 		return true;
@@ -293,6 +288,7 @@ class AttachmentBehavior extends ModelBehavior {
 		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $settings['useSsl']);
 		$s3->bucket = $settings['bucket'];
 		$s3->path = trim($settings['path'], '/') . '/';
+		$s3->uploads = array();
 		
 		return $s3;
 	}
@@ -335,6 +331,8 @@ class AttachmentBehavior extends ModelBehavior {
 		$bucket = $this->s3->bucket;
 
 		if ($this->s3->putObjectFile($this->uploader->formatPath($path), $bucket, $name, S3::ACL_PUBLIC_READ)) {
+			$this->s3->uploads[] = $path;
+			
 			return sprintf('http://%s.%s/%s', $bucket, self::AS3_DOMAIN, $name);
 		}
 		
