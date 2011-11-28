@@ -81,14 +81,6 @@ class Uploader {
 	const LOC_CENTER = 5;
 
 	/**
-	 * Should we allow file uploading for this request?
-	 *
-	 * @access public
-	 * @var boolean
-	 */
-	public $enableUpload = true;
-
-	/**
 	 * Max filesize using shorthand notation: http://php.net/manual/faq.using.php#faq.using.shorthandbytes
 	 *
 	 * @access public
@@ -135,14 +127,6 @@ class Uploader {
 	 * @var string
 	 */
 	public $uploadDir = 'files/uploads/';
-
-	/**
-	 * The final formatted directory.
-	 *
-	 * @access public
-	 * @var string
-	 */
-	public $finalDir;
 	
 	/**
 	 * The field name used during AJAX file uploading.
@@ -151,6 +135,38 @@ class Uploader {
 	 * @var string
 	 */
 	public $ajaxField = '';
+
+	/**
+	 * The current file being processed.
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $_current;
+
+	/**
+	 * Holds the current $_FILES data.
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $_data = array();
+
+	/**
+	 * Should we allow file uploading for this request?
+	 *
+	 * @access protected
+	 * @var boolean
+	 */
+	protected $_enabled = true;
+
+	/**
+	 * The final formatted directory.
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $_finalDir;
 
 	/**
 	 * The accepted file/mime types; imported from config.
@@ -162,61 +178,24 @@ class Uploader {
 	protected static $_mimeTypes = array();
 
 	/**
-	 * Holds the current $_FILES data.
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $_data = array();
-
-	/**
-	 * Holds the the logged uploads.
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $_logs = array();
-
-	/**
-	 * The current file being processed.
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $_current;
-
-	/**
 	 * Parse the $_FILES data and setup ini settings.
 	 *
 	 * @access public
 	 * @param array $settings
-	 * @param boolean $exit
 	 * @return void
 	 */
-	public function __construct(array $settings = array(), $exit = false) {
-		if (!empty($settings)) {
-			foreach ($settings as $key => $value) {
-				$this->{$key} = $value;
-			}
-		}
+	public function __construct(array $settings = array()) {
+		$this->setup($settings);
 		
-		if ($exit) {
-			return;
-		}
-		
-		if (!$this->_loadExtension('gd')) {
-			$this->enableUpload = false;
+		if ($this->_loadExtension('gd')) {
+			$this->_enabled = ini_get('file_uploads');
+		} else {
+			$this->_enabled = false;
 			trigger_error('Uploader.Uploader::__construct(): GD image library is not installed.', E_USER_WARNING);
 		}
-		
-		$this->_parseData();
-		
-		$fileUploads = ini_get('file_uploads');
 
-		if (!$fileUploads) {
-			$this->enableUpload = false;
-		} else if (!is_bool($this->enableUpload)) {
-			$this->enableUpload = $fileUploads;
+		if (!$this->_enabled) {
+			return false;
 		}
 
 		if (empty($this->maxFileSize)) {
@@ -252,6 +231,7 @@ class Uploader {
 		}
 
 		$this->baseDir = str_replace('\\', '/', $this->baseDir);
+		$this->_parseData();
 	}
 
 	/**
@@ -334,7 +314,7 @@ class Uploader {
 			chmod($finalDir, 0777);
 		}
 
-		$this->finalDir = $finalDir;
+		$this->_finalDir = $finalDir;
 	}
 
 	/**
@@ -390,7 +370,7 @@ class Uploader {
 	 * @return mixed
 	 */
 	public function crop(array $options = array(), $explicit = false) {
-		if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
+		if ($this->_data[$this->_current]['group'] != 'image' || !$this->_enabled) {
 			return false;
 		}
 
@@ -481,7 +461,7 @@ class Uploader {
 	public function delete($path) {
 		$path = $this->formatPath($path);
 
-		if (is_file($path)) {
+		if (file_exists($path)) {
 			clearstatcache();
 			return unlink($path);
 		}
@@ -554,7 +534,7 @@ class Uploader {
 	 * @return string
 	 */
 	public function flip(array $options = array(), $explicit = false) {
-		if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
+		if ($this->_data[$this->_current]['group'] != 'image' || !$this->_enabled) {
 			return false;
 		}
 
@@ -708,7 +688,7 @@ class Uploader {
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function import($path, array $options = array()) {
-		if (!$this->enableUpload || !is_file($path)) {
+		if (!$this->_enabled || !file_exists($path)) {
 			return false;
 		} else {
 			$this->checkDirectory();
@@ -765,7 +745,7 @@ class Uploader {
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function importRemote($url, array $options = array()) {
-		if (!$this->enableUpload) {
+		if (!$this->_enabled) {
 			return false;
 		} else {
 			$this->checkDirectory();
@@ -816,7 +796,7 @@ class Uploader {
 	 * @static
 	 */
 	public static function mimeType($path) {
-		if (function_exists('mime_content_type') && is_file($path)) {
+		if (function_exists('mime_content_type') && file_exists($path)) {
 			return mime_content_type($path);
 		}
 
@@ -896,7 +876,7 @@ class Uploader {
 	 * @return string
 	 */
 	public function resize(array $options, $explicit = false) {
-		if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
+		if ($this->_data[$this->_current]['group'] != 'image' || !$this->_enabled) {
 			return false;
 		}
 
@@ -959,7 +939,7 @@ class Uploader {
 	 * @return string
 	 */
 	public function scale(array $options = array(), $explicit = false) {
-		if ($this->_data[$this->_current]['group'] != 'image' || $this->enableUpload === false) {
+		if ($this->_data[$this->_current]['group'] != 'image' || !$this->_enabled) {
 			return false;
 		}
 
@@ -1001,17 +981,17 @@ class Uploader {
 		$append = isset($options['append']) ? $options['append'] : '';
 		$prepend = isset($options['prepend']) ? $options['prepend'] : '';
 		$name = $this->formatFilename($name, $append, $prepend);
-		$dest = $this->finalDir . $name;
+		$dest = $this->_finalDir . $name;
 
 		if (file_exists($dest) && !$overwrite) {
 			$no = 1;
 
-			while (file_exists($this->finalDir . $this->formatFilename($name, $append . $no, $prepend))) {
+			while (file_exists($this->_finalDir . $this->formatFilename($name, $append . $no, $prepend))) {
 				$no++;
 			}
 
 			$name = $this->formatFilename($name, $append . $no, $prepend);
-			$dest = $this->finalDir . $name;
+			$dest = $this->_finalDir . $name;
 		}
 
 		if ($update) {
@@ -1020,6 +1000,33 @@ class Uploader {
 		}
 
 		return $dest;
+	}
+	
+	/**
+	 * Apply settings to the class.
+	 * 
+	 * @access public
+	 * @param array $settings
+	 * @return Uploader 
+	 */
+	public function setup(array $settings) {
+		$settings = array_filter($settings);
+		
+		if (!empty($settings)) {
+			foreach ($settings as $key => $value) {
+				if ($key == 'scanFile') {
+					$this->{$key} = (bool) $value;
+					
+				} else if (in_array($key, array('maxFileSize', 'maxNameLength'))) {
+					$this->{$key} = (int) $value;
+					
+				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir'))) {
+					$this->{$key} = (string) $value;
+				}
+			}
+		}
+		
+		return $this;
 	}
 
 	/**
@@ -1114,7 +1121,7 @@ class Uploader {
 		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
 
 		if (!$options['multiple']) {
-			if (!$this->enableUpload) {
+			if (!$this->_enabled) {
 				return false;
 			} else {
 				$this->checkDirectory();
@@ -1185,7 +1192,7 @@ class Uploader {
 	 * @return array
 	 */
 	public function uploadAll(array $fields = array(), $overwrite = false, $rollback = true) {
-		if (!$this->enableUpload) {
+		if (!$this->_enabled) {
 			return false;
 		} else {
 			$this->checkDirectory();
@@ -1312,7 +1319,6 @@ class Uploader {
 	protected function _returnData($data = '', $append = '', $explicit = false) {
 		if (!empty($data) && !empty($append)) {
 			$this->_data[$this->_current]['path_'. trim($append, '_')] = $data['target'];
-			$this->_logs[$this->_current]['path_'. trim($append, '_')] = $data['target'];
 
 			chmod($data['target'], 0777);
 			$path = str_replace($this->baseDir, '/', $data['target']);
@@ -1337,7 +1343,6 @@ class Uploader {
 				}
 			}
 
-			$this->_logs[$this->_current] = $data;
 			return $data;
 		}
 	}
