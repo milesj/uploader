@@ -82,7 +82,7 @@ class Upload extends AppModel {
 					array(
 						'method' => 'scale',
 						'percent' => .5,
-						'dbColumn' => 'path'
+						'dbColumn' => 'path' // Overwrite the original image
 					)
 				)
 			)

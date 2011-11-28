@@ -11,7 +11,6 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
-App::uses('HttpSocket', 'Network/Http');
 Configure::load('Uploader.config');
 
 class Uploader {
@@ -473,7 +472,6 @@ class Uploader {
 	 * Get the dimensions of an image.
 	 *
 	 * @access public
-	 * @uses HttpSocket
 	 * @param string $path
 	 * @return array
 	 */
@@ -495,9 +493,7 @@ class Uploader {
 		}
 
 		if (empty($dim)) {
-			$Http = new HttpSocket();
-			$data = $Http->request($path);
-			$image = @imagecreatefromstring($data);
+			$image = @imagecreatefromstring(file_get_contents($path));
 
 			$dim = array(
 				'width' => @imagesx($image),
@@ -737,7 +733,6 @@ class Uploader {
 	 * Import a file from an external remote URL. Must be an absolute URL.
 	 *
 	 * @access public
-	 * @uses HttpSocket
 	 * @param string $path
 	 * @param array $options
 	 *		- name: What should the filename be changed to
@@ -766,9 +761,8 @@ class Uploader {
 
 		// Make a copy of the remote file
 		$dest = $this->setDestination($options['name'], $options['overwrite']);
-		$Http = new HttpSocket();
 
-		if (file_put_contents($dest, $Http->request($url))) {
+		if (file_put_contents($dest, file_get_contents($url))) {
 			$this->_data[$this->_current]['uploaded'] = date('Y-m-d H:i:s');
 			$this->_data[$this->_current]['filesize'] = self::bytes(filesize($dest));
 
