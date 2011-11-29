@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: CakePHP Uploader Plugin\n"
+"POT-Creation-Date: 2011-11-28 23:00-0800\n"
+"PO-Revision-Date: 2011-11-28 23:10-0800\n"
+"Last-Translator: Miles Johnson <mileswjohnson@gmail.com>\n"
+"Language-Team: Miles Johnson <mileswjohnson@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: English\n"
+"X-Poedit-Country: UNITED STATES\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: Model/Behavior/AttachmentBehavior.php:199
+msgid "There was an error uploading this file, please try again."
+msgstr ""
+
+#: Model/Behavior/AttachmentBehavior.php:223
+msgid "An error occured during image %s transformation."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:34
+msgid "Your image width is too small; minimum width %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:38
+msgid "Your image height is too small; minimum height %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:42
+msgid "Your image width is too large; maximum width %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:46
+msgid "Your image height is too large; maximum height %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:50
+msgid "Your filesize is too large; maximum size %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:54
+msgid "Your file type is not allowed; allowed types: %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:58
+msgid "This file is required."
+msgstr ""
+

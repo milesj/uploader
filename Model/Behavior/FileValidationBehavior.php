@@ -31,31 +31,31 @@ class FileValidationBehavior extends ModelBehavior {
 	protected $_validations = array(
 		'minWidth' => array(
 			'rule' => array('minWidth'),
-			'message' => 'Your image width is too small'
+			'message' => 'Your image width is too small; minimum width %s.'
 		),
 		'minHeight' => array(
 			'rule' => array('minHeight'),
-			'message' => 'Your image height is too small'
+			'message' => 'Your image height is too small; minimum height %s.'
 		),
 		'maxWidth' => array(
 			'rule' => array('maxWidth'),
-			'message' => 'Your image width is too large'
+			'message' => 'Your image width is too large; maximum width %s.'
 		),
 		'maxHeight' => array(
 			'rule' => array('maxHeight'),
-			'message' => 'Your image height is too large'
+			'message' => 'Your image height is too large; maximum height %s.'
 		),
 		'filesize' => array(
 			'rule' => array('filesize'),
-			'message' => 'Your filesize is too large'
+			'message' => 'Your filesize is too large; maximum size %s.'
 		),
 		'extension' => array(
 			'rule' => array('extension'),
-			'message' => 'Your file type is not allowed'
+			'message' => 'Your file type is not allowed; allowed types: %s.'
 		),
 		'required' => array(
 			'rule' => array('required'),
-			'message' => 'This file is required'
+			'message' => 'This file is required.'
 		)
 	);
 
@@ -220,6 +220,7 @@ class FileValidationBehavior extends ModelBehavior {
 
 				foreach ($rules as $rule => $setting) {
 					$set = $this->_validations[$rule];
+					$arg = '';
 
 					if (is_array($setting) && !isset($setting[0])) {
 						if (!empty($setting['error'])) {
@@ -231,14 +232,17 @@ class FileValidationBehavior extends ModelBehavior {
 								$set['rule'] = array($rule);
 							break;
 							case 'extension':
-								$set['rule'] = array($rule, (array) $setting['value']);
+								$arg = (array) $setting['value'];
+								$set['rule'] = array($rule, $arg);
 							break;
 							default:
-								$set['rule'] = array($rule, (int) $setting['value']);
+								$arg = (int) $setting['value'];
+								$set['rule'] = array($rule, $arg);
 							break;
 						}
 					} else {
 						$set['rule'] = array($rule, $setting);
+						$arg = $setting;
 					}
 
 					if (isset($rules['required'])) {
@@ -248,7 +252,12 @@ class FileValidationBehavior extends ModelBehavior {
 							$set['allowEmpty'] = !(bool) $rules['required'];
 						}
 					}
-
+						
+					if (is_array($arg)) {
+						$arg = implode(', ', $arg);
+					}
+					
+					$set['message'] = __d('uploader', $set['message'], $arg);
 					$validations[$rule] = $set;
 				}
 
