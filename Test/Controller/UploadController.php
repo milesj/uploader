@@ -33,7 +33,6 @@ class UploadController extends AppController {
 	 * Include plugin.
 	 */
 	public $uses = array('Upload');
-	public $components = array('Security');
 
 	/**
 	 * Test case for uploading an image with no transformations.

@@ -72,7 +72,7 @@ class AttachmentBehavior extends ModelBehavior {
 		's3' => array(
 			'accessKey' => '',
 			'secretKey' => '',
-			'useSsl' => true,
+			'ssl' => true,
 			'bucket' => '',
 			'path' => ''
 		),
@@ -196,7 +196,7 @@ class AttachmentBehavior extends ModelBehavior {
 			));
 			
 			if (empty($uploadResponse)) {
-				return $model->invalidate($field, __d('uploader', 'There was an error attaching this file!'));
+				return $model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
 			}
 					
 			$basePath = $this->transfer($uploadResponse['path']);
@@ -220,7 +220,7 @@ class AttachmentBehavior extends ModelBehavior {
 							$this->delete($path);
 						}
 
-						return $model->invalidate($field, __d('uploader', 'An error occured during "%s" transformation!', $method));
+						return $model->invalidate($field, __d('uploader', 'An error occured during image %s transformation.', $method));
 					}
 					
 					// Transform successful
@@ -285,7 +285,9 @@ class AttachmentBehavior extends ModelBehavior {
 			return null;
 		}
 		
-		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $settings['useSsl']);
+		$ssl = isset($settings['useSsl']) ? $settings['useSsl'] : $settings['ssl'];
+		
+		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $ssl);
 		$s3->bucket = $settings['bucket'];
 		$s3->path = trim($settings['path'], '/') . '/';
 		$s3->uploads = array();
