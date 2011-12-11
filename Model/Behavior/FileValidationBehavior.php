@@ -176,7 +176,7 @@ class FileValidationBehavior extends ModelBehavior {
 				$ext = Uploader::ext($field['name']);
 			}
 
-			return (Uploader::checkMimeType($ext, $field['type']) || in_array($ext, $allowed));
+			return (Uploader::checkMimeType($ext, $field['type']) && in_array($ext, $allowed));
 		}
 
 		return true;
