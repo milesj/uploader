@@ -62,6 +62,8 @@ class AttachmentBehavior extends ModelBehavior {
 		'name' => '',
 		'baseDir' => '',
 		'uploadDir' => '',
+		'append' => '',
+		'prepend' => '',
 		'dbColumn' => 'uploadPath',
 		'importFrom' => '',
 		'defaultPath' => '',
@@ -192,7 +194,9 @@ class AttachmentBehavior extends ModelBehavior {
 			// Upload or import the file and attach to model data
 			$uploadResponse = $this->upload($field, $attachment, array(
 				'overwrite' => $attachment['overwrite'],
-				'name' => $attachment['name']
+				'name' => $attachment['name'],
+				'append' => $attachment['append'],
+				'prepend' => $attachment['prepend']
 			));
 			
 			if (empty($uploadResponse)) {
