@@ -299,10 +299,11 @@ class Uploader {
 	 * Check the destination folder. If it does not exist or isn't writable, fix it!
 	 *
 	 * @access public
+	 * @param string $dir
 	 * @return void
 	 */
-	public function checkDirectory() {
-		$uploadDir = trim($this->uploadDir, '/');
+	public function checkDirectory($dir = null) {
+		$uploadDir = trim($dir ? $dir : $this->uploadDir, '/');
 		$finalDir = $this->formatPath($uploadDir . '/');
 
 		if (!file_exists($finalDir)) {
@@ -624,8 +625,9 @@ class Uploader {
 			);
 		}
 		
+		$patterns = array('/[^-_.a-zA-Z0-9\/\s]/i', '/[\s]/');
 		$name = str_replace('.'. $ext, '', $name);
-		$name = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $name);
+		$name = preg_replace($patterns, array('', '_'), $name);
 
 		if (is_numeric($this->maxNameLength) && $truncate) {
 			if (mb_strlen($name) > $this->maxNameLength) {
@@ -637,12 +639,12 @@ class Uploader {
 		$prepend = (string) $prepend;
 
 		if (!empty($append)) {
-			$append = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $append);
+			$append = preg_replace($patterns, array('', '_'), $append);
 			$name = $name . $append;
 		}
 
 		if (!empty($prepend)) {
-			$prepend = preg_replace(array('/[^-_.a-zA-Z0-9\s]/i', '/[\s]/'), array('', '_'), $prepend);
+			$prepend = preg_replace($patterns, array('', '_'), $prepend);
 			$name = $prepend . $name;
 		}
 
@@ -998,6 +1000,10 @@ class Uploader {
 			$this->_data[$this->_current]['name'] = $name;
 			$this->_data[$this->_current]['path'] = $dest;
 		}
+		
+		if ($append || $prepend) {
+			$this->checkDirectory(dirname($dest));
+		}
 
 		return $dest;
 	}
@@ -1115,10 +1121,12 @@ class Uploader {
 	 *		- name: What should the filename be changed to OR the name of a function to do the formatting
 	 *		- overwrite: Should we overwrite the existant file with the same name?
 	 *		- multiple: Is this method being called from uploadAll()
+	 *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
+	 *		- prepend: What should be prepended to the front of the filename
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function upload($file, array $options = array()) {
-		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false);
+		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false, 'append' => null, 'prepend' => null);
 
 		if (!$options['multiple']) {
 			if (!$this->_enabled) {
@@ -1151,7 +1159,7 @@ class Uploader {
 		}
 
 		// Upload! Try both functions, one should work!
-		$dest = $this->setDestination($options['name'], $options['overwrite']);
+		$dest = $this->setDestination($options['name'], $options['overwrite'], $options);
 
 		// Uploaded via stream / AJAX
 		if (isset($current['stream'])) {
