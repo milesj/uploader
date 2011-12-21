@@ -202,9 +202,13 @@ class AttachmentBehavior extends ModelBehavior {
 			if (empty($uploadResponse)) {
 				return $model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
 			}
-					
+			
 			$basePath = $this->transfer($uploadResponse['path']);
 			$data[$attachment['dbColumn']] = $basePath;
+					
+			$toDelete = array();
+			$lastPath = $basePath;
+			$lastDbColumn = $attachment['dbColumn'];
 
 			// Apply image transformations
 			if (!empty($attachment['transforms'])) {
@@ -228,12 +232,23 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 					
 					// Transform successful
-					$data[$options['dbColumn']] = $this->transfer($transformResponse);
+					$transformPath = $this->transfer($transformResponse);
+					$data[$options['dbColumn']] = $transformPath;
 
 					// Delete original if same column name and transform name are not the same file
-					if ($options['dbColumn'] == $attachment['dbColumn'] && $basePath != $data[$options['dbColumn']]) {
-						$this->delete($basePath);
+					if ($options['dbColumn'] == $attachment['dbColumn'] && $lastPath != $transformPath) {
+						$toDelete[] = $lastPath;
 					}
+					
+					$lastPath = $transformPath;
+					$lastDbColumn = $options['dbColumn'];
+				}
+			}
+			
+			// Delete old files if replacing them
+			if ($toDelete) {
+				foreach ($toDelete as $deleteFile) {
+					$this->delete($deleteFile);
 				}
 			}
 
