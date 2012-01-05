@@ -249,7 +249,18 @@ class Uploader {
 		}
 
 		if (!empty($ext) && !empty($type)) {
-			self::$_mimeTypes[$group][$ext] = $type;
+			if (isset(self::$_mimeTypes[$group][$ext])) {
+				if (is_array(self::$_mimeTypes[$group][$ext])) {
+					self::$_mimeTypes[$group][$ext][] = $type;
+				} else {
+					self::$_mimeTypes[$group][$ext] = array(
+						self::$_mimeTypes[$group][$ext],
+						$type
+					);
+				}
+			} else {
+				self::$_mimeTypes[$group][$ext] = $type;
+			}
 		}
 	}
 
