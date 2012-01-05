@@ -666,7 +666,7 @@ class Uploader {
 			$this->baseDir .= '/';
 		}
 
-		if (strpos($path, $this->baseDir) === false) {
+		if (strpos($path, $this->baseDir) !== 0) {
 			$path = $this->baseDir . $path;
 		}
 
@@ -993,7 +993,6 @@ class Uploader {
 			}
 
 			$name = $this->formatFilename($name, $append . $no, $prepend);
-			$dest = $this->_finalDir . $name;
 		}
 
 		if ($update) {
@@ -1002,9 +1001,11 @@ class Uploader {
 		}
 		
 		if ($append || $prepend) {
-			$this->checkDirectory(dirname($dest));
+			$this->checkDirectory($this->uploadDir . str_replace('.', '', dirname($name)));
 		}
 
+		$dest = $this->_finalDir . basename($name);
+			
 		return $dest;
 	}
 	
