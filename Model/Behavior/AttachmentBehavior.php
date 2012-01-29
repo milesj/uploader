@@ -187,6 +187,11 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 			}
 
+			// Save model method for formatting function
+			if (!empty($attachment['name']) && method_exists($model, $attachment['name'])) {
+				$attachment['name'] = array($model, $attachment['name']);
+			}
+
 			// Setup instances
 			$this->uploader->setup($attachment);
 			$this->s3 = $this->s3($attachment['s3']);

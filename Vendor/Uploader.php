@@ -621,19 +621,19 @@ class Uploader {
 			$name = $this->_data[$this->_current]['name'];
 		}
 
-		$ext = self::ext($name);
+		// Run the formatter function
+		if (is_callable($name, true)) {
+			$name = call_user_func_array($name, array(
+				$this->_data[$this->_current]['name'],
+				$this->_current,
+				$this->_data[$this->_current]
+			));
+		}
+
+		$ext = self::ext($this->_data[$this->_current]['name']);
 
 		if (empty($ext)) {
 			$ext = $this->_data[$this->_current]['ext'];
-		}
-
-		// Run the formatter function
-		if (function_exists($name)) {
-			$name = $name(
-				$this->_data[$this->_current]['name'],
-				$this->_current, 
-				$this->_data[$this->_current]
-			);
 		}
 		
 		$patterns = array('/[^-_.a-zA-Z0-9\/\s]/i', '/[\s]/');
