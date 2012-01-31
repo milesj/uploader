@@ -581,7 +581,7 @@ class Uploader {
 			break;
 		}
 
-		$append = '_flip_' . $adir;
+		$append = '_flipped_' . $adir;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -622,12 +622,14 @@ class Uploader {
 		}
 
 		// Run the formatter function
-		if (is_callable($name, true)) {
+		if (is_callable($name)) {
 			$name = call_user_func_array($name, array(
 				$this->_data[$this->_current]['name'],
 				$this->_current,
 				$this->_data[$this->_current]
 			));
+
+			$this->_data[$this->_current]['custom_name'] = $name;
 		}
 
 		$ext = self::ext($this->_data[$this->_current]['name']);
@@ -919,7 +921,7 @@ class Uploader {
 
 		$newWidth = round($newWidth);
 		$newHeight = round($newHeight);
-		$append = '_' . $newWidth . 'x' . $newHeight;
+		$append = '_resized_' . $newWidth . 'x' . $newHeight;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
@@ -991,6 +993,10 @@ class Uploader {
 	 * @return string
 	 */
 	public function setDestination($name = '', $overwrite = false, array $options = array(), $update = true) {
+		if (isset($this->_data[$this->_current]['custom_name'])) {
+			$name = $this->_data[$this->_current]['custom_name'];
+		}
+
 		$append = isset($options['append']) ? $options['append'] : '';
 		$prepend = isset($options['prepend']) ? $options['prepend'] : '';
 		$name = $this->formatFilename($name, $append, $prepend);
@@ -1005,17 +1011,17 @@ class Uploader {
 
 			$name = $this->formatFilename($name, $append . $no, $prepend);
 		}
-
-		if ($update) {
-			$this->_data[$this->_current]['name'] = $name;
-			$this->_data[$this->_current]['path'] = $dest;
-		}
 		
 		if ($append || $prepend) {
 			$this->checkDirectory($this->uploadDir . str_replace('.', '', dirname($name)));
 		}
 
 		$dest = $this->_finalDir . basename($name);
+
+		if ($update) {
+			//$this->_data[$this->_current]['name'] = $name;
+			$this->_data[$this->_current]['path'] = $dest;
+		}
 			
 		return $dest;
 	}
@@ -1331,7 +1337,7 @@ class Uploader {
 	 * Formates and returns the data array.
 	 *
 	 * @access protected
-	 * @param array $data
+	 * @param mixed $data
 	 * @param string $append
 	 * @param boolean $explicit
 	 * @return array

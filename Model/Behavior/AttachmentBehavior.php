@@ -213,7 +213,6 @@ class AttachmentBehavior extends ModelBehavior {
 					
 			$toDelete = array();
 			$lastPath = $basePath;
-			$lastDbColumn = $attachment['dbColumn'];
 
 			// Apply image transformations
 			if (!empty($attachment['transforms'])) {
@@ -246,7 +245,6 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 					
 					$lastPath = $transformPath;
-					$lastDbColumn = $options['dbColumn'];
 				}
 			}
 			
