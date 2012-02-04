@@ -403,6 +403,9 @@ class Uploader {
 			} else if ($height > $width) {
 				$dest_w = $options['width'];
 				$dest_h = round(($height / $width) * $options['width']);
+			} else {
+				$dest_w = $options['width'];
+				$dest_h = $options['height'];
 			}
 		} else {
 			if ($width > $height) {
