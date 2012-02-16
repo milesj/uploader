@@ -67,7 +67,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param array $settings
 	 * @return void
 	 */
-	public function setup($model, array $settings = array()) {
+	public function setup($model, $settings = array()) {
 		if (!empty($settings)) {
 			foreach ($settings as $field => $options) {
 				$this->_settings[$model->alias][$field] = $options + array('required' => true);
