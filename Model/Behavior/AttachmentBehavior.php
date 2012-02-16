@@ -68,8 +68,9 @@ class AttachmentBehavior extends ModelBehavior {
 		'importFrom' => '',
 		'defaultPath' => '',
 		'maxNameLength' => null,
-		'overwrite' => true,
-		'stopSave' => true,
+		'overwrite' => true,			// Overwrite a file with the same name if it exists
+		'stopSave' => true,				// Stop model save() on form upload error
+		'allowEmpty' => true,			// Allow an empty file upload to continue
 		'transforms' => array(),
 		's3' => array(
 			'accessKey' => '',
@@ -180,7 +181,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Should we continue if a file threw errors during upload?
 			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || (is_string($file) && empty($attachment['importFrom']))) {
-				if ($attachment['stopSave']) {
+				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
 					return false;
 				} else {
 					unset($model->data[$model->alias][$attachment['dbColumn']]);
@@ -229,7 +230,7 @@ class AttachmentBehavior extends ModelBehavior {
 					
 					// Rollback uploaded files if one fails
 					if (empty($transformResponse)) {
-						foreach ($data as $column => $path) {
+						foreach ($data as $path) {
 							$this->delete($path);
 						}
 
