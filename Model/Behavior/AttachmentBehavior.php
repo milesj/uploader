@@ -199,7 +199,7 @@ class AttachmentBehavior extends ModelBehavior {
 			$this->s3 = $this->s3($attachment['s3']);
 
 			// Upload or import the file and attach to model data
-			$uploadResponse = $this->upload($field, $attachment, array(
+			$uploadResponse = $this->upload($model->alias . '.' . $field, $attachment, array(
 				'overwrite' => $attachment['overwrite'],
 				'name' => $attachment['name'],
 				'append' => $attachment['append'],

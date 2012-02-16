@@ -1186,9 +1186,16 @@ class Uploader {
 			}
 		}
 
+		list($model, $field) = explode('.', $file);
+
 		if (isset($this->_data[$file])) {
 			$this->_current = $file;
-			
+
+		} else if (isset($this->_data[$field])) {
+			$this->_current = $field;
+		}
+
+		if ($this->_current) {
 			$current =& $this->_data[$this->_current];
 			$current['filesize'] = self::bytes($current['size']);
 			$current['ext'] = self::ext($current['name']);
