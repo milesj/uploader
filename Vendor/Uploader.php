@@ -181,7 +181,6 @@ class Uploader {
 	 *
 	 * @access public
 	 * @param array $settings
-	 * @return void
 	 */
 	public function __construct(array $settings = array()) {
 		$this->setup($settings);
@@ -194,7 +193,7 @@ class Uploader {
 		}
 
 		if (!$this->_enabled) {
-			return false;
+			return;
 		}
 
 		if (empty($this->maxFileSize)) {
@@ -344,22 +343,25 @@ class Uploader {
 		$validExt = false;
 		$validMime = false;
 		$currType = mb_strtolower($type);
+		$group = null;
 
 		foreach (self::$_mimeTypes as $grouping => $mimes) {
 			if (isset($mimes[$ext])) {
 				$validExt = true;
 			}
 
-			foreach ($mimes as $mimeExt => $mimeType) {
+			foreach ($mimes as $mimeType) {
 				if (($currType == $mimeType) || (is_array($mimeType) && in_array($currType, $mimeType))) {
 					$validMime = true;
+					$group = $grouping;
+
 					break 2;
 				}
 			}
 		}
 
 		if ($validExt && $validMime) {
-			return $grouping;
+			return $group;
 		}
 
 		return false;
@@ -493,7 +495,7 @@ class Uploader {
 		$dim = array();
 
 		foreach (array($path, $this->formatPath($path)) as $newPath) {
-			$data = @getimagesize($path);
+			$data = @getimagesize($newPath);
 
 			if (!empty($data) && is_array($data)) {
 				$dim = array(
@@ -617,7 +619,7 @@ class Uploader {
 	 * @param string $append
 	 * @param string $prepend
 	 * @param boolean $truncate
-	 * @return void
+	 * @return string
 	 */
 	public function formatFilename($name = '', $append = '', $prepend = '', $truncate = true) {
 		if (empty($name)) {
@@ -750,7 +752,7 @@ class Uploader {
 	 * Import a file from an external remote URL. Must be an absolute URL.
 	 *
 	 * @access public
-	 * @param string $path
+	 * @param string $url
 	 * @param array $options
 	 *		- name: What should the filename be changed to
 	 *		- overwrite: Should we overwrite the existant file with the same name?
@@ -895,7 +897,7 @@ class Uploader {
 			return false;
 		}
 
-		$options = $options + array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false);
+		$options = $options + array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false, 'aspect' => true);
 		$width = $this->_data[$this->_current]['width'];
 		$height = $this->_data[$this->_current]['height'];
 		$maxWidth = $options['width'];
@@ -914,9 +916,36 @@ class Uploader {
 				$newHeight = $maxHeight;
 				
 			} else if (is_numeric($maxHeight) && is_numeric($maxWidth)) {
-				$newWidth = $maxWidth;
-				$newHeight = $maxHeight;
-				
+
+				// Maintains the aspect ratio of the image and makes sure that it fits within the max width and max height
+				if ($options['aspect']) {
+					if ($maxWidth > $width) {
+						$maxWidth = $width;
+					}
+
+					if ($maxHeight > $height) {
+						$maxHeight = $height;
+					}
+
+					$widthScale = $maxWidth / $width;
+					$heightScale = $maxHeight / $height;
+
+					if ($widthScale < $heightScale) {
+						$newWidth = $maxWidth;
+						$newHeight = ($height * $newWidth) / $width;
+
+					} elseif ($widthScale > $heightScale) {
+						$newHeight = $maxHeight;
+						$newWidth = ($newHeight * $width) / $height;
+
+					} else {
+						$newWidth = $maxWidth;
+						$newHeight = $maxHeight;
+					}
+				} else {
+					$newWidth = $maxWidth;
+					$newHeight = $maxHeight;
+				}
 			} else {
 				return false;
 			}
@@ -1270,7 +1299,7 @@ class Uploader {
 	 * @return boolean
 	 */
 	protected function _loadExtension($name) {
-		if (!extension_loaded($name)) {
+		if (!extension_loaded($name) && function_exists('dl')) {
 			@dl((PHP_SHLIB_SUFFIX == 'dll' ? 'php_' : '') . $name . '.' . PHP_SHLIB_SUFFIX);
 		}
 
@@ -1285,9 +1314,8 @@ class Uploader {
 	 */
 	protected function _parseData() {
 		$data = array();
-		$count = 0;
 
-		// Form uploaidng
+		// Form uploading
 		if (!empty($_FILES)) {
 			
 			// via CakePHP
