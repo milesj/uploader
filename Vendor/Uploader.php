@@ -623,7 +623,11 @@ class Uploader {
 	 */
 	public function formatFilename($name = '', $append = '', $prepend = '', $truncate = true) {
 		if (empty($name)) {
-			$name = $this->_data[$this->_current]['name'];
+			if (!empty($this->_data[$this->_current]['custom_name'])) {
+				$name = $this->_data[$this->_current]['custom_name'];
+			} else {
+				$name = $this->_data[$this->_current]['name'];
+			}
 		}
 
 		// Run the formatter function
@@ -633,16 +637,16 @@ class Uploader {
 				$this->_current,
 				$this->_data[$this->_current]
 			));
-
-			$this->_data[$this->_current]['custom_name'] = $name;
 		}
+
+		$this->_data[$this->_current]['custom_name'] = $name;
 
 		$ext = self::ext($this->_data[$this->_current]['name']);
 
 		if (empty($ext)) {
 			$ext = $this->_data[$this->_current]['ext'];
 		}
-		
+
 		$patterns = array('/[^-_.a-zA-Z0-9\/\s]/i', '/[\s]/');
 		$name = str_replace('.'. $ext, '', $name);
 		$name = preg_replace($patterns, array('', '_'), $name);
