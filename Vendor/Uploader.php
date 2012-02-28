@@ -1186,12 +1186,14 @@ class Uploader {
 			}
 		}
 
-		list($model, $field) = explode('.', $file);
+		if (strpos($file, '.') !== false) {
+			list($model, $field) = explode('.', $file);
+		}
 
 		if (isset($this->_data[$file])) {
 			$this->_current = $file;
 
-		} else if (isset($this->_data[$field])) {
+		} else if (isset($field) && isset($this->_data[$field])) {
 			$this->_current = $field;
 		}
 
