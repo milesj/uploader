@@ -71,6 +71,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'overwrite' => true,			// Overwrite a file with the same name if it exists
 		'stopSave' => true,				// Stop model save() on form upload error
 		'allowEmpty' => true,			// Allow an empty file upload to continue
+		'saveAsFilename' => false,		// If true, will only save the filename and not relative path
 		'transforms' => array(),
 		's3' => array(
 			'accessKey' => '',
@@ -211,7 +212,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 			
 			$basePath = $this->transfer($uploadResponse['path']);
-			$data[$attachment['dbColumn']] = $basePath;
+			$data[$attachment['dbColumn']] = ($attachment['saveAsFilename'] && $this->s3 === null) ? basename($basePath) : $basePath;
 					
 			$toDelete = array();
 			$lastPath = $basePath;
@@ -239,7 +240,7 @@ class AttachmentBehavior extends ModelBehavior {
 					
 					// Transform successful
 					$transformPath = $this->transfer($transformResponse);
-					$data[$options['dbColumn']] = $transformPath;
+					$data[$options['dbColumn']] = ($attachment['saveAsFilename'] && $this->s3 === null) ? basename($transformPath) : $transformPath;
 
 					// Delete original if same column name and transform name are not the same file
 					if ($options['dbColumn'] == $attachment['dbColumn'] && $lastPath != $transformPath) {
