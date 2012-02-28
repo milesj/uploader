@@ -45,6 +45,7 @@ class UploadController extends AppController {
 		}
 
 		$this->set('title_for_layout', 'Upload: Test Case');
+		$this->render('single_upload');
 	}
 
 	/**
@@ -71,13 +72,20 @@ class UploadController extends AppController {
 			if ($data = $this->Uploader->upload('file', array('name' => 'crop', 'overwrite' => true))) {
 				debug($data);
 
-				$crop = $this->Uploader->crop(array('width' => 100, 'height' => 100));
-				debug($crop);
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100, 'quality' => 90, 'append' => '_top', 'location' => Uploader::LOC_TOP)));
+
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100, 'quality' => 70, 'append' => '_bottom', 'location' => Uploader::LOC_BOT)));
+
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100, 'quality' => 50, 'append' => '_left', 'location' => Uploader::LOC_LEFT)));
+
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100, 'quality' => 30, 'append' => '_right', 'location' => Uploader::LOC_RIGHT)));
+
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100, 'quality' => 10, 'append' => '_middle', 'location' => Uploader::LOC_CENTER)));
 			}
 		}
 
 		$this->set('title_for_layout', 'Upload: Crop');
-		$this->render('index');
+		$this->render('single_upload');
 	}
 
 	/**
@@ -88,13 +96,16 @@ class UploadController extends AppController {
 			if ($data = $this->Uploader->upload('file', array('name' => 'flip', 'overwrite' => true))) {
 				debug($data);
 
-				$flip = $this->Uploader->flip(array('dir' => Uploader::DIR_BOTH));
-				debug($flip);
+				debug($this->Uploader->flip(array('append' => '_both', 'quality' => 75, 'dir' => Uploader::DIR_BOTH)));
+
+				debug($this->Uploader->flip(array('append' => '_hori', 'quality' => 45, 'dir' => Uploader::DIR_HORI)));
+
+				debug($this->Uploader->flip(array('append' => '_vert', 'quality' => 25, 'dir' => Uploader::DIR_VERT)));
 			}
 		}
 
 		$this->set('title_for_layout', 'Upload: Flip');
-		$this->render('index');
+		$this->render('single_upload');
 	}
 
 	/**
@@ -122,13 +133,18 @@ class UploadController extends AppController {
 			if ($data = $this->Uploader->upload('file', array('name' => 'scale', 'overwrite' => true))) {
 				debug($data);
 
-				$scale = $this->Uploader->scale(array('percent' => .3));
-				debug($scale);
+				debug($this->Uploader->scale(array('append' => '_30', 'percent' => .3)));
+
+				debug($this->Uploader->scale(array('append' => '_77', 'percent' => .77)));
+
+				debug($this->Uploader->scale(array('append' => '_150', 'percent' => 1.50)));
+
+				debug($this->Uploader->scale(array('append' => '_175', 'percent' => 2.75)));
 			}
 		}
 
 		$this->set('title_for_layout', 'Upload: Scale');
-		$this->render('index');
+		$this->render('single_upload');
 	}
 
 	/**
