@@ -61,7 +61,7 @@ class UploadController extends AppController {
 		debug(Uploader::ext($this->testPath));
 
 		$this->set('title_for_layout', 'Upload: Meta Data');
-		$this->render('index');
+		$this->render('single_upload');
 	}
 
 	/**
@@ -116,13 +116,28 @@ class UploadController extends AppController {
 			if ($data = $this->Uploader->upload('file', array('name' => 'resize', 'overwrite' => true))) {
 				debug($data);
 
-				$resize = $this->Uploader->resize(array('width' => 1000, 'expand' => false));
-				debug($resize);
+				debug($this->Uploader->resize(array('width' => 250, 'expand' => false)));
+
+				debug($this->Uploader->resize(array('height' => 250, 'expand' => false)));
+
+				debug($this->Uploader->resize(array('width' => 250, 'height' => 500, 'expand' => false)));
+
+				debug($this->Uploader->resize(array('width' => 1000, 'expand' => true)));
+
+				debug($this->Uploader->resize(array('height' => 2000, 'expand' => true)));
+
+				debug($this->Uploader->resize(array('width' => 1250, 'height' => 1750, 'expand' => true, 'aspect' => false)));
+
+				debug($this->Uploader->resize(array('width' => 1250, 'height' => 1750, 'expand' => true, 'aspect' => true)));
+
+				debug($this->Uploader->resize(array('width' => 5000, 'height' => 5000, 'expand' => true, 'aspect' => true)));
+
+				debug($this->Uploader->resize(array('width' => 200, 'height' => 600, 'expand' => false, 'aspect' => true)));
 			}
 		}
 
 		$this->set('title_for_layout', 'Upload: Resize');
-		$this->render('index');
+		$this->render('single_upload');
 	}
 
 	/**
@@ -158,6 +173,7 @@ class UploadController extends AppController {
 		}
 
 		$this->set('title_for_layout', 'Upload: Upload All');
+		$this->render('multi_upload');
 	}
 
 	/**
@@ -175,7 +191,7 @@ class UploadController extends AppController {
 		}
 
 		$this->set('title_for_layout', 'Upload: Upload All with Validation');
-		$this->render('upload_all');
+		$this->render('multi_upload');
 	}
 
 	/**

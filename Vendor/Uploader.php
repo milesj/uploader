@@ -893,6 +893,7 @@ class Uploader {
 	 *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
 	 *		- prepend: What should be prepended to the front of the filename
 	 *		- expand: Should the image be resized if the dimension is greater than the original dimension
+	 * 		- aspect: Keep the aspect ratio
 	 * @param boolean $explicit
 	 * @return string
 	 */
@@ -902,56 +903,53 @@ class Uploader {
 		}
 
 		$options = $options + array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false, 'aspect' => true);
-		$width = $this->_data[$this->_current]['width'];
-		$height = $this->_data[$this->_current]['height'];
-		$maxWidth = $options['width'];
-		$maxHeight = $options['height'];
+		$baseWidth = $this->_data[$this->_current]['width'];
+		$baseHeight = $this->_data[$this->_current]['height'];
+		$width = $options['width'];
+		$height = $options['height'];
+		$newWidth = null;
+		$newHeight = null;
 
-		if ($options['expand'] === false && (($maxWidth > $width) || ($maxHeight > $height))) {
+		if (is_numeric($width) && empty($height)) {
+			$height = round(($baseHeight / $baseWidth) * $width);
+
+		} else if (is_numeric($height) && empty($width)) {
+			$width = round(($baseWidth / $baseHeight) * $height);
+
+		} else if (!is_numeric($height) && !is_numeric($width)) {
+			return false;
+		}
+
+		// Maintains the aspect ratio of the image
+		if ($options['aspect']) {
+			$widthScale = $width / $baseWidth;
+			$heightScale = $height / $baseHeight;
+
+			if ($widthScale < $heightScale) {
+				$newWidth = $width;
+				$newHeight = ($baseHeight * $newWidth) / $baseWidth;
+
+			} elseif ($widthScale > $heightScale) {
+				$newHeight = $height;
+				$newWidth = ($newHeight * $baseWidth) / $baseHeight;
+
+			} else {
+				$newWidth = $width;
+				$newHeight = $height;
+			}
+		} else {
 			$newWidth = $width;
 			$newHeight = $height;
-		} else {
-			if (is_numeric($maxWidth) && empty($maxHeight)) {
-				$newWidth = $maxWidth;
-				$newHeight = round(($height / $width) * $maxWidth);
-				
-			} else if (is_numeric($maxHeight) && empty($maxWidth)) {
-				$newWidth = round(($width / $height) * $maxHeight);
-				$newHeight = $maxHeight;
-				
-			} else if (is_numeric($maxHeight) && is_numeric($maxWidth)) {
+		}
 
-				// Maintains the aspect ratio of the image and makes sure that it fits within the max width and max height
-				if ($options['aspect']) {
-					if ($maxWidth > $width) {
-						$maxWidth = $width;
-					}
+		// Don't expand if we don't want it too
+		if (!$options['expand']) {
+			if ($newWidth > $baseWidth) {
+				$newWidth = $baseWidth;
+			}
 
-					if ($maxHeight > $height) {
-						$maxHeight = $height;
-					}
-
-					$widthScale = $maxWidth / $width;
-					$heightScale = $maxHeight / $height;
-
-					if ($widthScale < $heightScale) {
-						$newWidth = $maxWidth;
-						$newHeight = ($height * $newWidth) / $width;
-
-					} elseif ($widthScale > $heightScale) {
-						$newHeight = $maxHeight;
-						$newWidth = ($newHeight * $width) / $height;
-
-					} else {
-						$newWidth = $maxWidth;
-						$newHeight = $maxHeight;
-					}
-				} else {
-					$newWidth = $maxWidth;
-					$newHeight = $maxHeight;
-				}
-			} else {
-				return false;
+			if ($newHeight > $baseHeight) {
+				$newHeight = $baseHeight;
 			}
 		}
 
