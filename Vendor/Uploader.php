@@ -80,6 +80,22 @@ class Uploader {
 	const LOC_CENTER = 5;
 
 	/**
+	 * The mode to resize: width.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const MODE_WIDTH = 1;
+
+	/**
+	 * The mode to resize: height.
+	 *
+	 * @constant
+	 * @var int
+	 */
+	const MODE_HEIGHT = 2;
+
+	/**
 	 * Max filesize using shorthand notation: http://php.net/manual/faq.using.php#faq.using.shorthandbytes
 	 *
 	 * @access public
@@ -386,7 +402,15 @@ class Uploader {
 			return false;
 		}
 
-		$options = $options + array('location' => self::LOC_CENTER, 'quality' => 100, 'width' => null, 'height' => null, 'append' => null, 'prepend' => null);
+		$options = $options + array(
+			'location' => self::LOC_CENTER,
+			'quality' => 100,
+			'width' => null,
+			'height' => null,
+			'append' => null,
+			'prepend' => null
+		);
+
 		$width	= $this->_data[$this->_current]['width'];
 		$height = $this->_data[$this->_current]['height'];
 		$src_x	= 0;
@@ -902,7 +926,17 @@ class Uploader {
 			return false;
 		}
 
-		$options = $options + array('width' => null, 'height' => null, 'quality' => 100, 'append' => null, 'prepend' => null, 'expand' => false, 'aspect' => true);
+		$options = $options + array(
+			'width' => null,
+			'height' => null,
+			'quality' => 100,
+			'append' => null,
+			'prepend' => null,
+			'expand' => false,
+			'aspect' => true,
+			'mode' => self::MODE_WIDTH
+		);
+
 		$baseWidth = $this->_data[$this->_current]['width'];
 		$baseHeight = $this->_data[$this->_current]['height'];
 		$width = $options['width'];
@@ -925,11 +959,11 @@ class Uploader {
 			$widthScale = $width / $baseWidth;
 			$heightScale = $height / $baseHeight;
 
-			if ($widthScale < $heightScale) {
+			if (($options['mode'] == self::MODE_WIDTH && $widthScale < $heightScale) || ($options['mode'] == self::MODE_HEIGHT && $widthScale > $heightScale)) {
 				$newWidth = $width;
 				$newHeight = ($baseHeight * $newWidth) / $baseWidth;
 
-			} elseif ($widthScale > $heightScale) {
+			} else if (($options['mode'] == self::MODE_WIDTH && $widthScale > $heightScale) || ($options['mode'] == self::MODE_HEIGHT && $widthScale < $heightScale)) {
 				$newHeight = $height;
 				$newWidth = ($newHeight * $baseWidth) / $baseHeight;
 
@@ -1095,7 +1129,18 @@ class Uploader {
 	 * @return boolean
 	 */
 	public function transform(array $options) {
-		$options = $options + array('dest_x' => 0, 'dest_y' => 0, 'source_x' => 0, 'source_y' => 0, 'dest_w' => null, 'dest_h' => null, 'source_w' => $this->_data[$this->_current]['width'], 'source_h' => $this->_data[$this->_current]['height'], 'quality' => 100);
+		$options = $options + array(
+			'dest_x' => 0,
+			'dest_y' => 0,
+			'dest_w' => null,
+			'dest_h' => null,
+			'source_x' => 0,
+			'source_y' => 0,
+			'source_w' => $this->_data[$this->_current]['width'],
+			'source_h' => $this->_data[$this->_current]['height'],
+			'quality' => 100
+		);
+
 		$original = $this->_data[$this->_current]['path'];
 		$mimeType = $this->_data[$this->_current]['type'];
 
