@@ -38,7 +38,7 @@ class UploadController extends AppController {
 	 * Test case for uploading an image with no transformations.
 	 */
 	public function index() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->upload('file', array('name' => 'uploaderFilename', 'overwrite' => true))) {
 				debug($data);
 			}
@@ -52,7 +52,7 @@ class UploadController extends AppController {
 	 * Test case for getting a files meta data: dimensions, extension, mimetype, etc.
 	 */
 	public function meta() {
-		$this->testPath = $this->testPath .'test_dimensions.jpg';
+		$this->testPath = $this->testPath . 'test_dimensions.jpg';
 
 		debug($this->Uploader->dimensions($this->testPath));
 
@@ -68,7 +68,7 @@ class UploadController extends AppController {
 	 * Test case for crop()ping images.
 	 */
 	public function crop() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->upload('file', array('name' => 'crop', 'overwrite' => true))) {
 				debug($data);
 
@@ -92,7 +92,7 @@ class UploadController extends AppController {
 	 * Test case for flip()ping images.
 	 */
 	public function flip() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->upload('file', array('name' => 'flip', 'overwrite' => true))) {
 				debug($data);
 
@@ -112,7 +112,7 @@ class UploadController extends AppController {
 	 * Test case for resize()ing images.
 	 */
 	public function resize() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->upload('file', array('name' => 'resize', 'overwrite' => true))) {
 				debug($data);
 
@@ -133,6 +133,10 @@ class UploadController extends AppController {
 				debug($this->Uploader->resize(array('width' => 5000, 'height' => 5000, 'expand' => true, 'aspect' => true)));
 
 				debug($this->Uploader->resize(array('width' => 200, 'height' => 600, 'expand' => false, 'aspect' => true)));
+
+				debug($this->Uploader->resize(array('width' => 100, 'height' => 200, 'expand' => true, 'aspect' => true, 'mode' => Uploader::MODE_WIDTH)));
+
+				debug($this->Uploader->resize(array('width' => 100, 'height' => 200, 'expand' => true, 'aspect' => true, 'mode' => Uploader::MODE_HEIGHT)));
 			}
 		}
 
@@ -144,7 +148,7 @@ class UploadController extends AppController {
 	 * Test case for scale()ing images.
 	 */
 	public function scale() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->upload('file', array('name' => 'scale', 'overwrite' => true))) {
 				debug($data);
 
@@ -166,7 +170,7 @@ class UploadController extends AppController {
 	 * Test case for uploading multiple images.
 	 */
 	public function upload_all() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->uploadAll(array('file1', 'file2', 'file3'), true)) {
 				debug($data);
 			}
@@ -180,8 +184,8 @@ class UploadController extends AppController {
 	 * Test case for uploading multiple images with validation.
 	 */
 	public function upload_all_validate() {
-		if (!empty($this->data)) {
-			$this->Upload->set($this->data);
+		if (!empty($this->request->data)) {
+			$this->Upload->set($this->request->data);
 
 			if ($this->Upload->validates()) {
 				if ($data = $this->Uploader->uploadAll(array('file1', 'file2', 'file3'), true)) {
@@ -198,7 +202,7 @@ class UploadController extends AppController {
 	 * Test case for uploading multiple images from different models.
 	 */
 	public function multi_models() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->uploadAll(array('Upload.file', 'Upload1.file', 'Upload2.file'), true)) {
 				debug($data);
 			}
@@ -211,8 +215,8 @@ class UploadController extends AppController {
 	 * Test case for checking the behavior validation and upload for form submitted files.
 	 */
 	public function behaviors() {
-		if (!empty($this->data)) {
-			if ($this->Upload->save($this->data)) {
+		if (!empty($this->request->data)) {
+			if ($this->Upload->save($this->request->data)) {
 				debug('Image uploaded and row saved!');
 			}
 		}
@@ -224,8 +228,8 @@ class UploadController extends AppController {
 	 * Test case for checking the behavior validation and upload for imported files (remote URLs).
 	 */
 	public function behaviors_import() {
-		if (!empty($this->data)) {
-			if ($this->Upload->save($this->data)) {
+		if (!empty($this->request->data)) {
+			if ($this->Upload->save($this->request->data)) {
 				debug('Image uploaded and row saved!');
 			}
 		}
@@ -237,17 +241,15 @@ class UploadController extends AppController {
 	 * Test case for importing a file from a local source.
 	 */
 	public function import() {
-		$this->testPath = $this->testPath .'test_import.jpg';
+		$this->testPath = $this->testPath . 'test_import.jpg';
 
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->import($this->testPath, array('name' => 'imported', 'overwrite' => true))) {
 				debug($data);
 
-				$scale = $this->Uploader->scale(array('percent' => .3));
-				debug($scale);
+				debug($this->Uploader->scale(array('percent' => .3)));
 
-				$crop = $this->Uploader->crop(array('width' => 100, 'height' => 100));
-				debug($crop);
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100)));
 			}
 		}
 
@@ -259,15 +261,13 @@ class UploadController extends AppController {
 	 * Test case for importing a file from a remote source.
 	 */
 	public function import_remote() {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			if ($data = $this->Uploader->importRemote('http://www.google.com/images/logos/ps_logo2.png', array('name' => 'remote', 'overwrite' => false))) {
 				debug($data);
 
-				$crop = $this->Uploader->crop(array('width' => 100, 'height' => 100));
-				debug($crop);
+				debug($this->Uploader->crop(array('width' => 100, 'height' => 100)));
 
-				$flip = $this->Uploader->flip(array('dir' => Uploader::DIR_BOTH));
-				debug($flip);
+				debug($this->Uploader->flip(array('dir' => Uploader::DIR_BOTH)));
 			}
 		}
 

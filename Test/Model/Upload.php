@@ -48,6 +48,15 @@ class Upload extends AppModel {
 			),
 			'import' => array(
 				'required' => false
+			),
+			'file1' => array(
+				'required' => true
+			),
+			'file2' => array(
+				'required' => false
+			),
+			'file3' => array(
+				'required' => true
 			)
 		),
 		'Uploader.Attachment' => array(
