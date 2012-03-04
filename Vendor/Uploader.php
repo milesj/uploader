@@ -918,6 +918,7 @@ class Uploader {
 	 *		- prepend: What should be prepended to the front of the filename
 	 *		- expand: Should the image be resized if the dimension is greater than the original dimension
 	 * 		- aspect: Keep the aspect ratio
+	 * 		- mode: Use the width or height as the base for aspect keeping
 	 * @param boolean $explicit
 	 * @return string
 	 */
@@ -1087,7 +1088,6 @@ class Uploader {
 		$dest = $this->_finalDir . basename($name);
 
 		if ($update) {
-			//$this->_data[$this->_current]['name'] = $name;
 			$this->_data[$this->_current]['path'] = $dest;
 		}
 			
