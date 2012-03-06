@@ -96,14 +96,6 @@ class Uploader {
 	const MODE_HEIGHT = 2;
 
 	/**
-	 * Max filesize using shorthand notation: http://php.net/manual/faq.using.php#faq.using.shorthandbytes
-	 *
-	 * @access public
-	 * @var string
-	 */
-	public $maxFileSize = '5M';
-
-	/**
 	 * How long should file names be?
 	 *
 	 * @access public
@@ -212,39 +204,10 @@ class Uploader {
 			return;
 		}
 
-		if (empty($this->maxFileSize)) {
-			$this->maxFileSize = ini_get('upload_max_filesize');
+		if (isset($this->maxFileSize)) {
+			trigger_error('Uploader.Uploader::__construct(): "upload_max_filesize" and other file upload INI settings must be set in your php.ini.', E_USER_WARNING);
 		}
 
-		$byte = preg_replace('/[^0-9]/i', '', $this->maxFileSize);
-		$last = self::bytes($this->maxFileSize, 'byte');
-
-		if ($last == 'T' || $last == 'TB') {
-			$multiplier = 1;
-			$execTime = 20;
-		} else if ($last == 'G' || $last == 'GB') {
-			$multiplier = 3;
-			$execTime = 10;
-		} else if ($last == 'M' || $last == 'MB') {
-			$multiplier = 5;
-			$execTime = 5;
-		} else {
-			$multiplier = 10;
-			$execTime = 3;
-		}
-
-		ini_set('memory_limit', (($byte * $multiplier) * $multiplier) . $last);
-		ini_set('post_max_size', ($byte * $multiplier) . $last);
-		ini_set('upload_tmp_dir', $this->tempDir);
-		ini_set('upload_max_filesize', $this->maxFileSize);
-		ini_set('max_execution_time', ($execTime * 10));
-		ini_set('max_input_time', ($execTime * 10));
-
-		if (!is_writable($this->tempDir)) {
-			chmod($this->tempDir, 0777);
-		}
-
-		$this->baseDir = str_replace('\\', '/', $this->baseDir);
 		$this->_parseData();
 	}
 
@@ -1117,6 +1080,12 @@ class Uploader {
 				}
 			}
 		}
+
+		if (!is_writable($this->tempDir)) {
+			chmod($this->tempDir, 0777);
+		}
+
+		$this->baseDir = str_replace('\\', '/', $this->baseDir);
 		
 		return $this;
 	}
