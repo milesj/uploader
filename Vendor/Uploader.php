@@ -465,7 +465,7 @@ class Uploader {
 
 		if (file_exists($path)) {
 			clearstatcache();
-			return unlink($path);
+			return @unlink($path);
 		}
 
 		return false;

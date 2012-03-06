@@ -84,7 +84,7 @@ class Upload extends AppModel {
 			'import' => array(
 				'uploadDir' => '/files/uploads/',
 				'name' => 'uploaderFilename',
-				'dbColumn' => 'path',
+				'dbColumn' => 'path_import',
 				'overwrite' => true,
 				'stopSave' => false,
 				'transforms' => array(
