@@ -1,4 +1,4 @@
-# Uploader v3.3.2 #
+# Uploader v3.3.3 #
 
 A CakePHP plugin that will upload multiple types of files. Adds support for file validation and attachments within the model layer, the ability to transform image files (crop, resize, scale, etc) and minor support for Amazon S3 transfers.
 
@@ -19,7 +19,6 @@ This version is only compatible with CakePHP 2.
 
 * AttachmentBehavior allows models to attach files that automatically upload the file and save its information to a database
 * FileValidationBehavior adds file upload validation rules to your Models validation set
-* Automatically sets all ini settings required for file uploading
 * Support for a wide range of mime types: text, images, archives, audio, video, application
 * Logs all internal errors that can be retrieved and displayed
 * Automatically validates against the default mime types and internal errors

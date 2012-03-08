@@ -1202,15 +1202,25 @@ class Uploader {
 			}
 		}
 
-		if (strpos($file, '.') !== false) {
-			list($model, $field) = explode('.', $file);
-		}
+		// If $_FILES array
+		if (is_array($file) && isset($file['tmp_name'])) {
+			$time = microtime();
 
-		if (isset($this->_data[$file])) {
-			$this->_current = $file;
+			$this->_current = $time;
+			$this->_data[$time] = $file;
 
-		} else if (isset($field) && isset($this->_data[$field])) {
-			$this->_current = $field;
+		// If Uploader approach
+		} else {
+			if (strpos($file, '.') !== false) {
+				list($model, $field) = explode('.', $file);
+			}
+
+			if (isset($this->_data[$file])) {
+				$this->_current = $file;
+
+			} else if (isset($field) && isset($this->_data[$field])) {
+				$this->_current = $field;
+			}
 		}
 
 		if ($this->_current) {

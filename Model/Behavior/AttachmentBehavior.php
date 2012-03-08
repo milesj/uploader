@@ -171,7 +171,7 @@ class AttachmentBehavior extends ModelBehavior {
 			if (empty($this->_attachments[$model->alias][$field])) {
 				continue;
 			}
-			
+
 			$attachment = $this->_attachments[$model->alias][$field];
 			$data = array();
 			
@@ -200,7 +200,7 @@ class AttachmentBehavior extends ModelBehavior {
 			$this->s3 = $this->s3($attachment['s3']);
 
 			// Upload or import the file and attach to model data
-			$uploadResponse = $this->upload($model->alias . '.' . $field, $attachment, array(
+			$uploadResponse = $this->upload($file, $attachment, array(
 				'overwrite' => $attachment['overwrite'],
 				'name' => $attachment['name'],
 				'append' => $attachment['append'],
@@ -324,12 +324,12 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Attempt to upload a file via remote import, file system import or standard upload.
 	 *
 	 * @access public
-	 * @param string $field
+	 * @param string|array $file
 	 * @param array $attachment
 	 * @param array $options
 	 * @return array
 	 */
-	public function upload($field, $attachment, $options) {
+	public function upload($file, $attachment, $options) {
 		if (!empty($attachment['importFrom'])) {
 			if (preg_match('/(http|https)/', $attachment['importFrom'])) {
 				return $this->uploader->importRemote($attachment['importFrom'], $options);
@@ -339,7 +339,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 		}
 
-		return $this->uploader->upload($field, $options);
+		return $this->uploader->upload($file, $options);
 	}
 
 	/**
