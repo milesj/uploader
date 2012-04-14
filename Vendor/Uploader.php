@@ -357,6 +357,7 @@ class Uploader {
 	 *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
 	 *		- prepend: What should be prepended to the front of the filename
 	 *		- quality: The quality of the image
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @param boolean $explicit
 	 * @return mixed
 	 */
@@ -371,7 +372,8 @@ class Uploader {
 			'width' => null,
 			'height' => null,
 			'append' => null,
-			'prepend' => null
+			'prepend' => null,
+			'overwrite' => false
 		);
 
 		$width	= $this->_data[$this->_current]['width'];
@@ -442,7 +444,7 @@ class Uploader {
 			'source_h'	=> $height,
 			'dest_w'	=> $dest_w,
 			'dest_h'	=> $dest_h,
-			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
+			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], $options['overwrite'], $options, false),
 			'quality'	=> $options['quality']
 		);
 
@@ -529,6 +531,7 @@ class Uploader {
 	 *		- append: What should be appended to the end of the filename (defaults to flip direction if not set)
 	 *		- prepend: What should be prepended to the front of the filename
 	 *		- quality: The quality of the image
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @param boolean $explicit
 	 * @return string
 	 */
@@ -537,7 +540,14 @@ class Uploader {
 			return false;
 		}
 
-		$options = $options + array('dir' => self::DIR_VERT, 'quality' => 100, 'append' => null, 'prepend' => null);
+		$options = $options + array(
+			'dir' => self::DIR_VERT,
+			'quality' => 100,
+			'append' => null,
+			'prepend' => null,
+			'overwrite' => false
+		);
+
 		$width	= $this->_data[$this->_current]['width'];
 		$height = $this->_data[$this->_current]['height'];
 		$src_x	= 0;
@@ -586,7 +596,7 @@ class Uploader {
 			'source_y'	=> $src_y,
 			'source_w'	=> $src_w,
 			'source_h'	=> $src_h,
-			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
+			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], $options['overwrite'], $options, false),
 			'quality'	=> $options['quality']
 		);
 
@@ -689,7 +699,7 @@ class Uploader {
 	 * @param string $path
 	 * @param array $options
 	 *		- name: What should the filename be changed to
-	 *		- overwrite: Should we overwrite the existant file with the same name?
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 *		- delete: Delete the original file after importing
 	 * @return mixed - Array on success, false on failure
 	 */
@@ -700,7 +710,11 @@ class Uploader {
 			$this->checkDirectory();
 		}
 
-		$options = $options + array('name' => null, 'overwrite' => false, 'delete' => false);
+		$options = $options + array(
+			'name' => null,
+			'overwrite' => false,
+			'delete' => false
+		);
 
 		$this->_current = basename($path);
 		$this->_data[$this->_current]['name'] = $this->_current;
@@ -746,7 +760,7 @@ class Uploader {
 	 * @param string $url
 	 * @param array $options
 	 *		- name: What should the filename be changed to
-	 *		- overwrite: Should we overwrite the existant file with the same name?
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function importRemote($url, array $options = array()) {
@@ -756,7 +770,10 @@ class Uploader {
 			$this->checkDirectory();
 		}
 
-		$options = $options + array('name' => null, 'overwrite' => false);
+		$options = $options + array(
+			'name' => null,
+			'overwrite' => false
+		);
 
 		$this->_current = basename($url);
 		$this->_data[$this->_current]['name'] = $this->_current;
@@ -882,6 +899,7 @@ class Uploader {
 	 *		- expand: Should the image be resized if the dimension is greater than the original dimension
 	 * 		- aspect: Keep the aspect ratio
 	 * 		- mode: Use the width or height as the base for aspect keeping
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @param boolean $explicit
 	 * @return string
 	 */
@@ -898,7 +916,8 @@ class Uploader {
 			'prepend' => null,
 			'expand' => false,
 			'aspect' => true,
-			'mode' => self::MODE_WIDTH
+			'mode' => self::MODE_WIDTH,
+			'overwrite' => false
 		);
 
 		$baseWidth = $this->_data[$this->_current]['width'];
@@ -962,7 +981,7 @@ class Uploader {
 		$transform = array(
 			'width'		=> $newWidth,
 			'height'	=> $newHeight,
-			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
+			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], $options['overwrite'], $options, false),
 			'quality'	=> $options['quality']
 		);
 
@@ -982,6 +1001,7 @@ class Uploader {
 	 *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
 	 *		- prepend: What should be prepended to the front of the filename
 	 *		- quality: The quality of the image
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @param boolean $explicit
 	 * @return string
 	 */
@@ -990,7 +1010,14 @@ class Uploader {
 			return false;
 		}
 
-		$options = $options + array('percent' => .5, 'quality' => 100, 'append' => null, 'prepend' => null);
+		$options = $options + array(
+			'percent' => .5,
+			'quality' => 100,
+			'append' => null,
+			'prepend' => null,
+			'overwrite' => false
+		);
+
 		$width = round($this->_data[$this->_current]['width'] * $options['percent']);
 		$height = round($this->_data[$this->_current]['height'] * $options['percent']);
 
@@ -1003,7 +1030,7 @@ class Uploader {
 		$transform = array(
 			'width'		=> $width,
 			'height'	=> $height,
-			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], true, $options, false),
+			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], $options['overwrite'], $options, false),
 			'quality'	=> $options['quality']
 		);
 
@@ -1185,14 +1212,20 @@ class Uploader {
 	 * @param string $file
 	 * @param array $options
 	 *		- name: What should the filename be changed to OR the name of a function to do the formatting
-	 *		- overwrite: Should we overwrite the existant file with the same name?
+	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 *		- multiple: Is this method being called from uploadAll()
 	 *		- append: What should be appended to the end of the filename (defaults to dimensions if not set)
 	 *		- prepend: What should be prepended to the front of the filename
 	 * @return mixed - Array on success, false on failure
 	 */
 	public function upload($file, array $options = array()) {
-		$options = $options + array('name' => null, 'overwrite' => false, 'multiple' => false, 'append' => null, 'prepend' => null);
+		$options = $options + array(
+			'name' => null,
+			'overwrite' => false,
+			'multiple' => false,
+			'append' => null,
+			'prepend' => null
+		);
 
 		if (!$options['multiple']) {
 			if (!$this->_enabled) {

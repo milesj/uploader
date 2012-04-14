@@ -68,7 +68,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'importFrom' => '',
 		'defaultPath' => '',
 		'maxNameLength' => null,
-		'overwrite' => true,			// Overwrite a file with the same name if it exists
+		'overwrite' => false,			// Overwrite a file with the same name if it exists
 		'stopSave' => true,				// Stop model save() on form upload error
 		'allowEmpty' => true,			// Allow an empty file upload to continue
 		'saveAsFilename' => false,		// If true, will only save the filename and not relative path
@@ -226,7 +226,7 @@ class AttachmentBehavior extends ModelBehavior {
 						trigger_error(sprintf('Uploader.Attachment::beforeSave(): "%s" is not a defined transformation method.', $method), E_USER_WARNING);
 						return false;
 					}
-					
+
 					$transformResponse = $this->uploader->{$method}($options);
 					
 					// Rollback uploaded files if one fails
