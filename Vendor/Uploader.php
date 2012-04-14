@@ -668,7 +668,6 @@ class Uploader {
 		}
 
 		$name = $name . '.' . $ext;
-		$name = trim($name, '/');
 
 		return $name;
 	}
@@ -1056,26 +1055,25 @@ class Uploader {
 			$name = $this->_data[$this->_current]['custom_name'];
 		}
 
-		$append = isset($options['append']) ? $options['append'] : '';
-		$prepend = isset($options['prepend']) ? $options['prepend'] : '';
-		$name = $this->formatFilename($name, $append, $prepend);
-		$dest = $this->_finalDir . $name;
+		$append = isset($options['append']) ? rtrim($options['append'], '/') : '';
+		$prepend = isset($options['prepend']) ? ltrim($options['prepend'], '/') : '';
+		$finalName = $this->formatFilename($name, $append, $prepend);
+		$dest = $this->_finalDir . $finalName;
 
-		if (file_exists($dest) && !$overwrite) {
+		if (!$overwrite) {
 			$no = 1;
 
-			while (file_exists($this->_finalDir . $this->formatFilename($name, $append . $no, $prepend))) {
+			while (file_exists($this->_finalDir . $finalName)) {
+				$finalName = $this->formatFilename($name, $append . '-' . $no, $prepend);
 				$no++;
 			}
-
-			$name = $this->formatFilename($name, $append . $no, $prepend);
 		}
-		
+
 		if ($append || $prepend) {
-			$this->checkDirectory($this->uploadDir . str_replace('.', '', dirname($name)));
+			$this->checkDirectory($this->uploadDir . str_replace('.', '', dirname($finalName)));
 		}
 
-		$dest = $this->_finalDir . basename($name);
+		$dest = $this->_finalDir . basename($finalName);
 
 		if ($update) {
 			$this->_data[$this->_current]['path'] = $dest;
