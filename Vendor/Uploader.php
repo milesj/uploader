@@ -5,6 +5,7 @@
  * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files. 
  * The class can also handle advanced image transforming.
  *
+ * @version		3.4.3
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
@@ -347,7 +348,7 @@ class Uploader {
 	}
 
 	/**
-	 * Crops a photo, resizes first depending on which side is larger.
+	 * Crops a photo, but resizes and keeps aspect ratio depending on which side is larger.
 	 *
 	 * @access public
 	 * @param array $options
@@ -376,74 +377,69 @@ class Uploader {
 			'overwrite' => false
 		);
 
-		$width	= $this->_data[$this->_current]['width'];
-		$height = $this->_data[$this->_current]['height'];
-		$src_x	= 0;
-		$src_y	= 0;
-		$dest_w = $width;
-		$dest_h = $height;
+		$baseWidth = $this->_data[$this->_current]['width'];
+		$baseHeight = $this->_data[$this->_current]['height'];
+		$width = $options['width'];
+		$height = $options['height'];
+
+		if (is_numeric($width) && empty($height)) {
+			$height = round(($baseHeight / $baseWidth) * $width);
+
+		} else if (is_numeric($height) && empty($width)) {
+			$width = round(($baseWidth / $baseHeight) * $height);
+
+		} else if (!is_numeric($height) && !is_numeric($width)) {
+			return false;
+		}
+
 		$location = $options['location'];
+		$widthScale = $baseWidth / $width;
+		$heightScale = $baseHeight / $height;
+		$src_x = 0;
+		$src_y = 0;
+		$src_w = $baseWidth;
+		$src_h = $baseHeight;
 
-		if (is_numeric($options['width']) && is_numeric($options['height'])) {
-			$newWidth = $options['width'];
-			$newHeight = $options['height'];
+		// Source width is larger, use height scale as the base
+		if ($widthScale > $heightScale) {
+			$src_w = round($width * $heightScale);
 
-			if ($width > $height) {
-				$dest_h = $options['height'];
-				$dest_w = round(($width / $height) * $options['height']);
-			} else if ($height > $width) {
-				$dest_w = $options['width'];
-				$dest_h = round(($height / $width) * $options['width']);
-			} else {
-				$dest_w = $options['width'];
-				$dest_h = $options['height'];
+			// Position horizontally in the middle
+			if ($location == self::LOC_CENTER) {
+				$src_x = round(($baseWidth / 2) - (($width / 2) * $heightScale));
+
+			// Position at the far right
+			} else if ($location == self::LOC_RIGHT || $location == self::LOC_BOT) {
+				$src_x = $baseWidth - $src_w;
 			}
+
+		// Source height is larger, use width scale as the base
 		} else {
-			if ($width > $height) {
-				$newWidth = $height;
-				$newHeight = $height;
-			} else {
-				$newWidth = $width;
-				$newHeight = $width;
-			}
+			$src_h = round($height * $widthScale);
 
-			$dest_h = $newHeight;
-			$dest_w = $newWidth;
-		}
+			// Position vertically in the middle
+			if ($location == self::LOC_CENTER) {
+				$src_y = round(($baseHeight / 2) - (($height / 2) * $widthScale));
 
-		if ($dest_w > $dest_h) {
-			if ($location == self::LOC_CENTER) {
-				$src_x = ceil(($width - $height) / 2);
-				$src_y = 0;
-			} else if ($location == self::LOC_BOT || $location == self::LOC_RIGHT) {
-				$src_x = ($width - $height);
-				$src_y = 0;
-			}
-		} else if ($dest_h > $dest_w) {
-			if ($location == self::LOC_CENTER) {
-				$src_x = 0;
-				$src_y = ceil(($height - $width) / 2);
-			} else if ($location == self::LOC_BOT || $location == self::LOC_RIGHT) {
-				$src_x = 0;
-				$src_y = ($height - $width);
+			// Position at the bottom
+			} else if ($location == self::LOC_RIGHT || $location == self::LOC_BOT) {
+				$src_y = $baseHeight - $src_h;
 			}
 		}
 
-		$append = '_cropped_' . $newWidth . 'x' . $newHeight;
+		$append = '_cropped_' . $width . 'x' . $height;
 
 		if ($options['append'] !== false && empty($options['append'])) {
 			$options['append'] = $append;
 		}
 
 		$transform = array(
-			'width'		=> $newWidth,
-			'height'	=> $newHeight,
+			'width'		=> $width,
+			'height'	=> $height,
 			'source_x'	=> $src_x,
 			'source_y'	=> $src_y,
-			'source_w'	=> $width,
-			'source_h'	=> $height,
-			'dest_w'	=> $dest_w,
-			'dest_h'	=> $dest_h,
+			'source_w'	=> $src_w,
+			'source_h'	=> $src_h,
 			'target'	=> $this->setDestination($this->_data[$this->_current]['name'], $options['overwrite'], $options, false),
 			'quality'	=> $options['quality']
 		);
@@ -886,7 +882,7 @@ class Uploader {
 	}
 
 	/**
-	 * Resizes and image based off a previously uploaded image.
+	 * Resizes an image based off a previously uploaded image.
 	 *
 	 * @access public
 	 * @param array $options
