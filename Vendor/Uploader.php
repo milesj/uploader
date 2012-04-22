@@ -1,8 +1,8 @@
-<?php 
-/** 
+<?php
+/**
  * Uploader
  *
- * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files. 
+ * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files.
  * The class can also handle advanced image transforming.
  *
  * @version		3.4.3
@@ -135,10 +135,10 @@ class Uploader {
 	 * @var string
 	 */
 	public $uploadDir = 'files/uploads/';
-	
+
 	/**
 	 * The field name used during AJAX file uploading.
-	 * 
+	 *
 	 * @access public
 	 * @var string
 	 */
@@ -193,7 +193,7 @@ class Uploader {
 	 */
 	public function __construct(array $settings = array()) {
 		$this->setup($settings);
-		
+
 		if ($this->_loadExtension('gd')) {
 			$this->_enabled = ini_get('file_uploads');
 		} else {
@@ -298,7 +298,7 @@ class Uploader {
 
 		if (!file_exists($finalDir)) {
 			mkdir($finalDir, 0777, true);
-			
+
 		} else if (!is_writable($finalDir)) {
 			chmod($finalDir, 0777);
 		}
@@ -319,7 +319,7 @@ class Uploader {
 		if (empty(self::$_mimeTypes)) {
 			self::$_mimeTypes = Configure::read('Uploader.mimeTypes');
 		}
-		
+
 		$validExt = false;
 		$validMime = false;
 		$currType = mb_strtolower($type);
@@ -488,7 +488,7 @@ class Uploader {
 					'height' => $data[1],
 					'type' => $data['mime']
 				);
-				
+
 				break;
 			}
 		}
@@ -641,7 +641,7 @@ class Uploader {
 		}
 
 		$patterns = array('/[^-_.a-zA-Z0-9\/\s]/i', '/[\s]/');
-		$name = str_replace('.'. $ext, '', $name);
+		$name = str_replace(array('.' . $ext, '.' . strtoupper($ext)), '', $name);
 		$name = preg_replace($patterns, array('', '_'), $name);
 
 		if (is_numeric($this->maxNameLength) && $truncate) {
@@ -744,7 +744,7 @@ class Uploader {
 		}
 
 		chmod($dest, 0777);
-		
+
 		return $this->_returnData();
 	}
 
@@ -775,7 +775,7 @@ class Uploader {
 		$this->_data[$this->_current]['path'] = $url;
 		$this->_data[$this->_current]['type'] = self::mimeType($url);
 		$this->_data[$this->_current]['ext'] = self::ext($url);
-		
+
 		// Validate everything
 		if (!$this->_validates(true)) {
 			return false;
@@ -799,7 +799,7 @@ class Uploader {
 		}
 
 		chmod($dest, 0777);
-		
+
 		return $this->_returnData();
 	}
 
@@ -815,7 +815,7 @@ class Uploader {
 		if (function_exists('mime_content_type') && file_exists($path)) {
 			return mime_content_type($path);
 		}
-		
+
 		if (empty(self::$_mimeTypes)) {
 			self::$_mimeTypes = Configure::read('Uploader.mimeTypes');
 		}
@@ -1074,28 +1074,28 @@ class Uploader {
 		if ($update) {
 			$this->_data[$this->_current]['path'] = $dest;
 		}
-			
+
 		return $dest;
 	}
-	
+
 	/**
 	 * Apply settings to the class.
-	 * 
+	 *
 	 * @access public
 	 * @param array $settings
-	 * @return Uploader 
+	 * @return Uploader
 	 */
 	public function setup(array $settings) {
 		$settings = array_filter($settings);
-		
+
 		if (!empty($settings)) {
 			foreach ($settings as $key => $value) {
 				if ($key == 'scanFile') {
 					$this->{$key} = (bool) $value;
-					
+
 				} else if ($key == 'maxNameLength') {
 					$this->{$key} = (int) $value;
-					
+
 				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir', 'ajaxField', 'maxFileSize'))) {
 					$this->{$key} = (string) $value;
 				}
@@ -1107,7 +1107,7 @@ class Uploader {
 		}
 
 		$this->baseDir = str_replace('\\', '/', $this->baseDir);
-		
+
 		return $this;
 	}
 
@@ -1195,7 +1195,7 @@ class Uploader {
 		// Clear memory
 		imagedestroy($source);
 		imagedestroy($target);
-		
+
 		return true;
 	}
 
@@ -1275,15 +1275,15 @@ class Uploader {
 
 		// Uploaded via stream / AJAX
 		if (isset($current['stream'])) {
-			$target = fopen($dest, 'w');        
+			$target = fopen($dest, 'w');
 			fseek($current['tmp_name'], 0, SEEK_SET);
-			
+
 			if (stream_copy_to_stream($current['tmp_name'], $target)) {
 				$current['uploaded'] = date('Y-m-d H:i:s');
 			}
-			
+
 			fclose($target);
-		
+
 		// Uploaded via POST
 		} else {
 			if (move_uploaded_file($current['tmp_name'], $dest)) {
@@ -1298,7 +1298,7 @@ class Uploader {
 		}
 
 		chmod($dest, 0777);
-		
+
 		return $this->_returnData();
 	}
 
@@ -1379,7 +1379,7 @@ class Uploader {
 
 		// Form uploading
 		if (!empty($_FILES)) {
-			
+
 			// via CakePHP
 			if (isset($_FILES['data'])) {
 				foreach ($_FILES['data'] as $key => $file) {
@@ -1395,12 +1395,12 @@ class Uploader {
 						}
 					}
 				}
-			
+
 			// via normal form or AJAX iframe
 			} else {
 				$data = $_FILES;
 			}
-			
+
 		// AJAX uploading
 		} else if (isset($_GET[$this->ajaxField])) {
 			$name = $_GET[$this->ajaxField];
@@ -1418,11 +1418,11 @@ class Uploader {
 					'error' => 0,
 					'size' => stream_copy_to_stream($input, $temp)
 				);
-				
+
 				fclose($input);
 			}
 		}
-		
+
 		$this->_data = $data;
 	}
 
@@ -1479,7 +1479,7 @@ class Uploader {
 
 		if ($grouping) {
 			$this->_data[$this->_current]['group'] = $grouping;
-			
+
 		} else if (!$import) {
 			return false;
 		}
