@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * Uploader Plugin Config
  *
  * A config class that holds all the settings and default mimetypes.
@@ -13,7 +13,7 @@
 /**
  * Current version.
  */
-$config['Uploader']['version'] = '3.4.3';
+$config['Uploader']['version'] = '3.5';
 
 /**
  * The accepted file/mime types.
