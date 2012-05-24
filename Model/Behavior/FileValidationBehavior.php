@@ -90,7 +90,7 @@ class FileValidationBehavior extends ModelBehavior {
 		}
 
 		foreach ($data as $fieldName => $field) {
-			if (!$this->_settings[$model->alias][$fieldName]['required'] && empty($field['tmp_name'])) {
+			if ($this->required($model, $data) && empty($field['tmp_name'])) {
 				return true;
 				
 			} else if (empty($field['tmp_name'])) {
@@ -166,7 +166,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function extension($model, $data, array $allowed = array()) {
 		foreach ($data as $fieldName => $field) {
-			if (!$this->_settings[$model->alias][$fieldName]['required'] && empty($field['tmp_name'])) {
+			if ($this->required($model, $data) && empty($field['tmp_name'])) {
 				return true;
 				
 			} else if (empty($field['tmp_name'])) {
@@ -286,7 +286,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	protected function _validateImage($model, $data, $type, $size = 100) {
 		foreach ($data as $fieldName => $field) {
-			if (!$this->_settings[$model->alias][$fieldName]['required'] && empty($field['tmp_name'])) {
+			if ($this->required($model, $data) && empty($field['tmp_name'])) {
 				return true;
 				
 			} else if (empty($field['tmp_name'])) {
