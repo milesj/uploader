@@ -67,7 +67,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param array $settings
 	 * @return void
 	 */
-	public function setup($model, $settings = array()) {
+	public function setup(Model $model, $settings = array()) {
 		if (!empty($settings)) {
 			foreach ($settings as $field => $options) {
 				$this->_settings[$model->alias][$field] = $options + array('required' => true);
@@ -213,7 +213,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @return boolean
 	 */
-	public function beforeValidate($model) {
+	public function beforeValidate(Model $model) {
 		if (!empty($this->_settings[$model->alias])) {
 			foreach ($this->_settings[$model->alias] as $field => $rules) {
 				$validations = array();
