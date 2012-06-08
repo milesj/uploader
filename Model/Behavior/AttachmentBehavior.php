@@ -99,7 +99,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param array $settings
 	 * @return void
 	 */
-	public function setup($model, $settings = array()) {
+	public function setup(Model $model, $settings = array()) {
 		$this->uploader = new Uploader();
 		
 		if (!empty($settings)) {
@@ -131,7 +131,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param boolean $cascade
 	 * @return boolean
 	 */
-	public function beforeDelete($model, $cascade = true) {
+	public function beforeDelete(Model $model, $cascade = true) {
 		if (empty($model->id)) {
 			return false;
 		}
@@ -162,7 +162,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @return boolean
 	 */
-	public function beforeSave($model) {
+	public function beforeSave(Model $model) {
 		if (empty($model->data[$model->alias])) {
 			return true;
 		}
