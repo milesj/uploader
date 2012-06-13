@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * FileValidationBehavior
  *
  * A CakePHP Behavior that adds validation model rules to file uploading.
@@ -92,7 +92,7 @@ class FileValidationBehavior extends ModelBehavior {
 		foreach ($data as $fieldName => $field) {
 			if ($this->required($model, $data)) {
 				return true;
-				
+
 			} else if (empty($field['tmp_name'])) {
 				return false;
 			}
@@ -168,15 +168,15 @@ class FileValidationBehavior extends ModelBehavior {
 		foreach ($data as $fieldName => $field) {
 			if ($this->required($model, $data)) {
 				return true;
-				
+
 			} else if (empty($field['tmp_name'])) {
 				return false;
-				
+
 			} else {
 				$ext = Uploader::ext($field['name']);
 			}
 
-			return (Uploader::checkMimeType($ext, $field['type']) && in_array($ext, $allowed));
+			return (Uploader::checkMimeType($ext, $field['type']) && (empty($allowed) || in_array($ext, $allowed)));
 		}
 
 		return true;
@@ -252,11 +252,11 @@ class FileValidationBehavior extends ModelBehavior {
 							$set['allowEmpty'] = !(bool) $rules['required'];
 						}
 					}
-						
+
 					if (is_array($arg)) {
 						$arg = implode(', ', $arg);
 					}
-					
+
 					$set['message'] = __d('uploader', $set['message'], $arg);
 					$validations[$rule] = $set;
 				}
@@ -288,7 +288,7 @@ class FileValidationBehavior extends ModelBehavior {
 		foreach ($data as $fieldName => $field) {
 			if ($this->required($model, $data)) {
 				return true;
-				
+
 			} else if (empty($field['tmp_name'])) {
 				return false;
 			}
