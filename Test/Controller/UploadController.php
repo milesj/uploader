@@ -13,12 +13,12 @@ App::import('Vendor', 'Uploader.Uploader');
 /**
  * Custom global function to handle filename formatting; works within the component or behavior.
  * Simply pass the function name to the the name option.
- * 
+ *
  * @access public
  * @param string $name
  * @param string $field
  * @param array $data
- * @return string 
+ * @return string
  */
 function uploaderFilename($name, $field, $data) {
 	return md5($name);
@@ -274,7 +274,7 @@ class UploadController extends AppController {
 		$this->set('title_for_layout', 'Upload: Import Remote File');
 		$this->render('import');
 	}
-	
+
 	/**
 	 * Test case for uploading files via XHR or AJAX iframe hack.
 	 */
@@ -282,13 +282,13 @@ class UploadController extends AppController {
 		$this->set('title_for_layout', 'Upload: AJAX File Upload');
 		$this->render('ajax');
 	}
-	
+
 	/**
 	 * URL to handle the AJAX call.
 	 */
 	public function ajax_upload() {
 		$this->autoLayout = $this->autoRender = false;
-		
+
 		if ($data = $this->Uploader->upload($this->Uploader->ajaxField, array('overwrite' => true))) {
 			header('Content-Type: application/json');
 			echo json_encode(array('success' => true, 'data' => $data));

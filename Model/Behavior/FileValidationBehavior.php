@@ -84,7 +84,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	public function filesize($model, $data, $size = 5242880) {
+	public function filesize(Model $model, $data, $size = 5242880) {
 		if (empty($size) || !is_numeric($size)) {
 			$size = 5242880;
 		}
@@ -112,7 +112,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	public function maxHeight($model, $data, $size = 100) {
+	public function maxHeight(Model $model, $data, $size = 100) {
 		return $this->_validateImage($model, $data, 'maxHeight', $size);
 	}
 
@@ -125,7 +125,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	public function maxWidth($model, $data, $size = 100) {
+	public function maxWidth(Model $model, $data, $size = 100) {
 		return $this->_validateImage($model, $data, 'maxWidth', $size);
 	}
 
@@ -138,7 +138,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	public function minHeight($model, $data, $size = 100) {
+	public function minHeight(Model $model, $data, $size = 100) {
 		return $this->_validateImage($model, $data, 'minHeight', $size);
 	}
 
@@ -151,7 +151,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	public function minWidth($model, $data, $size = 100) {
+	public function minWidth(Model $model, $data, $size = 100) {
 		return $this->_validateImage($model, $data, 'minWidth', $size);
 	}
 
@@ -164,7 +164,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param array $allowed
 	 * @return boolean
 	 */
-	public function extension($model, $data, array $allowed = array()) {
+	public function extension(Model $model, $data, array $allowed = array()) {
 		foreach ($data as $fieldName => $field) {
 			if ($this->required($model, $data)) {
 				return true;
@@ -190,7 +190,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param array $data
 	 * @return boolean
 	 */
-	public function required($model, $data) {
+	public function required(Model $model, $data) {
 		foreach ($data as $fieldName => $field) {
 			$required = $this->_settings[$model->alias][$fieldName]['required'];
 
@@ -284,7 +284,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param int $size
 	 * @return boolean
 	 */
-	protected function _validateImage($model, $data, $type, $size = 100) {
+	protected function _validateImage(Model $model, $data, $type, $size = 100) {
 		foreach ($data as $fieldName => $field) {
 			if ($this->required($model, $data)) {
 				return true;
