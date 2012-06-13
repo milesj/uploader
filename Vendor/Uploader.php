@@ -1259,14 +1259,7 @@ class Uploader {
 		}
 
 		// Validate everything
-		if ($this->_validates()) {
-			if ($current['group'] == 'image' && !isset($current['stream'])) {
-				$dimensions = $this->dimensions($current['tmp_name']);
-
-				$current['width'] = $dimensions['width'];
-				$current['height'] = $dimensions['height'];
-			}
-		} else {
+		if (!$this->_validates()) {
 			return false;
 		}
 
@@ -1298,6 +1291,14 @@ class Uploader {
 		}
 
 		chmod($dest, 0777);
+
+		// Grab the dimensions if it's an image
+		if ($current['group'] == 'image') {
+			$dimensions = $this->dimensions($dest);
+
+			$current['width'] = $dimensions['width'];
+			$current['height'] = $dimensions['height'];
+		}
 
 		return $this->_returnData();
 	}
