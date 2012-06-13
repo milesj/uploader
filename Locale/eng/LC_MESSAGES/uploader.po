@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CakePHP Uploader Plugin\n"
 "POT-Creation-Date: 2011-11-28 23:00-0800\n"
-"PO-Revision-Date: 2011-11-28 23:10-0800\n"
+"PO-Revision-Date: 2012-06-13 00:52-0800\n"
 "Last-Translator: Miles Johnson <mileswjohnson@gmail.com>\n"
 "Language-Team: Miles Johnson <mileswjohnson@gmail.com>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgid "There was an error uploading this file, please try again."
 msgstr ""
 
 #: Model/Behavior/AttachmentBehavior.php:223
-msgid "An error occured during image %s transformation."
+msgid "An error occurred during image %s transformation."
 msgstr ""
 
 #: Model/Behavior/FileValidationBehavior.php:34
@@ -46,5 +46,13 @@ msgstr ""
 
 #: Model/Behavior/FileValidationBehavior.php:58
 msgid "This file is required."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:34
+msgid "Your image width is invalid; required width is %s."
+msgstr ""
+
+#: Model/Behavior/FileValidationBehavior.php:38
+msgid "Your image height is invalid; required height is %s."
 msgstr ""
 

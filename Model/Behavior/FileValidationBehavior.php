@@ -29,6 +29,14 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @var array
 	 */
 	protected $_validations = array(
+		'width' => array(
+			'rule' => array('width'),
+			'message' => 'Your image width is invalid; required width is %s.'
+		),
+		'height' => array(
+			'rule' => array('height'),
+			'message' => 'Your image height is invalid; required height is %s.'
+		),
 		'minWidth' => array(
 			'rule' => array('minWidth'),
 			'message' => 'Your image width is too small; minimum width %s.'
@@ -101,6 +109,32 @@ class FileValidationBehavior extends ModelBehavior {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks that the image height is exact.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function height(Model $model, $data, $size = 100) {
+		return $this->_validateImage($model, $data, 'height', $size);
+	}
+
+	/**
+	 * Checks that the image width is exact.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param array $data
+	 * @param int $size
+	 * @return boolean
+	 */
+	public function width(Model $model, $data, $size = 100) {
+		return $this->_validateImage($model, $data, 'width', $size);
 	}
 
 	/**
@@ -198,7 +232,7 @@ class FileValidationBehavior extends ModelBehavior {
 				$required = $required['value'];
 			}
 
-			if ($required && empty($field['tmp_name'])) {
+			if ($required && (empty($field['tmp_name']) || !is_array($field))) {
 				return false;
 			}
 		}
@@ -303,10 +337,12 @@ class FileValidationBehavior extends ModelBehavior {
 			$height = $file[1];
 
 			switch ($type) {
-				case 'maxWidth':    return ($width <= $size); break;
-				case 'maxHeight':   return ($height <= $size); break;
-				case 'minWidth':    return ($width >= $size); break;
-				case 'minHeight':   return ($height >= $size); break;
+				case 'width':		return ($width == $size); break;
+				case 'height':		return ($height == $size); break;
+				case 'maxWidth':	return ($width <= $size); break;
+				case 'maxHeight':	return ($height <= $size); break;
+				case 'minWidth':	return ($width >= $size); break;
+				case 'minHeight':	return ($height >= $size); break;
 			}
 		}
 
