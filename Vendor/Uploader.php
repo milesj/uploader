@@ -1307,16 +1307,32 @@ class Uploader {
 	 *
 	 * @access public
 	 * @param array $fields
-	 * @param boolean $overwrite
-	 * @param boolean $rollback
+	 * @param array $options
+	 * 		- overwrite: Should the uploads overwrite existing files
+	 * 		- rollback: If one image fails, should the upload rollback and delete previous files
+	 * 		- allowEmpty: If an upload is empty, should the uploads continue or break
+	 * @param boolean $rollback (backwards compatible support)
 	 * @return array
 	 */
-	public function uploadAll(array $fields = array(), $overwrite = false, $rollback = true) {
+	public function uploadAll(array $fields = array(), $options = array(), $rollback = true) {
 		if (!$this->_enabled) {
 			return false;
 		} else {
 			$this->checkDirectory();
 		}
+
+		// Setup options
+		$defaults = array(
+			'overwrite' => false,
+			'rollback' => (bool) $rollback,
+			'allowEmpty' => true
+		);
+
+		if (!is_array($options)) {
+			$options = array('overwrite' => (bool) $options);
+		}
+
+		$options = $options + $defaults;
 
 		if (empty($fields) || !$fields) {
 			$fields = array_keys($this->_data);
@@ -1328,11 +1344,23 @@ class Uploader {
 		if (!empty($fields)) {
 			foreach ($fields as $field) {
 				if (isset($this->_data[$field])) {
-					$upload = $this->upload($field, array('overwrite' => $overwrite, 'multiple' => true));
+					if (empty($this->_data[$field]['tmp_name'])) {
+						if ($options['allowEmpty']) {
+							continue;
+						} else if ($options['rollback']) {
+							$fail = true;
+							break;
+						}
+					}
+
+					$upload = $this->upload($field, array(
+						'overwrite' => $options['overwrite'],
+						'multiple' => true
+					));
 
 					if (!empty($upload)) {
 						$data[$field] = $upload;
-					} else {
+					} else if ($options['rollback']) {
 						$fail = true;
 						break;
 					}
@@ -1340,11 +1368,9 @@ class Uploader {
 			}
 		}
 
-		if ($fail) {
-			if ($rollback && !empty($data)) {
-				foreach ($data as $file) {
-					$this->delete($file['path']);
-				}
+		if ($fail && !empty($data)) {
+			foreach ($data as $file) {
+				$this->delete($file['path']);
 			}
 
 			return false;

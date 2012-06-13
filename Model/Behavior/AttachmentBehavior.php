@@ -182,10 +182,10 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Should we continue if a file threw errors during upload?
-			if ((isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || (is_string($file) && empty($attachment['importFrom']))) {
+			if (empty($file['tmp_name']) || (isset($file['error']) && $file['error'] == UPLOAD_ERR_NO_FILE) || (is_string($file) && empty($attachment['importFrom']))) {
 				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
 					return false;
-				} else {
+				} else if ($attachment['allowEmpty']) {
 					unset($model->data[$model->alias][$attachment['dbColumn']]);
 					continue;
 				}
