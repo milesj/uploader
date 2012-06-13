@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * AttachmentBehavior
  *
  * A CakePHP Behavior that attaches a file to a model, and uploads automatically, then stores a value in the database.
@@ -19,18 +19,18 @@ class AttachmentBehavior extends ModelBehavior {
 	 * AS3 domain snippet.
 	 */
 	const AS3_DOMAIN = 's3.amazonaws.com';
-	
+
 	/**
 	 * Uploader instance.
-	 * 
+	 *
 	 * @access public
 	 * @var Uploader
 	 */
 	public $uploader = null;
-	
+
 	/**
 	 * S3 instance.
-	 * 
+	 *
 	 * @access public
 	 * @var S3
 	 */
@@ -43,10 +43,10 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @var array
 	 */
 	protected $_attachments = array();
-	
+
 	/**
 	 * Mapping of database columns to form fields.
-	 * 
+	 *
 	 * @access protected
 	 * @var array
 	 */
@@ -90,7 +90,7 @@ class AttachmentBehavior extends ModelBehavior {
 			'filesize' => ''
 		)
 	);
-	
+
 	/**
 	 * Initialize uploader and save attachments.
 	 *
@@ -101,13 +101,13 @@ class AttachmentBehavior extends ModelBehavior {
 	 */
 	public function setup(Model $model, $settings = array()) {
 		$this->uploader = new Uploader();
-		
+
 		if (!empty($settings)) {
 			foreach ($settings as $field => $attachment) {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
-				
+
 				$attachment = $attachment + $this->_defaults;
 				$columns = array($attachment['dbColumn'] => $field);
 
@@ -143,11 +143,12 @@ class AttachmentBehavior extends ModelBehavior {
 			foreach ($data[$model->alias] as $column => $value) {
 				if (isset($columns[$column])) {
 					$attachment = $this->_attachments[$model->alias][$columns[$column]];
-					
+
 					$this->uploader->setup($attachment);
 					$this->s3 = $this->s3($attachment['s3']);
 
-					$this->delete($value);
+					$path = $attachment['saveAsFilename'] ? rtrim($attachment['uploadDir'], '/') . '/' . $value : $value;
+					$this->delete($path);
 				}
 			}
 		}
@@ -174,7 +175,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 			$attachment = $this->_attachments[$model->alias][$field];
 			$data = array();
-			
+
 			// Not a form upload, so lets treat it as an import
 			if (is_string($file) && !empty($file)) {
 				$attachment['importFrom'] = $file;
@@ -206,14 +207,14 @@ class AttachmentBehavior extends ModelBehavior {
 				'append' => $attachment['append'],
 				'prepend' => $attachment['prepend']
 			));
-			
+
 			if (empty($uploadResponse)) {
 				return $model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
 			}
-			
+
 			$basePath = $this->transfer($uploadResponse['path']);
 			$data[$attachment['dbColumn']] = ($attachment['saveAsFilename'] && $this->s3 === null) ? basename($basePath) : $basePath;
-					
+
 			$toDelete = array();
 			$lastPath = $basePath;
 
@@ -228,7 +229,7 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 
 					$transformResponse = $this->uploader->{$method}($options);
-					
+
 					// Rollback uploaded files if one fails
 					if (empty($transformResponse)) {
 						foreach ($data as $path) {
@@ -237,7 +238,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 						return $model->invalidate($field, __d('uploader', 'An error occured during image %s transformation.', $method));
 					}
-					
+
 					// Transform successful
 					$transformPath = $this->transfer($transformResponse);
 					$data[$options['dbColumn']] = ($attachment['saveAsFilename'] && $this->s3 === null) ? basename($transformPath) : $transformPath;
@@ -246,11 +247,11 @@ class AttachmentBehavior extends ModelBehavior {
 					if ($options['dbColumn'] == $attachment['dbColumn'] && $lastPath != $transformPath) {
 						$toDelete[] = $lastPath;
 					}
-					
+
 					$lastPath = $transformPath;
 				}
 			}
-			
+
 			// Delete old files if replacing them
 			if ($toDelete) {
 				foreach ($toDelete as $deleteFile) {
@@ -272,20 +273,20 @@ class AttachmentBehavior extends ModelBehavior {
 				foreach ($this->s3->uploads as $path) {
 					$this->delete($path);
 				}
-				
+
 				$this->s3 = null;
 			}
 
 			// Merge upload data with model data
 			$model->data[$model->alias] = $data + $model->data[$model->alias];
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Delete a file from Amazon S3 or locally.
-	 * 
+	 *
 	 * @access public
 	 * @param string $path
 	 * @return boolean
@@ -294,29 +295,29 @@ class AttachmentBehavior extends ModelBehavior {
 		if (strpos($path, self::AS3_DOMAIN) !== false && $this->s3 !== null) {
 			return $this->s3->deleteObject($this->s3->bucket, $this->s3->path . basename($path));
 		}
-		
+
 		return $this->uploader->delete($path);
 	}
 
 	/**
 	 * Return an S3 instance.
-	 * 
+	 *
 	 * @access public
 	 * @param array $settings
-	 * @return S3 
+	 * @return S3
 	 */
 	public function s3(array $settings) {
 		if (empty($settings['accessKey']) || empty($settings['secretKey'])) {
 			return null;
 		}
-		
+
 		$ssl = isset($settings['useSsl']) ? $settings['useSsl'] : $settings['ssl'];
-		
+
 		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $ssl);
 		$s3->bucket = $settings['bucket'];
 		$s3->path = trim($settings['path'], '/') . '/';
 		$s3->uploads = array();
-		
+
 		return $s3;
 	}
 
@@ -353,16 +354,16 @@ class AttachmentBehavior extends ModelBehavior {
 		if ($this->s3 === null) {
 			return $path;
 		}
-		
+
 		$name = $this->s3->path . basename($path);
 		$bucket = $this->s3->bucket;
 
 		if ($this->s3->putObjectFile($this->uploader->formatPath($path), $bucket, $name, S3::ACL_PUBLIC_READ)) {
 			$this->s3->uploads[] = $path;
-			
+
 			return sprintf('http://%s.%s/%s', $bucket, self::AS3_DOMAIN, $name);
 		}
-		
+
 		return $path;
 	}
 
