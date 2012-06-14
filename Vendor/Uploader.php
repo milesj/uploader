@@ -5,7 +5,7 @@
  * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files.
  * The class can also handle advanced image transforming.
  *
- * @version		3.4.3
+ * @version		3.6
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
