@@ -28,7 +28,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @access protected
 	 * @var array
 	 */
-	protected $_validations = array(
+	protected $_defaults = array(
 		'width' => array(
 			'rule' => array('width'),
 			'message' => 'Your image width is invalid; required width is %s.'
@@ -63,9 +63,19 @@ class FileValidationBehavior extends ModelBehavior {
 		),
 		'required' => array(
 			'rule' => array('required'),
-			'message' => 'This file is required.'
+			'message' => 'This file is required.',
+			'on' => 'create',
+			'allowEmpty' => true
 		)
 	);
+
+	/**
+	 * Generated list of validation rules.
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $_validations = array();
 
 	/**
 	 * Setup the validation and model settings.
@@ -222,16 +232,11 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @access public
 	 * @param Model $model
 	 * @param array $data
+	 * @param boolean $required
 	 * @return boolean
 	 */
-	public function required(Model $model, $data) {
+	public function required(Model $model, $data, $required = true) {
 		foreach ($data as $fieldName => $field) {
-			$required = $this->_settings[$model->alias][$fieldName]['required'];
-
-			if (is_array($required)) {
-				$required = $required['value'];
-			}
-
 			if ($required && (!is_array($field) || empty($field['tmp_name']))) {
 				return false;
 			}
@@ -253,40 +258,33 @@ class FileValidationBehavior extends ModelBehavior {
 				$validations = array();
 
 				foreach ($rules as $rule => $setting) {
-					$set = $this->_validations[$rule];
+					$set = $this->_defaults[$rule];
 					$arg = '';
 
-					if (is_array($setting) && !isset($setting[0])) {
-						if (!empty($setting['error'])) {
-							$set['message'] = $setting['error'];
-						}
-
-						switch ($rule) {
-							case 'required':
-								$set['rule'] = array($rule);
-							break;
-							case 'extension':
-								$arg = (array) $setting['value'];
-								$set['rule'] = array($rule, $arg);
-							break;
-							default:
-								$arg = (int) $setting['value'];
-								$set['rule'] = array($rule, $arg);
-							break;
-						}
-					} else {
-						$set['rule'] = array($rule, $setting);
-						$arg = $setting;
+					// Parse out values
+					if (!is_array($setting)) {
+						$setting = array('value' => $setting);
 					}
 
-					if (isset($rules['required'])) {
-						if (is_array($rules['required'])) {
-							$set['allowEmpty'] = !(bool) $rules['required']['value'];
-						} else {
-							$set['allowEmpty'] = !(bool) $rules['required'];
-						}
+					switch ($rule) {
+						case 'required':	$arg = (bool) $setting['value']; break;
+						case 'extension':	$arg = (array) $setting['value']; break;
+						default:			$arg = (int) $setting['value']; break;
 					}
 
+					$setting['rule'] = array($rule, $arg);
+
+					if (!empty($setting['error'])) {
+						$setting['message'] = $setting['error'];
+						unset($setting['error']);
+					}
+
+					unset($setting['value']);
+
+					// Merge settings
+					$set = array_merge($set, $setting);
+
+					// Apply validations
 					if (is_array($arg)) {
 						$arg = implode(', ', $arg);
 					}
@@ -300,6 +298,7 @@ class FileValidationBehavior extends ModelBehavior {
 						$validations = $validations + $model->validate[$field];
 					}
 
+					$this->_validations[$field] = $validations;
 					$model->validate[$field] = $validations;
 				}
 			}
@@ -318,17 +317,21 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return bool
 	 */
 	protected function _allowEmpty(Model $model, $fieldName, $field) {
-		$required = false;
+		if (isset($this->_validations[$fieldName]['required'])) {
+			$rule = $this->_validations[$fieldName]['required'];
+			$required = $rule['rule'][1];
 
-		if (isset($this->_settings[$model->alias][$fieldName]['required'])) {
-			$required = $this->_settings[$model->alias][$fieldName]['required'];
+			if (empty($field['tmp_name'])) {
+				if ($rule['allowEmpty']) {
+					return true;
 
-			if (is_array($required)) {
-				$required = $required['value'];
+				} else if ($required) {
+					return false;
+				}
 			}
 		}
 
-		return (!$required && empty($field['tmp_name']));
+		return false;
 	}
 
 	/**
