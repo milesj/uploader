@@ -130,7 +130,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @access public
 	 * @param Model $model
 	 * @param boolean $cascade
-	 * @return boolean
+	 * @return mixed
 	 */
 	public function beforeDelete(Model $model, $cascade = true) {
 		if (empty($model->id)) {
@@ -162,7 +162,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @return boolean
+	 * @return mixed
 	 */
 	public function beforeSave(Model $model) {
 		if (empty($model->data[$model->alias])) {

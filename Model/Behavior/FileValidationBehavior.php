@@ -250,7 +250,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @return boolean
+	 * @return mixed
 	 */
 	public function beforeValidate(Model $model) {
 		if (!empty($this->_settings[$model->alias])) {
