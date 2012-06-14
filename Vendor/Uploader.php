@@ -199,6 +199,7 @@ class Uploader {
 	 *
 	 * @access public
 	 * @param array $settings
+	 * @throws Exception
 	 */
 	public function __construct(array $settings = array()) {
 		$this->setup($settings);
@@ -207,7 +208,7 @@ class Uploader {
 			$this->_enabled = ini_get('file_uploads');
 		} else {
 			$this->_enabled = false;
-			trigger_error('Uploader.Uploader::__construct(): GD image library is not installed.', E_USER_WARNING);
+			throw new Exception('Uploader.Uploader::__construct(): GD image library is not installed.');
 		}
 
 		if (!$this->_enabled) {
@@ -215,7 +216,7 @@ class Uploader {
 		}
 
 		if (isset($this->maxFileSize)) {
-			trigger_error('Uploader.Uploader::__construct(): "upload_max_filesize" and other file upload INI settings must be set in your php.ini.', E_USER_WARNING);
+			throw new Exception('Uploader.Uploader::__construct(): "upload_max_filesize" and other file upload INI settings must be set in your php.ini.');
 		}
 
 		$this->_parseData();
@@ -614,6 +615,7 @@ class Uploader {
 				$src_h = -$height;
 				$adir = 'both';
 			break;
+
 			default:
 				return false;
 			break;
@@ -797,8 +799,13 @@ class Uploader {
 	 *		- name: What should the filename be changed to
 	 *		- overwrite: Should we overwrite the existent file with the same name?
 	 * @return mixed - Array on success, false on failure
+	 * @throws Exception
 	 */
 	public function importRemote($url, array $options = array()) {
+		if (!function_exists('curl_init')) {
+			throw new Exception(sprintf('The cURL module is required for %s', __METHOD__));
+		}
+
 		if (!$this->_enabled) {
 			return false;
 		} else {
