@@ -10,6 +10,7 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
+App::uses('Set', 'Utility');
 App::import('Vendor', 'Uploader.S3');
 App::import('Vendor', 'Uploader.Uploader');
 
@@ -108,7 +109,7 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
 
-				$attachment = $attachment + $this->_defaults;
+				$attachment = Set::merge($this->_defaults, $attachment);
 				$columns = array($attachment['dbColumn'] => $field);
 
 				if (!empty($attachment['transforms'])) {

@@ -259,7 +259,6 @@ class FileValidationBehavior extends ModelBehavior {
 
 				foreach ($rules as $rule => $setting) {
 					$set = $this->_defaults[$rule];
-					$arg = '';
 
 					// Parse out values
 					if (!is_array($setting)) {
@@ -272,9 +271,11 @@ class FileValidationBehavior extends ModelBehavior {
 						default:			$arg = (int) $setting['value']; break;
 					}
 
-					$setting['rule'] = array($rule, $arg);
+					if (!isset($setting['rule'])) {
+						$setting['rule'] = array($rule, $arg);
+					}
 
-					if (!empty($setting['error'])) {
+					if (isset($setting['error'])) {
 						$setting['message'] = $setting['error'];
 						unset($setting['error']);
 					}
@@ -290,6 +291,7 @@ class FileValidationBehavior extends ModelBehavior {
 					}
 
 					$set['message'] = __d('uploader', $set['message'], $arg);
+
 					$validations[$rule] = $set;
 				}
 
@@ -319,7 +321,7 @@ class FileValidationBehavior extends ModelBehavior {
 	protected function _allowEmpty(Model $model, $fieldName, $field) {
 		if (isset($this->_validations[$fieldName]['required'])) {
 			$rule = $this->_validations[$fieldName]['required'];
-			$required = $rule['rule'][1];
+			$required = isset($rule['rule'][1]) ? $rule['rule'][1] : true;
 
 			if (empty($field['tmp_name'])) {
 				if ($rule['allowEmpty']) {

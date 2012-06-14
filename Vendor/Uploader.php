@@ -208,7 +208,7 @@ class Uploader {
 			$this->_enabled = ini_get('file_uploads');
 		} else {
 			$this->_enabled = false;
-			throw new Exception('Uploader.Uploader::__construct(): GD image library is not installed.');
+			throw new Exception(sprintf('%s: GD image library is not installed', __METHOD__));
 		}
 
 		if (!$this->_enabled) {
@@ -216,7 +216,7 @@ class Uploader {
 		}
 
 		if (isset($this->maxFileSize)) {
-			throw new Exception('Uploader.Uploader::__construct(): "upload_max_filesize" and other file upload INI settings must be set in your php.ini.');
+			throw new Exception(spritnf('%s: "upload_max_filesize" and other file upload INI settings must be set in your php.ini', __METHOD__));
 		}
 
 		$this->_parseData();
@@ -803,7 +803,7 @@ class Uploader {
 	 */
 	public function importRemote($url, array $options = array()) {
 		if (!function_exists('curl_init')) {
-			throw new Exception(sprintf('The cURL module is required for %s', __METHOD__));
+			throw new Exception(sprintf('%s: The cURL module is required', __METHOD__));
 		}
 
 		if (!$this->_enabled) {
@@ -1124,7 +1124,6 @@ class Uploader {
 		$append = isset($options['append']) ? rtrim($options['append'], '/') : '';
 		$prepend = isset($options['prepend']) ? ltrim($options['prepend'], '/') : '';
 		$finalName = $this->formatFilename($name, $append, $prepend);
-		$dest = $this->_finalDir . $finalName;
 
 		if (!$overwrite) {
 			$no = 1;
