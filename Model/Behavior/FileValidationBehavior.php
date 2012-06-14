@@ -98,7 +98,7 @@ class FileValidationBehavior extends ModelBehavior {
 		}
 
 		foreach ($data as $fieldName => $field) {
-			if ($this->required($model, $data)) {
+			if ($this->_allowEmpty($model, $fieldName, $field)) {
 				return true;
 
 			} else if (empty($field['tmp_name'])) {
@@ -200,7 +200,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function extension(Model $model, $data, array $allowed = array()) {
 		foreach ($data as $fieldName => $field) {
-			if ($this->required($model, $data)) {
+			if ($this->_allowEmpty($model, $fieldName, $field)) {
 				return true;
 
 			} else if (empty($field['tmp_name'])) {
@@ -232,7 +232,7 @@ class FileValidationBehavior extends ModelBehavior {
 				$required = $required['value'];
 			}
 
-			if ($required && (empty($field['tmp_name']) || !is_array($field))) {
+			if ($required && (!is_array($field) || empty($field['tmp_name']))) {
 				return false;
 			}
 		}
@@ -309,6 +309,29 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
+	 * Allow empty file uploads to circumvent file validations.
+	 *
+	 * @access protected
+	 * @param Model $model
+	 * @param string $fieldName
+	 * @param array $field
+	 * @return bool
+	 */
+	protected function _allowEmpty(Model $model, $fieldName, $field) {
+		$required = false;
+
+		if (isset($this->_settings[$model->alias][$fieldName]['required'])) {
+			$required = $this->_settings[$model->alias][$fieldName]['required'];
+
+			if (is_array($required)) {
+				$required = $required['value'];
+			}
+		}
+
+		return (!$required && empty($field['tmp_name']));
+	}
+
+	/**
 	 * Validates multiple combinations of height and width for an image.
 	 *
 	 * @access protected
@@ -320,7 +343,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	protected function _validateImage(Model $model, $data, $type, $size = 100) {
 		foreach ($data as $fieldName => $field) {
-			if ($this->required($model, $data)) {
+			if ($this->_allowEmpty($model, $fieldName, $field)) {
 				return true;
 
 			} else if (empty($field['tmp_name'])) {
