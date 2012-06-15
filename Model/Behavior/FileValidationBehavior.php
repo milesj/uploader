@@ -261,7 +261,7 @@ class FileValidationBehavior extends ModelBehavior {
 					$set = $this->_defaults[$rule];
 
 					// Parse out values
-					if (!is_array($setting)) {
+					if (!isset($setting['value'])) {
 						$setting = array('value' => $setting);
 					}
 
