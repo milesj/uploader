@@ -216,7 +216,7 @@ class Uploader {
 		}
 
 		if (isset($this->maxFileSize)) {
-			throw new Exception(spritnf('%s: "upload_max_filesize" and other file upload INI settings must be set in your php.ini', __METHOD__));
+			throw new Exception(sprintf('%s: "upload_max_filesize" and other file upload INI settings must be set in your php.ini', __METHOD__));
 		}
 
 		$this->_parseData();
