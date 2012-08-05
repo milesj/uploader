@@ -70,7 +70,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'prepend' => '',
 		'dbColumn' => 'uploadPath',
 		'importFrom' => '',
-		'defaultPath' => '',
+		'defaultPath' => '',			// Default file path to be used if the field is empty
 		'maxNameLength' => null,
 		'overwrite' => false,			// Overwrite a file with the same name if it exists
 		'stopSave' => true,				// Stop model save() on form upload error
@@ -192,7 +192,12 @@ class AttachmentBehavior extends ModelBehavior {
 				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
 					return false;
 				} else if ($attachment['allowEmpty']) {
-					unset($model->data[$model->alias][$attachment['dbColumn']]);
+					if (empty($attachment['defaultPath'])) {
+						unset($model->data[$model->alias][$attachment['dbColumn']]);
+					} else {
+						$model->data[$model->alias][$attachment['dbColumn']] = $attachment['defaultPath'];
+					}
+
 					continue;
 				}
 			}
