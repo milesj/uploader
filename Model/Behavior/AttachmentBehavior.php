@@ -12,6 +12,7 @@
 
 App::uses('Set', 'Utility');
 App::uses('String', 'Utility');
+App::uses('ModelBehavior', 'Model');
 
 App::import('Vendor', 'Uploader.S3');
 App::import('Vendor', 'Uploader.Uploader');
@@ -101,14 +102,14 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @param array $settings
+	 * @param array $config
 	 * @return void
 	 */
-	public function setup(Model $model, $settings = array()) {
+	public function setup(Model $model, $config = array()) {
 		$this->uploader = new Uploader();
 
-		if (!empty($settings)) {
-			foreach ($settings as $field => $attachment) {
+		if (!empty($config)) {
+			foreach ($config as $field => $attachment) {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
 				}
@@ -321,7 +322,8 @@ class AttachmentBehavior extends ModelBehavior {
 		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $ssl);
 		$s3->host = $settings['host'];
 		$s3->bucket = $settings['bucket'];
-		$s3->path = trim($settings['path'], '/') . '/';
+		$s3->path = trim($settings['path'], '/');
+		$s3->format = $settings['format'];
 		$s3->uploads = array();
 
 		return $s3;
@@ -362,8 +364,12 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		$host = empty($this->s3->host) ? self::AS3_DOMAIN : $this->s3->host;
-		$name = $this->s3->path . basename($path);
+		$name = basename($path);
 		$bucket = $this->s3->bucket;
+
+		if (!empty($this->s3->path)) {
+			$name = $this->s3->path . '/' . $name;
+		}
 
 		if ($this->s3->putObjectFile($this->uploader->formatPath($path), $bucket, $name, S3::ACL_PUBLIC_READ)) {
 			$this->s3->uploads[] = $path;

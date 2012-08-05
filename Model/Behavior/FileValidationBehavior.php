@@ -10,6 +10,8 @@
  * @link        http://milesj.me/code/cakephp/uploader
  */
 
+App::uses('ModelBehavior', 'Model');
+
 App::import('Vendor', 'Uploader.Uploader');
 
 class FileValidationBehavior extends ModelBehavior {
@@ -82,12 +84,12 @@ class FileValidationBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @param array $settings
+	 * @param array $config
 	 * @return void
 	 */
-	public function setup(Model $model, $settings = array()) {
-		if (!empty($settings)) {
-			foreach ($settings as $field => $options) {
+	public function setup(Model $model, $config = array()) {
+		if (!empty($config)) {
+			foreach ($config as $field => $options) {
 				$this->_settings[$model->alias][$field] = $options + array('required' => true);
 			}
 		}
