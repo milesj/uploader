@@ -11,6 +11,8 @@
  */
 
 App::uses('Set', 'Utility');
+App::uses('String', 'Utility');
+
 App::import('Vendor', 'Uploader.S3');
 App::import('Vendor', 'Uploader.Uploader');
 
@@ -75,11 +77,13 @@ class AttachmentBehavior extends ModelBehavior {
 		'saveAsFilename' => false,		// If true, will only save the filename and not relative path
 		'transforms' => array(),
 		's3' => array(
+			'format' => 'http://{bucket}.{host}/{path}',
 			'accessKey' => '',
 			'secretKey' => '',
 			'ssl' => true,
 			'bucket' => '',
-			'path' => ''
+			'path' => '',
+			'host' => self::AS3_DOMAIN
 		),
 		'metaColumns' => array(
 			'ext' => '',
@@ -293,7 +297,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function delete($path) {
-		if (strpos($path, self::AS3_DOMAIN) !== false && $this->s3 !== null) {
+		if ($this->s3 !== null) {
 			return $this->s3->deleteObject($this->s3->bucket, $this->s3->path . basename($path));
 		}
 
@@ -315,6 +319,7 @@ class AttachmentBehavior extends ModelBehavior {
 		$ssl = isset($settings['useSsl']) ? $settings['useSsl'] : $settings['ssl'];
 
 		$s3 = new S3($settings['accessKey'], $settings['secretKey'], (bool) $ssl);
+		$s3->host = $settings['host'];
 		$s3->bucket = $settings['bucket'];
 		$s3->path = trim($settings['path'], '/') . '/';
 		$s3->uploads = array();
@@ -356,13 +361,21 @@ class AttachmentBehavior extends ModelBehavior {
 			return $path;
 		}
 
+		$host = empty($this->s3->host) ? self::AS3_DOMAIN : $this->s3->host;
 		$name = $this->s3->path . basename($path);
 		$bucket = $this->s3->bucket;
 
 		if ($this->s3->putObjectFile($this->uploader->formatPath($path), $bucket, $name, S3::ACL_PUBLIC_READ)) {
 			$this->s3->uploads[] = $path;
 
-			return sprintf('http://%s.%s/%s', $bucket, self::AS3_DOMAIN, $name);
+			return String::insert($this->s3->format, array(
+				'bucket' => $bucket,
+				'path' => $name,
+				'host' => $host
+			), array(
+				'before' => '{',
+				'after' => '}'
+			));
 		}
 
 		return $path;
