@@ -13,7 +13,7 @@
 /**
  * Current version.
  */
-$config['Uploader']['version'] = '3.6.1';
+$config['Uploader']['version'] = '3.6.3';
 
 /**
  * The accepted file/mime types.

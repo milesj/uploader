@@ -1,4 +1,4 @@
-# Uploader v3.6.1 #
+# Uploader v3.6.3 #
 
 A CakePHP plugin that will upload multiple types of files. Adds support for file validation and attachments within the model layer, the ability to transform image files (crop, resize, scale, etc) and minor support for Amazon S3 transfers.
 
@@ -11,7 +11,7 @@ This version is only compatible with CakePHP 2.
 
 ## Requirements ##
 
-* PHP 5.2, 5.3
+* PHP 5.2+
 * Multibyte - http://php.net/manual/book.mbstring.php
 * ClamAV module (for virus detection) - http://sourceforge.net/projects/php-clamav/
 
