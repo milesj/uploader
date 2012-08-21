@@ -682,7 +682,7 @@ class Uploader {
 			$ext = $this->_data[$this->_current]['ext'];
 		}
 
-		$patterns = array('/[^-_.a-zA-Z0-9\/\s]/i', '/[\s]/');
+		$patterns = array('/[^-_.@a-zA-Z0-9\/\s]/i', '/[\s]/');
 		$name = str_replace(array('.' . $ext, '.' . strtoupper($ext)), '', $name);
 		$name = preg_replace($patterns, array('', '_'), $name);
 
