@@ -220,7 +220,8 @@ class AttachmentBehavior extends ModelBehavior {
 			));
 
 			if (empty($uploadResponse)) {
-				return $model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
+				$model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
+				return false;
 			}
 
 			$basePath = $this->transfer($uploadResponse['path']);
@@ -247,7 +248,8 @@ class AttachmentBehavior extends ModelBehavior {
 							$this->delete($path);
 						}
 
-						return $model->invalidate($field, __d('uploader', 'An error occured during image %s transformation.', $method));
+						$model->invalidate($field, __d('uploader', 'An error occured during image %s transformation.', $method));
+						return false;
 					}
 
 					// Transform successful
