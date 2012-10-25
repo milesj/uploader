@@ -1125,6 +1125,8 @@ class Uploader {
 		$prepend = isset($options['prepend']) ? ltrim($options['prepend'], '/') : '';
 		$finalName = $this->formatFilename($name, $append, $prepend);
 
+		$this->checkDirectory();
+
 		if (!$overwrite) {
 			$no = 1;
 

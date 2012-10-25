@@ -180,6 +180,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			$attachment = $this->_attachments[$model->alias][$field];
+			$attachment = $this->callback($model, 'beforeUpload', array($field, $attachment));
 			$data = array();
 
 			// Not a form upload, so lets treat it as an import
@@ -219,6 +220,12 @@ class AttachmentBehavior extends ModelBehavior {
 				'prepend' => $attachment['prepend']
 			));
 
+			$uploaderOptions = array(
+				'uploadDir' => $this->uploader->uploadDir,
+				'baseDir' => $this->uploader->baseDir,
+				'tempDir' => $this->uploader->tempDir
+			);
+
 			if (empty($uploadResponse)) {
 				$model->invalidate($field, __d('uploader', 'There was an error uploading this file, please try again.'));
 				return false;
@@ -233,6 +240,8 @@ class AttachmentBehavior extends ModelBehavior {
 			// Apply image transformations
 			if (!empty($attachment['transforms'])) {
 				foreach ($attachment['transforms'] as $options) {
+					$options = $this->callback($model, 'beforeTransform', array($field, $options));
+
 					$method = $options['method'];
 
 					if (!method_exists($this->uploader, $method)) {
@@ -240,6 +249,10 @@ class AttachmentBehavior extends ModelBehavior {
 						return false;
 					}
 
+					// Apply custom options for transform
+					$this->uploader->setup($options);
+
+					// Transform image
 					$transformResponse = $this->uploader->{$method}($options);
 
 					// Rollback uploaded files if one fails
@@ -262,6 +275,9 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 
 					$lastPath = $transformPath;
+
+					// Reset to default settings
+					$this->uploader->setup($uploaderOptions);
 				}
 			}
 
@@ -392,6 +408,23 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		return $path;
+	}
+
+	/**
+	 * Trigger a callback function to modify data.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param $method
+	 * @param array $options
+	 * @return array
+	 */
+	public function callback(Model $model, $method, array $options) {
+		if (method_exists($model, $method)) {
+			return call_user_func_array(array($model, $method), $options);
+		}
+
+		return $options;
 	}
 
 }
