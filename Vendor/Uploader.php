@@ -682,9 +682,9 @@ class Uploader {
 			$ext = $this->_data[$this->_current]['ext'];
 		}
 
-		$patterns = array('/[^-_.@a-zA-Z0-9\/\s]/i', '/[\s]/');
-		$name = str_replace(array('.' . $ext, '.' . strtoupper($ext)), '', $name);
-		$name = preg_replace($patterns, array('', '_'), $name);
+		$name = str_replace(array('.' . $ext, '.' . mb_strtoupper($ext)), '', $name);
+		$name = str_replace(array('_', '.', '-'), ' ', $name);
+		$name = Inflector::slug($name, '-');
 
 		if (is_numeric($this->maxNameLength) && $truncate) {
 			if (mb_strlen($name) > $this->maxNameLength) {
@@ -695,14 +695,12 @@ class Uploader {
 		$append = (string) $append;
 		$prepend = (string) $prepend;
 
-		if (!empty($append)) {
-			$append = preg_replace($patterns, array('', '_'), $append);
-			$name = $name . $append;
+		if ($append) {
+			$name = $name . Inflector::slug($append, '-');
 		}
 
-		if (!empty($prepend)) {
-			$prepend = preg_replace($patterns, array('', '_'), $prepend);
-			$name = $prepend . $name;
+		if ($prepend) {
+			$name = Inflector::slug($prepend, '-') . $name;
 		}
 
 		$name = $name . '.' . $ext;
