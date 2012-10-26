@@ -1403,6 +1403,7 @@ class Uploader {
 		}
 
 		$options = $options + $defaults;
+		$options['multiple'] = true;
 
 		if (empty($fields) || !$fields) {
 			$fields = array_keys($this->_data);
@@ -1411,7 +1412,7 @@ class Uploader {
 		$data = array();
 		$fail = false;
 
-		if (!empty($fields)) {
+		if ($fields) {
 			foreach ($fields as $field) {
 				if (isset($this->_data[$field])) {
 					if (empty($this->_data[$field]['tmp_name'])) {
@@ -1423,13 +1424,11 @@ class Uploader {
 						}
 					}
 
-					$upload = $this->upload($field, array(
-						'overwrite' => $options['overwrite'],
-						'multiple' => true
-					));
+					$upload = $this->upload($field, $options);
 
-					if (!empty($upload)) {
+					if ($upload) {
 						$data[$field] = $upload;
+
 					} else if ($options['rollback']) {
 						$fail = true;
 						break;
@@ -1438,7 +1437,7 @@ class Uploader {
 			}
 		}
 
-		if ($fail && !empty($data)) {
+		if ($fail && $data) {
 			foreach ($data as $file) {
 				$this->delete($file['path']);
 			}
