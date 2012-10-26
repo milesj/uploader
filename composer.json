@@ -1,0 +1,21 @@
+{
+	"name": "mjohnson/uploader",
+	"type": "cakephp-plugin",
+	"description": "File uploader and validation plugin for CakePHP.",
+	"keywords": ["cakephp", "uploader", "plugin", "file"],
+	"homepage": "http://milesj.me/code/cakephp/uploader",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Miles Johnson",
+			"homepage": "http://milesj.me"
+		}
+	],
+	"require": {
+		"php": ">=5.2",
+		"composer/installers": "*"
+	},
+	"support": {
+		"source": "https://github.com/milesj/cake-uploader"
+	}
+}
