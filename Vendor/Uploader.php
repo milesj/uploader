@@ -5,7 +5,7 @@
  * A class that will upload a wide range of file types. Security and type checking have been integrated to only allow valid files.
  * The class can also handle advanced image transforming.
  *
- * @version		3.7.1
+ * @version		3.7.2
  * @author      Miles Johnson - http://milesj.me
  * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
  * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
@@ -1479,12 +1479,15 @@ class Uploader {
 			if (isset($_FILES['data'])) {
 				foreach ($_FILES['data'] as $key => $file) {
 					$count = count($file);
+
+					// Add model index if it doesn't exist
 					$iterator = new RecursiveArrayIterator($file);
-                                        if (false === $iterator->hasChildren()) {
-                                            $file = array(
-                                                'Fake' => $file
-                                            );
-                                        }
+
+					if ($iterator->hasChildren() === false) {
+						$file = array(
+							'Fake' => $file
+						);
+					}
 
 					foreach ($file as $model => $fields) {
 						foreach ($fields as $field => $value) {
