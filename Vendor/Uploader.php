@@ -1479,6 +1479,12 @@ class Uploader {
 			if (isset($_FILES['data'])) {
 				foreach ($_FILES['data'] as $key => $file) {
 					$count = count($file);
+					$iterator = new RecursiveArrayIterator($file);
+                                        if (false === $iterator->hasChildren()) {
+                                            $file = array(
+                                                'Fake' => $file
+                                            );
+                                        }
 
 					foreach ($file as $model => $fields) {
 						foreach ($fields as $field => $value) {
