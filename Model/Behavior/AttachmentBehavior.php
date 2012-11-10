@@ -78,7 +78,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'saveAsFilename' => false,		// If true, will only save the filename and not relative path
 		'transforms' => array(),
 		's3' => array(
-			'format' => 'http://{bucket}.{host}/{path}',
+			'format' => 'http://{host}/{bucket}/{path}',
 			'accessKey' => '',
 			'secretKey' => '',
 			'ssl' => true,
@@ -115,6 +115,8 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 
 				$attachment = Set::merge($this->_defaults, $attachment);
+				$attachment['field'] = $field;
+
 				$columns = array($attachment['dbColumn'] => $field);
 
 				if (!empty($attachment['transforms'])) {
@@ -180,7 +182,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			$attachment = $this->_attachments[$model->alias][$field];
-			$attachment = $this->callback($model, 'beforeUpload', array($field, $attachment));
+			$attachment = $this->callback($model, 'beforeUpload', $attachment);
 			$data = array();
 
 			// Not a form upload, so lets treat it as an import
@@ -240,7 +242,8 @@ class AttachmentBehavior extends ModelBehavior {
 			// Apply image transformations
 			if (!empty($attachment['transforms'])) {
 				foreach ($attachment['transforms'] as $options) {
-					$options = $this->callback($model, 'beforeTransform', array($field, $options));
+					$options['field'] = $field;
+					$options = $this->callback($model, 'beforeTransform', $options);
 
 					$method = $options['method'];
 
@@ -415,13 +418,13 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @param $method
+	 * @param string $method
 	 * @param array $options
 	 * @return array
 	 */
 	public function callback(Model $model, $method, array $options) {
 		if (method_exists($model, $method)) {
-			return call_user_func_array(array($model, $method), $options);
+			return $model->{$method}($options);
 		}
 
 		return $options;
