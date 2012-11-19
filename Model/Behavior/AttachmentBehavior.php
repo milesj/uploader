@@ -108,7 +108,7 @@ class AttachmentBehavior extends ModelBehavior {
 	public function setup(Model $model, $config = array()) {
 		$this->uploader = new Uploader();
 
-		if (!empty($config)) {
+		if ($config) {
 			foreach ($config as $field => $attachment) {
 				if (isset($attachment['skipSave'])) {
 					$attachment['stopSave'] = $attachment['skipSave'];
@@ -119,7 +119,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 				$columns = array($attachment['dbColumn'] => $field);
 
-				if (!empty($attachment['transforms'])) {
+				if ($attachment['transforms']) {
 					foreach ($attachment['transforms'] as $transform) {
 						$columns[$transform['dbColumn']] = $field;
 					}
@@ -240,7 +240,7 @@ class AttachmentBehavior extends ModelBehavior {
 			$lastPath = $basePath;
 
 			// Apply image transformations
-			if (!empty($attachment['transforms'])) {
+			if ($attachment['transforms']) {
 				foreach ($attachment['transforms'] as $options) {
 					$options['field'] = $field;
 					$options = $this->callback($model, 'beforeTransform', $options);
@@ -292,7 +292,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Apply meta columns
-			if (!empty($attachment['metaColumns'])) {
+			if ($attachment['metaColumns']) {
 				foreach ($attachment['metaColumns'] as $field => $column) {
 					if (isset($uploadResponse[$field]) && !empty($column)) {
 						$data[$column] = $uploadResponse[$field];
@@ -324,7 +324,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function delete($path) {
-		if ($this->s3 !== null) {
+		if ($this->s3 !== null && strpos($path, self::AS3_DOMAIN) !== false) {
 			return $this->s3->deleteObject($this->s3->bucket, $this->s3->path . basename($path));
 		}
 
@@ -365,7 +365,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return array
 	 */
 	public function upload($file, $attachment, $options) {
-		if (!empty($attachment['importFrom'])) {
+		if ($attachment['importFrom']) {
 			if (preg_match('/(http|https)/', $attachment['importFrom'])) {
 				return $this->uploader->importRemote($attachment['importFrom'], $options);
 
