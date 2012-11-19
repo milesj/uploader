@@ -102,7 +102,7 @@ class Uploader {
 	 * @access public
 	 * @var int
 	 */
-	public $maxNameLength = 40;
+	public $maxNameLength = 80;
 
 	/**
 	 * Should we scan the file for viruses? Requires ClamAV module: http://clamav.net/
@@ -233,11 +233,9 @@ class Uploader {
 	 * @static
 	 */
 	public static function addMimeType($group = null, $ext = null, $type = null) {
-		if (empty($group)) {
-			$group = 'misc';
-		}
+		$group = $group ?: 'misc';
 
-		if (!empty($ext) && !empty($type)) {
+		if ($ext && $type) {
 			if (isset(self::$_mimeTypes[$group][$ext])) {
 				if (is_array(self::$_mimeTypes[$group][$ext])) {
 					self::$_mimeTypes[$group][$ext][] = $type;
@@ -657,7 +655,7 @@ class Uploader {
 	 * @return string
 	 */
 	public function formatFilename($name = '', $append = '', $prepend = '', $truncate = true) {
-		if (empty($name)) {
+		if (!$name) {
 			if (!empty($this->_data[$this->_current]['custom_name'])) {
 				$name = $this->_data[$this->_current]['custom_name'];
 			} else {
@@ -676,36 +674,31 @@ class Uploader {
 
 		$this->_data[$this->_current]['custom_name'] = $name;
 
+		// Grab the extension
 		$ext = self::ext($this->_data[$this->_current]['name']);
 
-		if (empty($ext)) {
+		if (!$ext) {
 			$ext = $this->_data[$this->_current]['ext'];
 		}
 
-		$name = str_replace(array('.' . $ext, '.' . mb_strtoupper($ext)), '', $name);
-		$name = str_replace(array('_', '.', '-'), ' ', $name);
-		$name = Inflector::slug($name, '-');
+		// Format the name
+		if ($pos = mb_strrpos($name, '.')) {
+			$name = mb_substr($name, 0, $pos);
+		}
 
-		if (is_numeric($this->maxNameLength) && $truncate) {
+		$name = (string) $prepend . $name . (string) $append;
+
+		// Remove unwanted characters
+		$name = preg_replace('/[^\p{Ll}\p{Lm}\p{Lo}\p{Lt}\p{Lu}\p{Nd}]/imu', '-', $name);
+
+		// Check for name length
+		if ($this->maxNameLength && $truncate) {
 			if (mb_strlen($name) > $this->maxNameLength) {
 				$name = mb_substr($name, 0, $this->maxNameLength);
 			}
 		}
 
-		$append = (string) $append;
-		$prepend = (string) $prepend;
-
-		if ($append) {
-			$name = $name . Inflector::slug($append, '-');
-		}
-
-		if ($prepend) {
-			$name = Inflector::slug($prepend, '-') . $name;
-		}
-
-		$name = $name . '.' . $ext;
-
-		return $name;
+		return $name . '.' . $ext;
 	}
 
 	/**
@@ -1540,7 +1533,7 @@ class Uploader {
 	 * @return array
 	 */
 	protected function _returnData($data = '', $append = '', $explicit = false) {
-		if (!empty($data) && !empty($append)) {
+		if ($data && $append) {
 			$this->_data[$this->_current]['path_' . trim($append, '_')] = $data['target'];
 
 			chmod($data['target'], 0777);
