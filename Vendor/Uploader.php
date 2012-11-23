@@ -232,8 +232,8 @@ class Uploader {
 	 * @return void
 	 * @static
 	 */
-	public static function addMimeType($group = null, $ext = null, $type = null) {
-		$group = $group ?: 'misc';
+	public static function addMimeType($group, $ext, $type) {
+		$group = isset($group) ? $group : 'misc';
 
 		if ($ext && $type) {
 			if (isset(self::$_mimeTypes[$group][$ext])) {
@@ -471,6 +471,7 @@ class Uploader {
 
 		if (file_exists($path)) {
 			clearstatcache();
+
 			return @unlink($path);
 		}
 
