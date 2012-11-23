@@ -491,7 +491,7 @@ class Uploader {
 		foreach (array($path, $this->formatPath($path)) as $newPath) {
 			$data = @getimagesize($newPath);
 
-			if (!empty($data) && is_array($data)) {
+			if ($data && is_array($data)) {
 				$dim = array(
 					'width' => $data[0],
 					'height' => $data[1],
@@ -1151,12 +1151,12 @@ class Uploader {
 	public function setup(array $settings) {
 		$settings = array_filter($settings);
 
-		if (!empty($settings)) {
+		if ($settings) {
 			foreach ($settings as $key => $value) {
-				if ($key == 'scanFile') {
+				if ($key === 'scanFile') {
 					$this->{$key} = (bool) $value;
 
-				} else if ($key == 'maxNameLength') {
+				} else if ($key === 'maxNameLength') {
 					$this->{$key} = (int) $value;
 
 				} else if (in_array($key, array('tempDir', 'baseDir', 'uploadDir', 'ajaxField', 'maxFileSize'))) {
@@ -1467,7 +1467,7 @@ class Uploader {
 		$data = array();
 
 		// Form uploading
-		if (!empty($_FILES)) {
+		if ($_FILES) {
 
 			// via CakePHP
 			if (isset($_FILES['data'])) {
