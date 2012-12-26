@@ -6,12 +6,12 @@ This version is only compatible with CakePHP 2.
 
 ## Compatibility ##
 
-* v2.x - CakePHP 1.3
-* v3.x - CakePHP 2
+* v2.x - CakePHP 1.3, PHP 5.2
+* v3.x - CakePHP 2, PHP 5.2
+* v4.x - CakePHP 2, PHP 5.3
 
 ## Requirements ##
 
-* PHP 5.2+
 * Multibyte - http://php.net/manual/book.mbstring.php
 * ClamAV module (for virus detection) - http://sourceforge.net/projects/php-clamav/
 
