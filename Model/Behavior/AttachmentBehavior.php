@@ -63,7 +63,8 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		nameCallback	- Method to format filename with
 	 * 		append			- What to append to the end of the filename
 	 * 		prepend			- What to prepend to the beginning of the filename
-	 * 		uploadDir		- Directory to upload files to
+	 * 		uploadDir		- Directory to upload files to temporarily
+	 * 		finalDir		- Directory to move file to after upload to make it publicly accessible
 	 * 		finalPath		- The final path to prepend to file names (like a domain)
 	 * 		dbColumn		- Database column to write file path to
 	 * 		metaColumns		- Database columns to write meta data to
@@ -83,7 +84,8 @@ class AttachmentBehavior extends ModelBehavior {
 		'append' => '',
 		'prepend' => '',
 		'uploadDir' => TMP,
-		'finalPath' => 'files/uploads/',
+		'finalDir' => IMAGES,
+		'finalPath' => 'img/',
 		'dbColumn' => 'path',
 		'metaColumns' => array(),
 		'defaultPath' => '',
@@ -141,15 +143,16 @@ class AttachmentBehavior extends ModelBehavior {
 			foreach ($data[$model->alias] as $column => $value) {
 				if (isset($columns[$column])) {
 					$attachment = $this->_attachments[$model->alias][$columns[$column]];
+					$basePath = $attachment['finalDir'] ?: $attachment['uploadDir'];
 
-					// Delete from remote location
+					// Delete remote file
 					if ($attachment['transport']) {
 						$transporter = $this->_getTransporter($attachment['transport']);
 						$transporter->delete($value);
 
 					// Delete local file
 					} else {
-						$file = new File($attachment['uploadDir'] . basename($value));
+						$file = new File($basePath . basename($value));
 						$file->delete();
 					}
 				}
@@ -225,7 +228,10 @@ class AttachmentBehavior extends ModelBehavior {
 
 					$originalFile->rename($nameCallback, $attachment['append'], $attachment['prepend']);
 
-					$data[$attachment['dbColumn']] = $originalFile->basename();
+					// Move the file to its final location
+					if ($attachment['finalDir']) {
+						$originalFile->move($attachment['finalDir'], $overwrite);
+					}
 
 					// Transform the files and save their file path
 					if ($attachment['transforms']) {
@@ -244,6 +250,9 @@ class AttachmentBehavior extends ModelBehavior {
 							}
 						}
 					}
+
+					// Save its path to the database
+					$data[$attachment['dbColumn']] = $originalFile->basename();
 				}
 
 			// Trigger form errors if validation fails
