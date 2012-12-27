@@ -1,13 +1,8 @@
 <?php
 /**
- * AttachmentBehavior
- *
- * A CakePHP Behavior that attaches a file to a model, and uploads automatically, then stores a value in the database.
- *
- * @author      Miles Johnson - http://milesj.me
- * @copyright   Copyright 2006-2011, Miles Johnson, Inc.
- * @license     http://opensource.org/licenses/mit-license.php - Licensed under The MIT License
- * @link        http://milesj.me/code/cakephp/uploader
+ * @copyright	Copyright 2006-2013, Miles Johnson - http://milesj.me
+ * @license		http://opensource.org/licenses/mit-license.php - Licensed under the MIT License
+ * @link		http://milesj.me/code/cakephp/uploader
  */
 
 App::uses('Set', 'Utility');
@@ -25,6 +20,10 @@ use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
 use \Exception;
 
+/**
+ * A CakePHP Behavior that attaches a file to a model, uploads automatically,
+ * and then stores a value in the database.
+ */
 class AttachmentBehavior extends ModelBehavior {
 
 	/**
@@ -50,7 +49,7 @@ class AttachmentBehavior extends ModelBehavior {
 	protected $_attachments = array();
 
 	/**
-	 * Mapping of database columns to form fields.
+	 * Mapping of database columns to attachment fields.
 	 *
 	 * @access protected
 	 * @var array
