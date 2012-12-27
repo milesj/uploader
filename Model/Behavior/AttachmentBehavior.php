@@ -15,6 +15,7 @@ App::uses('String', 'Utility');
 App::uses('ModelBehavior', 'Model');
 
 use Transit\Transit;
+use Transit\File;
 use Transit\Exception\ValidationException;
 use Transit\Transformer\Image\CropTransformer;
 use Transit\Transformer\Image\FlipTransformer;
@@ -138,15 +139,19 @@ class AttachmentBehavior extends ModelBehavior {
 
 		if ($data[$model->alias]) {
 			foreach ($data[$model->alias] as $column => $value) {
-				// @TODO
 				if (isset($columns[$column])) {
 					$attachment = $this->_attachments[$model->alias][$columns[$column]];
 
-					$this->uploader->setup($attachment);
-					$this->s3 = $this->s3($attachment['s3']);
+					// Delete from remote location
+					if ($attachment['transport']) {
+						$transporter = $this->_getTransporter($attachment['transport']);
+						$transporter->delete($value);
 
-					$path = $attachment['saveAsFilename'] ? rtrim($attachment['uploadDir'], '/') . '/' . $value : $value;
-					$this->delete($path);
+					// Delete local file
+					} else {
+						$file = new File($attachment['uploadDir'] . basename($value));
+						$file->delete();
+					}
 				}
 			}
 		}
@@ -323,30 +328,13 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		foreach ($attachment['transforms'] as $options) {
-			$transformer = null;
 			$options = $this->_callback($model, 'beforeTransform', $options + array(
 				'method' => '',
 				'self' => false,
 				'overwrite' => $attachment['overwrite']
 			));
 
-			switch ($options['method']) {
-				case self::CROP:
-					$transformer = new CropTransformer($options);
-				break;
-				case self::FLIP:
-					$transformer = new FlipTransformer($options);
-				break;
-				case self::RESIZE:
-					$transformer = new ResizeTransformer($options);
-				break;
-				case self::SCALE:
-					$transformer = new ScaleTransformer($options);
-				break;
-				default:
-					throw new Exception(sprintf('Invalid transformation method %s', $options['method']));
-				break;
-			}
+			$transformer = $this->_getTransformer($options);
 
 			if ($options['self']) {
 				$transit->addSelfTransformer($transformer);
@@ -375,12 +363,52 @@ class AttachmentBehavior extends ModelBehavior {
 			'overwrite' => $attachment['overwrite']
 		));
 
+		$transit->setTransporter($this->_getTransporter($options));
+	}
+
+	/**
+	 * Return a Transformer based on the options.
+	 *
+	 * @access protected
+	 * @param array $options
+	 * @return \Transit\Transformer\Transformer
+	 * @throws \Exception
+	 */
+	protected function _getTransformer(array $options) {
+		switch ($options['method']) {
+			case self::CROP:
+				return new CropTransformer($options);
+			break;
+			case self::FLIP:
+				return new FlipTransformer($options);
+			break;
+			case self::RESIZE:
+				return new ResizeTransformer($options);
+			break;
+			case self::SCALE:
+				return new ScaleTransformer($options);
+			break;
+			default:
+				throw new Exception(sprintf('Invalid transformation method %s', $options['method']));
+			break;
+		}
+	}
+
+	/**
+	 * Return a Transporter based on the options.
+	 *
+	 * @access protected
+	 * @param array $options
+	 * @return \Transit\Transporter\Transporter
+	 * @throws \Exception
+	 */
+	protected function _getTransporter(array $options) {
 		switch ($options['class']) {
 			case self::S3:
-				$transit->setTransporter(new S3Transporter($options['accessKey'], $options['secretKey'], $options));
+				return new S3Transporter($options['accessKey'], $options['secretKey'], $options);
 			break;
 			case self::GLACIER:
-				$transit->setTransporter(new GlacierTransporter($options['accessKey'], $options['secretKey'], $options));
+				return new GlacierTransporter($options['accessKey'], $options['secretKey'], $options);
 			break;
 			default:
 				throw new Exception(sprintf('Invalid transport class %s', $options['class']));
