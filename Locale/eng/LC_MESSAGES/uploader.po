@@ -12,47 +12,53 @@ msgstr ""
 "X-Poedit-Country: UNITED STATES\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: Model/Behavior/AttachmentBehavior.php:199
-msgid "There was an error uploading this file, please try again."
+msgid "There was an error uploading this file, please try again"
 msgstr ""
 
-#: Model/Behavior/AttachmentBehavior.php:223
-msgid "An error occurred during image %s transformation."
+msgid "An error occurred during image %s transformation"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:34
-msgid "Your image width is too small; minimum width %s."
+msgid "Your image width is too small; minimum width %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:38
-msgid "Your image height is too small; minimum height %s."
+msgid "Your image height is too small; minimum height %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:42
-msgid "Your image width is too large; maximum width %s."
+msgid "Your image width is too large; maximum width %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:46
-msgid "Your image height is too large; maximum height %s."
+msgid "Your image height is too large; maximum height %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:50
-msgid "Your filesize is too large; maximum size %s."
+msgid "Your file size is too large; maximum size %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:54
-msgid "Your file type is not allowed; allowed types: %s."
+msgid "Your file type is not allowed; allowed types: %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:58
-msgid "This file is required."
+msgid "This file is required"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:34
-msgid "Your image width is invalid; required width is %s."
+msgid "Your image width is invalid; required width is %s"
 msgstr ""
 
-#: Model/Behavior/FileValidationBehavior.php:38
-msgid "Your image height is invalid; required height is %s."
+msgid "Your image height is invalid; required height is %s"
 msgstr ""
 
+msgid "An unknown error has occurred"
+msgstr ""
+
+msgid "File exceeds the maximum file size"
+msgstr ""
+
+msgid "File was only partially uploaded"
+msgstr ""
+
+msgid "No file was found for upload"
+msgstr ""
+
+msgid "File failed to upload"
+msgstr ""
+
+msgid "Invalid file detected for upload"
+msgstr ""

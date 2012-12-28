@@ -24,39 +24,43 @@ class FileValidationBehavior extends ModelBehavior {
 	protected $_defaults = array(
 		'width' => array(
 			'rule' => array('width'),
-			'message' => 'Your image width is invalid; required width is %s.'
+			'message' => 'Your image width is invalid; required width is %s'
 		),
 		'height' => array(
 			'rule' => array('height'),
-			'message' => 'Your image height is invalid; required height is %s.'
+			'message' => 'Your image height is invalid; required height is %s'
 		),
 		'minWidth' => array(
 			'rule' => array('minWidth'),
-			'message' => 'Your image width is too small; minimum width %s.'
+			'message' => 'Your image width is too small; minimum width %s'
 		),
 		'minHeight' => array(
 			'rule' => array('minHeight'),
-			'message' => 'Your image height is too small; minimum height %s.'
+			'message' => 'Your image height is too small; minimum height %s'
 		),
 		'maxWidth' => array(
 			'rule' => array('maxWidth'),
-			'message' => 'Your image width is too large; maximum width %s.'
+			'message' => 'Your image width is too large; maximum width %s'
 		),
 		'maxHeight' => array(
 			'rule' => array('maxHeight'),
-			'message' => 'Your image height is too large; maximum height %s.'
+			'message' => 'Your image height is too large; maximum height %s'
 		),
 		'filesize' => array(
 			'rule' => array('filesize'),
-			'message' => 'Your filesize is too large; maximum size %s.'
+			'message' => 'Your file size is too large; maximum size %s'
 		),
 		'extension' => array(
 			'rule' => array('extension'),
-			'message' => 'Your file type is not allowed; allowed types: %s.'
+			'message' => 'Your file type is not allowed; allowed types: %s'
+		),
+		'mimeType' => array(
+			'rule' => array('mimeType'),
+			'message' => 'Your file type is not allowed; allowed types: %s'
 		),
 		'required' => array(
 			'rule' => array('required'),
-			'message' => 'This file is required.',
+			'message' => 'This file is required',
 			'on' => 'create',
 			'allowEmpty' => true
 		)

@@ -266,6 +266,8 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Log exceptions that shouldn't be shown to the client
 			} catch (Exception $e) {
+				$model->invalidate($field, __d('uploader', 'An unknown error has occurred'));
+
 				$this->log($e->getMessage(), LOG_DEBUG);
 			}
 
