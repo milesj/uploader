@@ -41,14 +41,6 @@ class AttachmentBehavior extends ModelBehavior {
 	const GLACIER = 'glacier';
 
 	/**
-	 * All user defined attachments indexed by column name.
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $_attachments = array();
-
-	/**
 	 * Mapping of database columns to attachment fields.
 	 *
 	 * @access protected
@@ -116,7 +108,7 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 				}
 
-				$this->_attachments[$model->alias][$field] = $attachment;
+				$this->settings[$model->alias][$field] = $attachment;
 				$this->_columns[$model->alias] = $columns;
 			}
 		}
@@ -141,7 +133,7 @@ class AttachmentBehavior extends ModelBehavior {
 		if ($data[$model->alias]) {
 			foreach ($data[$model->alias] as $column => $value) {
 				if (isset($columns[$column])) {
-					$attachment = $this->_attachments[$model->alias][$columns[$column]];
+					$attachment = $this->settings[$model->alias][$columns[$column]];
 					$basePath = $attachment['finalDir'] ?: $attachment['uploadDir'];
 
 					// Delete remote file
@@ -176,12 +168,12 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		foreach ($model->data[$alias] as $field => $file) {
-			if (empty($this->_attachments[$alias][$field])) {
+			if (empty($this->settings[$alias][$field])) {
 				continue;
 			}
 
 			// Gather attachment settings
-			$attachment = $this->_attachments[$alias][$field];
+			$attachment = $this->settings[$alias][$field];
 			$attachment = $this->_callback($model, 'beforeUpload', $attachment);
 			$data = array();
 
@@ -256,12 +248,6 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Trigger form errors if validation fails
 			} catch (ValidationException $e) {
-				$model->invalidate($field, __d('uploader', $e->getMessage()));
-
-				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
-					return false;
-				}
-
 				if ($attachment['allowEmpty']) {
 					if (empty($attachment['defaultPath'])) {
 						unset($model->data[$alias][$attachment['dbColumn']]);
@@ -270,6 +256,12 @@ class AttachmentBehavior extends ModelBehavior {
 					}
 
 					continue;
+				}
+
+				$model->invalidate($field, __d('uploader', $e->getMessage()));
+
+				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
+					return false;
 				}
 
 			// Log exceptions that shouldn't be shown to the client
