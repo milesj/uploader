@@ -2,7 +2,7 @@
 	"name": "mjohnson/uploader",
 	"type": "cakephp-plugin",
 	"description": "File uploader and validation plugin for CakePHP.",
-	"keywords": ["cakephp", "uploader", "plugin", "file"],
+	"keywords": ["cakephp", "uploader", "plugin", "file", "validation", "attachment"],
 	"homepage": "http://milesj.me/code/cakephp/uploader",
 	"license": "MIT",
 	"authors": [
@@ -12,7 +12,7 @@
 		}
 	],
 	"require": {
-		"php": ">=5.2",
+		"php": ">=5.3",
 		"composer/installers": "*",
 		"mjohnson/transit": "*"
 	},

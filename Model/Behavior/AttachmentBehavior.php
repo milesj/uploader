@@ -6,7 +6,6 @@
  */
 
 App::uses('Set', 'Utility');
-App::uses('String', 'Utility');
 App::uses('ModelBehavior', 'Model');
 
 use Transit\Transit;
@@ -18,7 +17,6 @@ use Transit\Transformer\Image\ResizeTransformer;
 use Transit\Transformer\Image\ScaleTransformer;
 use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
-use \Exception;
 
 /**
  * A CakePHP Behavior that attaches a file to a model, uploads automatically,
@@ -63,7 +61,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		overwrite		- Overwrite a file with the same name if it exists
 	 * 		stopSave		- Stop save() if error exists during upload
 	 * 		allowEmpty		- Allow an empty file upload to continue
-	 * 		saveAsFilename	- Save only the filename instead of the relative path
 	 * 		transforms		- List of transforms to apply to the image
 	 * 		transport		- Settings for file transportation
 	 *
@@ -127,7 +124,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
-		$data = $model->read(null, $model->id);
+		$data = $model->read();
 		$columns = $this->_columns[$model->alias];
 
 		if ($data[$model->alias]) {
@@ -173,8 +170,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Gather attachment settings
-			$attachment = $this->settings[$alias][$field];
-			$attachment = $this->_callback($model, 'beforeUpload', $attachment);
+			$attachment = $this->_callback($model, 'beforeUpload', $this->settings[$alias][$field]);
 			$data = array();
 
 			// Initialize Transit
@@ -244,6 +240,17 @@ class AttachmentBehavior extends ModelBehavior {
 
 					// Save its path to the database
 					$data[$attachment['dbColumn']] = $originalFile->basename();
+
+					// Save file meta data
+					if ($attachment['metaColumns']) {
+						foreach ($attachment['metaColumns'] as $method => $column) {
+							$fileMetaData = $transit->getOriginalFile()->toArray();
+
+							if (isset($fileMetaData[$method]) && $column) {
+								$data[$column] = $fileMetaData[$method];
+							}
+						}
+					}
 				}
 
 			// Trigger form errors if validation fails
@@ -269,21 +276,14 @@ class AttachmentBehavior extends ModelBehavior {
 				$model->invalidate($field, __d('uploader', 'An unknown error has occurred'));
 
 				$this->log($e->getMessage(), LOG_DEBUG);
-			}
 
-			// Save file meta data
-			if ($attachment['metaColumns']) {
-				foreach ($attachment['metaColumns'] as $method => $column) {
-					$fileMetaData = $transit->getOriginalFile()->toArray();
-
-					if (isset($fileMetaData[$method]) && $column) {
-						$data[$column] = $fileMetaData[$method];
-					}
+				if ($originalFile = $transit->getOriginalFile()) {
+					$originalFile->delete();
 				}
 			}
 
 			// Generate final paths
-			if ($attachment['finalPath']) {
+			if ($attachment['finalPath'] && $data) {
 				foreach ($data as $key => $value) {
 					if (strpos($value, 'http') === false) {
 						$data[$key] = $attachment['finalPath'] . $value;
@@ -322,7 +322,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param \Transit\Transit $transit
 	 * @param array $attachment
-	 * @throws \Exception
 	 */
 	protected function _addTransformers(Model $model, Transit $transit, array $attachment) {
 		if (empty($attachment['transforms'])) {
@@ -353,7 +352,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param \Transit\Transit $transit
 	 * @param array $attachment
-	 * @throws \Exception
 	 */
 	protected function _setTransporter(Model $model, Transit $transit, array $attachment) {
 		if (empty($attachment['transport'])) {

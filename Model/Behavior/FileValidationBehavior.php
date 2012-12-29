@@ -233,56 +233,65 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function beforeValidate(Model $model) {
-		if (!empty($this->settings[$model->alias])) {
-			foreach ($this->settings[$model->alias] as $field => $rules) {
-				$validations = array();
+		if (empty($this->settings[$model->alias])) {
+			return true;
+		}
 
-				foreach ($rules as $rule => $setting) {
-					$set = $this->_defaults[$rule];
+		foreach ($this->settings[$model->alias] as $field => $rules) {
+			$validations = array();
 
-					// Parse out values
-					if (!isset($setting['value'])) {
-						$setting = array('value' => $setting);
-					}
+			foreach ($rules as $rule => $setting) {
+				$set = $this->_defaults[$rule];
 
-					switch ($rule) {
-						case 'required':	$arg = (bool) $setting['value']; break;
-						case 'extension':	$arg = (array) $setting['value']; break;
-						default:			$arg = (int) $setting['value']; break;
-					}
-
-					if (!isset($setting['rule'])) {
-						$setting['rule'] = array($rule, $arg);
-					}
-
-					if (isset($setting['error'])) {
-						$setting['message'] = $setting['error'];
-						unset($setting['error']);
-					}
-
-					unset($setting['value']);
-
-					// Merge settings
-					$set = array_merge($set, $setting);
-
-					// Apply validations
-					if (is_array($arg)) {
-						$arg = implode(', ', $arg);
-					}
-
-					$set['message'] = __d('uploader', $set['message'], $arg);
-
-					$validations[$rule] = $set;
+				// Parse out values
+				if (!isset($setting['value'])) {
+					$setting = array('value' => $setting);
 				}
 
-				if ($validations) {
-					if (!empty($model->validate[$field])) {
-						$validations = $validations + $model->validate[$field];
-					}
-
-					$this->_validations[$field] = $validations;
-					$model->validate[$field] = $validations;
+				switch ($rule) {
+					case 'required':
+						$arg = (bool) $setting['value'];
+					break;
+					case 'mimeType':
+					case 'extension':
+						$arg = (array) $setting['value'];
+					break;
+					default:
+						$arg = (int) $setting['value'];
+					break;
 				}
+
+				if (!isset($setting['rule'])) {
+					$setting['rule'] = array($rule, $arg);
+				}
+
+				if (isset($setting['error'])) {
+					$setting['message'] = $setting['error'];
+					unset($setting['error']);
+				}
+
+				unset($setting['value']);
+
+				// Merge settings
+				$set = array_merge($set, $setting);
+
+				// Apply validations
+				if (is_array($arg)) {
+					$arg = implode(', ', $arg);
+				}
+
+				$set['message'] = __d('uploader', $set['message'], $arg);
+
+				$validations[$rule] = $set;
+			}
+
+			if ($validations) {
+				if (!empty($model->validate[$field])) {
+					$validations = $validations + $model->validate[$field];
+				}
+
+				$this->_validations[$field] = $validations;
+				$model->validate[$field] = $validations;
 			}
 		}
 
