@@ -71,9 +71,9 @@ class AttachmentBehavior extends ModelBehavior {
 		'nameCallback' => '',
 		'append' => '',
 		'prepend' => '',
-		'uploadDir' => TMP,
-		'finalDir' => IMAGES,
-		'finalPath' => 'img/',
+		'uploadDir' => '',
+		'finalDir' => '',
+		'finalPath' => '',
 		'dbColumn' => 'path',
 		'metaColumns' => array(),
 		'defaultPath' => '',
@@ -96,6 +96,11 @@ class AttachmentBehavior extends ModelBehavior {
 			foreach ($settings as $field => $attachment) {
 				$attachment = Set::merge($this->_defaults, $attachment);
 				$attachment['field'] = $field;
+
+				if (!$attachment['uploadDir']) {
+					$attachment['uploadDir'] = WWW_ROOT . 'files/uploads/';
+					$attachment['finalPath'] = 'files/uploads/';
+				}
 
 				$columns = array($attachment['dbColumn'] => $field);
 
@@ -277,9 +282,8 @@ class AttachmentBehavior extends ModelBehavior {
 
 				$this->log($e->getMessage(), LOG_DEBUG);
 
-				if ($originalFile = $transit->getOriginalFile()) {
-					$originalFile->delete();
-				}
+				// Rollback the files since it threw errors
+				$transit->rollback();
 			}
 
 			// Generate final paths
