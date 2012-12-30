@@ -39,6 +39,14 @@ class AttachmentBehavior extends ModelBehavior {
 	const GLACIER = 'glacier';
 
 	/**
+	 * Transit instances indexed by model alias.
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $_uploads = array();
+
+	/**
 	 * Mapping of database columns to attachment fields.
 	 *
 	 * @access protected
@@ -130,6 +138,10 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment['dbColumn'] = $field;
 				}
 
+				if (!$attachment['tempDir']) {
+					$attachment['tempDir'] = TMP;
+				}
+
 				if (!$attachment['uploadDir']) {
 					$attachment['uploadDir'] = WWW_ROOT . 'files/uploads/';
 					$attachment['finalPath'] = 'files/uploads/';
@@ -164,6 +176,20 @@ class AttachmentBehavior extends ModelBehavior {
 				$this->_columns[$model->alias] = $columns;
 			}
 		}
+	}
+
+	/**
+	 * Cleanup and reset the behavior when its detached.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @return void
+	 */
+	public function cleanup(Model $model) {
+		parent::cleanup($model);
+
+		$this->_uploads = array();
+		$this->_columns = array();
 	}
 
 	/**
@@ -231,6 +257,8 @@ class AttachmentBehavior extends ModelBehavior {
 			// Initialize Transit
 			$transit = new Transit($file);
 			$transit->setDirectory($attachment['tempDir']);
+
+			$this->_uploads[$alias] = $transit;
 
 			// Set transformers and transporter
 			$this->_addTransformers($model, $transit, $attachment);
@@ -335,6 +363,36 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Return the uploaded original File object.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @return \Transit\File
+	 */
+	public function getUploadedFile(Model $model) {
+		if (isset($this->_uploads[$model->alias])) {
+			return $this->_uploads[$model->alias]->getOriginalFile();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Return the transformed File objects.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @return array
+	 */
+	public function getTransformedFiles(Model $model) {
+		if (isset($this->_uploads[$model->alias])) {
+			return $this->_uploads[$model->alias]->getTransformedFiles();
+		}
+
+		return array();
 	}
 
 	/**
@@ -462,11 +520,12 @@ class AttachmentBehavior extends ModelBehavior {
 
 		$file->rename($nameCallback, $options['append'], $options['prepend']);
 
-		if ($options['uploadDir']) {
+		// Don't move the file to the same folder
+		if ($options['uploadDir'] && realpath($options['uploadDir']) !== realpath($file->dir())) {
 			$file->move($options['uploadDir'], $options['overwrite']);
 		}
 
-		return $options['finalPath'] . $file->basename();
+		return (string) $options['finalPath'] . $file->basename();
 	}
 
 }
