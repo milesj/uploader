@@ -52,8 +52,8 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		nameCallback	- Method to format filename with
 	 * 		append			- What to append to the end of the filename
 	 * 		prepend			- What to prepend to the beginning of the filename
-	 * 		uploadDir		- Directory to upload files to temporarily
-	 * 		finalDir		- Directory to move file to after upload to make it publicly accessible
+	 * 		tempDir			- Directory to upload files to temporarily
+	 * 		uploadDir		- Directory to move file to after upload to make it publicly accessible
 	 * 		finalPath		- The final path to prepend to file names (like a domain)
 	 * 		dbColumn		- Database column to write file path to
 	 * 		metaColumns		- Database columns to write meta data to
@@ -67,14 +67,14 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @access protected
 	 * @var array
 	 */
-	protected $_defaults = array(
+	protected $_defaultSettings = array(
 		'nameCallback' => '',
 		'append' => '',
 		'prepend' => '',
+		'tempDir' => TMP,
 		'uploadDir' => '',
-		'finalDir' => '',
 		'finalPath' => '',
-		'dbColumn' => 'path',
+		'dbColumn' => '',
 		'metaColumns' => array(),
 		'defaultPath' => '',
 		'overwrite' => false,
@@ -82,6 +82,34 @@ class AttachmentBehavior extends ModelBehavior {
 		'allowEmpty' => true,
 		'transforms' => array(),
 		'transport' => array()
+	);
+
+	/**
+	 * Default transform settings.
+	 *
+	 * 		method			- The transform method
+	 * 		nameCallback	- Method to format filename with
+	 * 		append			- What to append to the end of the filename
+	 * 		prepend			- What to prepend to the beginning of the filename
+	 * 		uploadDir		- Directory to move file to after upload to make it publicly accessible
+	 * 		finalPath		- The final path to prepend to file names (like a domain)
+	 * 		dbColumn		- Database column to write file path to
+	 * 		overwrite		- Overwrite a file with the same name if it exists
+	 * 		self			- Should the transforms apply to the uploaded file instead of creating new images
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $_transformSettings = array(
+		'method' => '',
+		'nameCallback' => '',
+		'append' => '',
+		'prepend' => '',
+		'uploadDir' => '',
+		'finalPath' => '',
+		'dbColumn' => 'thumbnail',
+		'overwrite' => false,
+		'self' => false
 	);
 
 	/**
@@ -94,20 +122,42 @@ class AttachmentBehavior extends ModelBehavior {
 	public function setup(Model $model, $settings = array()) {
 		if ($settings) {
 			foreach ($settings as $field => $attachment) {
-				$attachment = Set::merge($this->_defaults, $attachment);
+				$attachment = Set::merge($this->_defaultSettings, $attachment);
 				$attachment['field'] = $field;
+
+				// Set defaults if not defined
+				if (!$attachment['dbColumn']) {
+					$attachment['dbColumn'] = $field;
+				}
 
 				if (!$attachment['uploadDir']) {
 					$attachment['uploadDir'] = WWW_ROOT . 'files/uploads/';
 					$attachment['finalPath'] = 'files/uploads/';
 				}
 
+				$attachment = $this->_callback($model, 'beforeUpload', $attachment);
 				$columns = array($attachment['dbColumn'] => $field);
 
+				// Merge transform settings with defaults
 				if ($attachment['transforms']) {
-					foreach ($attachment['transforms'] as $transform) {
+					foreach ($attachment['transforms'] as &$transform) {
+						$transform = Set::merge($this->_transformSettings, $transform + array(
+							'uploadDir' => $attachment['uploadDir'],
+							'finalPath' => $attachment['finalPath']
+						));
+
+						if ($transform['self']) {
+							$transform['dbColumn'] = $attachment['dbColumn'];
+						}
+
+						$transform = $this->_callback($model, 'beforeTransform', $transform);
+
 						$columns[$transform['dbColumn']] = $field;
 					}
+				}
+
+				if ($attachment['transport']) {
+					$attachment['transport'] = $this->_callback($model, 'beforeTransport', $attachment['transport']);
 				}
 
 				$this->settings[$model->alias][$field] = $attachment;
@@ -136,7 +186,7 @@ class AttachmentBehavior extends ModelBehavior {
 			foreach ($data[$model->alias] as $column => $value) {
 				if (isset($columns[$column])) {
 					$attachment = $this->settings[$model->alias][$columns[$column]];
-					$basePath = $attachment['finalDir'] ?: $attachment['uploadDir'];
+					$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
 
 					// Delete remote file
 					if ($attachment['transport']) {
@@ -175,12 +225,12 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Gather attachment settings
-			$attachment = $this->_callback($model, 'beforeUpload', $this->settings[$alias][$field]);
+			$attachment = $this->settings[$alias][$field];
 			$data = array();
 
 			// Initialize Transit
 			$transit = new Transit($file);
-			$transit->setDirectory($attachment['uploadDir']);
+			$transit->setDirectory($attachment['tempDir']);
 
 			// Set transformers and transporter
 			$this->_addTransformers($model, $transit, $attachment);
@@ -211,26 +261,17 @@ class AttachmentBehavior extends ModelBehavior {
 				if ($response) {
 					$originalFile = $transit->getOriginalFile();
 
-					// Rename the file before processing
-					$nameCallback = null;
+					// Rename and move file
+					$data[$attachment['dbColumn']] = $this->_renameAndMove($model, $originalFile, $attachment);
 
-					if ($attachment['nameCallback'] && method_exists($model, $attachment['nameCallback'])) {
-						$nameCallback = array($model, $attachment['nameCallback']);
-					}
-
-					$originalFile->rename($nameCallback, $attachment['append'], $attachment['prepend']);
-
-					// Move the file to its final location
-					if ($attachment['finalDir']) {
-						$originalFile->move($attachment['finalDir'], $overwrite);
-					}
-
-					// Transform the files and save their file path
+					// Transform the files and save their path
 					if ($attachment['transforms']) {
 						$transit->transform();
 
 						foreach ($transit->getTransformedFiles() as $i => $transformedFile) {
-							$data[$attachment['transforms'][$i]['dbColumn']] = $transformedFile->basename();
+							$transformSettings = $attachment['transforms'][$i];
+
+							$data[$transformSettings['dbColumn']] = $this->_renameAndMove($model, $transformedFile, $transformSettings);
 						}
 					}
 
@@ -238,21 +279,13 @@ class AttachmentBehavior extends ModelBehavior {
 					if ($attachment['transport']) {
 						if ($transportedFiles = $transit->transport()) {
 							foreach ($transportedFiles as $i => $transportedFile) {
-								$data[$attachment['transforms'][$i]['dbColumn']] = $transportedFile;
-							}
-						}
-					}
+								if ($i == 0) {
+									$dbColumn = $attachment['dbColumn'];
+								} else {
+									$dbColumn = $attachment['transforms'][$i]['dbColumn'];
+								}
 
-					// Save its path to the database
-					$data[$attachment['dbColumn']] = $originalFile->basename();
-
-					// Save file meta data
-					if ($attachment['metaColumns']) {
-						foreach ($attachment['metaColumns'] as $method => $column) {
-							$fileMetaData = $transit->getOriginalFile()->toArray();
-
-							if (isset($fileMetaData[$method]) && $column) {
-								$data[$column] = $fileMetaData[$method];
+								$data[$dbColumn] = $transportedFile;
 							}
 						}
 					}
@@ -286,11 +319,13 @@ class AttachmentBehavior extends ModelBehavior {
 				$transit->rollback();
 			}
 
-			// Generate final paths
-			if ($attachment['finalPath'] && $data) {
-				foreach ($data as $key => $value) {
-					if (strpos($value, 'http') === false) {
-						$data[$key] = $attachment['finalPath'] . $value;
+			// Save file meta data
+			if ($attachment['metaColumns'] && $data) {
+				foreach ($attachment['metaColumns'] as $method => $column) {
+					$fileMetaData = $transit->getOriginalFile()->toArray();
+
+					if (isset($fileMetaData[$method]) && $column) {
+						$data[$column] = $fileMetaData[$method];
 					}
 				}
 			}
@@ -333,12 +368,6 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		foreach ($attachment['transforms'] as $options) {
-			$options = $this->_callback($model, 'beforeTransform', $options + array(
-				'method' => '',
-				'self' => false,
-				'overwrite' => $attachment['overwrite']
-			));
-
 			$transformer = $this->_getTransformer($options);
 
 			if ($options['self']) {
@@ -362,12 +391,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return;
 		}
 
-		$options = $this->_callback($model, 'beforeTransport', $attachment['transport'] + array(
-			'class' => '',
-			'overwrite' => $attachment['overwrite']
-		));
-
-		$transit->setTransporter($this->_getTransporter($options));
+		$transit->setTransporter($this->_getTransporter($attachment['transport']));
 	}
 
 	/**
@@ -418,6 +442,31 @@ class AttachmentBehavior extends ModelBehavior {
 				throw new Exception(sprintf('Invalid transport class %s', $options['class']));
 			break;
 		}
+	}
+
+	/**
+	 * Rename or move the file and return its relative path.
+	 *
+	 * @access protected
+	 * @param Model $model
+	 * @param \Transit\File $file
+	 * @param array $options
+	 * @return string
+	 */
+	protected function _renameAndMove(Model $model, File $file, array $options) {
+		$nameCallback = null;
+
+		if ($options['nameCallback'] && method_exists($model, $options['nameCallback'])) {
+			$nameCallback = array($model, $options['nameCallback']);
+		}
+
+		$file->rename($nameCallback, $options['append'], $options['prepend']);
+
+		if ($options['uploadDir']) {
+			$file->move($options['uploadDir'], $options['overwrite']);
+		}
+
+		return $options['finalPath'] . $file->basename();
 	}
 
 }
