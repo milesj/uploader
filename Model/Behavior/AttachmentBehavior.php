@@ -307,10 +307,10 @@ class AttachmentBehavior extends ModelBehavior {
 					if ($attachment['transport']) {
 						if ($transportedFiles = $transit->transport()) {
 							foreach ($transportedFiles as $i => $transportedFile) {
-								if ($i == 0) {
+								if ($i === 0) {
 									$dbColumn = $attachment['dbColumn'];
 								} else {
-									$dbColumn = $attachment['transforms'][$i]['dbColumn'];
+									$dbColumn = $attachment['transforms'][($i - 1)]['dbColumn'];
 								}
 
 								$data[$dbColumn] = $transportedFile;
@@ -333,7 +333,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 				$model->invalidate($field, __d('uploader', $e->getMessage()));
 
-				if ($attachment['stopSave'] && !$attachment['allowEmpty']) {
+				if ($attachment['stopSave']) {
 					return false;
 				}
 
@@ -359,7 +359,9 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Merge upload data with model data
-			$model->data[$alias] = $data + $model->data[$alias];
+			if ($data) {
+				$model->data[$alias] = $data + $model->data[$alias];
+			}
 		}
 
 		return true;
