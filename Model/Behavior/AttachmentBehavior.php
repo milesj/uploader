@@ -55,7 +55,7 @@ class AttachmentBehavior extends ModelBehavior {
 	protected $_columns = array();
 
 	/**
-	 * The default settings for attachments.
+	 * Default attachment settings.
 	 *
 	 * 		nameCallback	- Method to format filename with
 	 * 		append			- What to append to the end of the filename

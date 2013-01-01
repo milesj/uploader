@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CakePHP Uploader Plugin\n"
 "POT-Creation-Date: 2011-11-28 23:00-0800\n"
-"PO-Revision-Date: 2012-12-30 00:09-0800\n"
+"PO-Revision-Date: 2012-12-31 15:59-0800\n"
 "Last-Translator: Miles Johnson <mileswjohnson@gmail.com>\n"
 "Language-Team: Miles Johnson <mileswjohnson@gmail.com>\n"
 "MIME-Version: 1.0\n"
@@ -31,6 +31,9 @@ msgid "Your image height is too large; maximum height %s"
 msgstr ""
 
 msgid "Your file size is too large; maximum size %s"
+msgstr ""
+
+msgid "Your file extension is not allowed; allowed extensions: %s"
 msgstr ""
 
 msgid "Your file type is not allowed; allowed types: %s"

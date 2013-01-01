@@ -52,6 +52,10 @@ class FileValidationBehavior extends ModelBehavior {
 		),
 		'extension' => array(
 			'rule' => array('extension'),
+			'message' => 'Your file extension is not allowed; allowed extensions: %s'
+		),
+		'type' => array(
+			'rule' => array('type'),
 			'message' => 'Your file type is not allowed; allowed types: %s'
 		),
 		'mimeType' => array(
@@ -194,7 +198,7 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Validates the mime type.
+	 * Validates the type.
 	 *
 	 * @access public
 	 * @param Model $model
@@ -202,8 +206,21 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param array $allowed
 	 * @return boolean
 	 */
-	public function mimeType(Model $model, $data, array $allowed = array()) {
+	public function type(Model $model, $data, array $allowed = array()) {
 		return $this->_validate($model, $data, 'type', array($allowed));
+	}
+
+	/**
+	 * Validates the mime type.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param array $data
+	 * @param array|string $mimeType
+	 * @return boolean
+	 */
+	public function mimeType(Model $model, $data, $mimeType) {
+		return $this->_validate($model, $data, 'mimeType', array($mimeType));
 	}
 
 	/**
@@ -252,6 +269,7 @@ class FileValidationBehavior extends ModelBehavior {
 					case 'required':
 						$arg = (bool) $setting['value'];
 					break;
+					case 'type':
 					case 'mimeType':
 					case 'extension':
 						$arg = (array) $setting['value'];
@@ -344,10 +362,17 @@ class FileValidationBehavior extends ModelBehavior {
 				return false;
 			}
 
-			$validator = new ImageValidator();
-			$validator->setFile(new File($value['tmp_name']));
+			// Extension is special as the tmp_name uses the .tmp extension
+			if ($method === 'ext') {
+				return in_array(mb_strtolower(pathinfo($value['name'], PATHINFO_EXTENSION)), $params[0]);
 
-			return call_user_func_array(array($validator, $method), $params);
+			// Use robust validator
+			} else {
+				$validator = new ImageValidator();
+				$validator->setFile(new File($value['tmp_name']));
+
+				return call_user_func_array(array($validator, $method), $params);
+			}
 		}
 	}
 
