@@ -522,8 +522,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 		$file->rename($nameCallback, $options['append'], $options['prepend']);
 
-		// Don't move the file to the same folder
-		if ($options['uploadDir'] && realpath($options['uploadDir']) !== realpath($file->dir())) {
+		if ($options['uploadDir']) {
 			$file->move($options['uploadDir'], $options['overwrite']);
 		}
 
