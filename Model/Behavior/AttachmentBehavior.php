@@ -345,7 +345,7 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Delete all images associated with a record, but do not delete the record.
+	 * Delete all images associated with a record but do not delete the record.
 	 *
 	 * @access public
 	 * @param Model $model
