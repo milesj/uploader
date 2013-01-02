@@ -198,37 +198,14 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @access public
 	 * @param Model $model
 	 * @param boolean $cascade
-	 * @return mixed
+	 * @return boolean
 	 */
 	public function beforeDelete(Model $model, $cascade = true) {
 		if (empty($model->id)) {
 			return false;
 		}
 
-		$data = $model->read();
-		$columns = $this->_columns[$model->alias];
-
-		if ($data[$model->alias]) {
-			foreach ($data[$model->alias] as $column => $value) {
-				if (isset($columns[$column])) {
-					$attachment = $this->settings[$model->alias][$columns[$column]];
-					$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
-
-					// Delete remote file
-					if ($attachment['transport']) {
-						$transporter = $this->_getTransporter($attachment['transport']);
-						$transporter->delete($value);
-
-					// Delete local file
-					} else {
-						$file = new File($basePath . basename($value));
-						$file->delete();
-					}
-				}
-			}
-		}
-
-		return true;
+		return $this->deleteImages($model, $model->id);
 	}
 
 	/**
@@ -368,6 +345,49 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 
 	/**
+	 * Delete all images associated with a record, but do not delete the record.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param int $id
+	 * @return boolean
+	 */
+	public function deleteImages(Model $model, $id) {
+		$data = $model->read(null, $id);
+		$columns = $this->_columns[$model->alias];
+
+		if (empty($data[$model->alias])) {
+			return false;
+		}
+
+		foreach ($data[$model->alias] as $column => $value) {
+			if (empty($columns[$column]) || empty($this->settings[$model->alias][$columns[$column]])) {
+				continue;
+			}
+
+			$attachment = $this->settings[$model->alias][$columns[$column]];
+			$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
+
+			try {
+				// Delete remote file
+				if ($attachment['transport']) {
+					$transporter = $this->_getTransporter($attachment['transport']);
+					$transporter->delete($value);
+
+				// Delete local file
+				} else {
+					$file = new File($basePath . basename($value));
+					$file->delete();
+				}
+			} catch (Exception $e) {
+				$this->log($e->getMessage(), LOG_DEBUG);
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Return the uploaded original File object.
 	 *
 	 * @access public
@@ -394,7 +414,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return $this->_uploads[$model->alias]->getTransformedFiles();
 		}
 
-		return array();
+		return null;
 	}
 
 	/**
