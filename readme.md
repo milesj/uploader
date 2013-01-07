@@ -14,7 +14,6 @@ Provides support for image transformation and remote storage transportation.
 * CakePHP 2
 * PHP 5.3
 * Composer
-
 * Multibyte
 * Curl
 

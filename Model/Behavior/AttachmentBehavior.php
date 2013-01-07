@@ -147,7 +147,6 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment['finalPath'] = 'files/uploads/';
 				}
 
-				$attachment = $this->_callback($model, 'beforeUpload', $attachment);
 				$columns = array($attachment['dbColumn'] => $field);
 
 				// Merge transform settings with defaults
@@ -162,14 +161,8 @@ class AttachmentBehavior extends ModelBehavior {
 							$transform['dbColumn'] = $attachment['dbColumn'];
 						}
 
-						$transform = $this->_callback($model, 'beforeTransform', $transform);
-
 						$columns[$transform['dbColumn']] = $field;
 					}
-				}
-
-				if ($attachment['transport']) {
-					$attachment['transport'] = $this->_callback($model, 'beforeTransport', $attachment['transport']);
 				}
 
 				$this->settings[$model->alias][$field] = $attachment;
@@ -228,7 +221,7 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Gather attachment settings
-			$attachment = $this->settings[$alias][$field];
+			$attachment = $this->_settingsCallback($model, $this->settings[$alias][$field]);
 			$data = array();
 
 			// Initialize Transit
@@ -274,9 +267,9 @@ class AttachmentBehavior extends ModelBehavior {
 						$transit->transform();
 
 						foreach ($transit->getTransformedFiles() as $i => $transformedFile) {
-							$transformSettings = $attachment['transforms'][$i];
+							$transform = $attachment['transforms'][$i];
 
-							$data[$transformSettings['dbColumn']] = $this->_renameAndMove($model, $transformedFile, $transformSettings);
+							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $transformedFile, $transform);
 						}
 					}
 
@@ -327,10 +320,10 @@ class AttachmentBehavior extends ModelBehavior {
 			// Save file meta data
 			if ($attachment['metaColumns'] && $data) {
 				foreach ($attachment['metaColumns'] as $method => $column) {
-					$fileMetaData = $transit->getOriginalFile()->toArray();
+					$metaData = $transit->getOriginalFile()->toArray();
 
-					if (isset($fileMetaData[$method]) && $column) {
-						$data[$column] = $fileMetaData[$method];
+					if (isset($metaData[$method]) && $column) {
+						$data[$column] = $metaData[$method];
 					}
 				}
 			}
@@ -418,17 +411,26 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Trigger a callback function to modify data.
+	 * Trigger callback methods to modify attachment settings before uploading.
 	 *
 	 * @access protected
 	 * @param Model $model
-	 * @param string $method
 	 * @param array $options
 	 * @return array
 	 */
-	protected function _callback(Model $model, $method, array $options) {
-		if (method_exists($model, $method)) {
-			return $model->{$method}($options);
+	protected function _settingsCallback(Model $model, array $options) {
+		if (method_exists($model, 'beforeUpload')) {
+			$options = $model->beforeUpload($options);
+		}
+
+		if ($options['transforms'] && method_exists($model, 'beforeTransform')) {
+			foreach ($options['transforms'] as $i => $transform) {
+				$options['transforms'][$i] = $model->beforeTransform($transform);
+			}
+		}
+
+		if ($options['transport'] && method_exists($model, 'beforeTransport')) {
+			$options['transport'] = $model->beforeTransport($options['transport']);
 		}
 
 		return $options;
