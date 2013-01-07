@@ -209,11 +209,13 @@ class AttachmentBehavior extends ModelBehavior {
 	 */
 	public function beforeSave(Model $model) {
 		$alias = $model->alias;
+		$cleanup = array();
 
 		if (empty($model->data[$alias])) {
 			return true;
 		}
 
+		// Loop through the data and upload the file
 		foreach ($model->data[$alias] as $field => $file) {
 			if (empty($this->settings[$alias][$field])) {
 				continue;
@@ -265,10 +267,19 @@ class AttachmentBehavior extends ModelBehavior {
 					if ($attachment['transforms']) {
 						$transit->transform();
 
+						$originalFile = $transit->getOriginalFile();
 						$transformedFiles = $transit->getTransformedFiles();
+						$count = 0;
 
-						foreach (array_values($attachment['transforms']) as $i => $transform) {
-							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $transformedFiles[$i], $transform);
+						foreach ($attachment['transforms'] as $transform) {
+							if ($transform['self']) {
+								$tempFile = $originalFile;
+							} else {
+								$tempFile = $transformedFiles[$count];
+								$count++;
+							}
+
+							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $tempFile, $transform);
 						}
 					}
 
@@ -317,6 +328,8 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 
 			// Save file meta data
+			$cleanup = $data;
+
 			if ($attachment['metaColumns'] && $data) {
 				foreach ($attachment['metaColumns'] as $method => $column) {
 					$metaData = $transit->getOriginalFile()->toArray();
@@ -333,6 +346,11 @@ class AttachmentBehavior extends ModelBehavior {
 			}
 		}
 
+		// If we are doing an update, delete the previous images that are being replaced
+		if ($model->id && $cleanup) {
+			$this->_cleanupOldImages($model, $cleanup);
+		}
+
 		return true;
 	}
 
@@ -342,10 +360,11 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @access public
 	 * @param Model $model
 	 * @param int $id
+	 * @param array $filter
 	 * @return boolean
 	 */
-	public function deleteImages(Model $model, $id) {
-		$data = $model->read(null, $id);
+	public function deleteImages(Model $model, $id, array $filter = array()) {
+		$data = $model->findById($id);
 		$columns = $this->_columns[$model->alias];
 
 		if (empty($data[$model->alias])) {
@@ -353,27 +372,13 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		foreach ($data[$model->alias] as $column => $value) {
-			if (empty($columns[$column]) || empty($this->settings[$model->alias][$columns[$column]])) {
+			if (empty($columns[$column])) {
+				continue;
+			} else if ($filter && !in_array($column, $filter)) {
 				continue;
 			}
 
-			$attachment = $this->settings[$model->alias][$columns[$column]];
-			$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
-
-			try {
-				// Delete remote file
-				if ($attachment['transport']) {
-					$transporter = $this->_getTransporter($attachment['transport']);
-					$transporter->delete($value);
-
-				// Delete local file
-				} else {
-					$file = new File($basePath . basename($value));
-					$file->delete();
-				}
-			} catch (Exception $e) {
-				$this->log($e->getMessage(), LOG_DEBUG);
-			}
+			$this->_deleteImage($model, $columns[$column], $value);
 		}
 
 		return true;
@@ -548,6 +553,70 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		return (string) $options['finalPath'] . $file->basename();
+	}
+
+	/**
+	 * Attempt to delete an image using the attachment settings.
+	 *
+	 * @access public
+	 * @param Model $model
+	 * @param string $field
+	 * @param string $image
+	 * @return void
+	 */
+	protected function _deleteImage(Model $model, $field, $image) {
+		if (empty($this->settings[$model->alias][$field])) {
+			return;
+		}
+
+		$attachment = $this->settings[$model->alias][$field];
+		$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
+
+		try {
+			// Delete remote file
+			if ($attachment['transport']) {
+				$transporter = $this->_getTransporter($attachment['transport']);
+				$transporter->delete($image);
+
+			// Delete local file
+			} else {
+				$file = new File($basePath . basename($image));
+				$file->delete();
+			}
+
+		} catch (Exception $e) {
+			$this->log($e->getMessage(), LOG_DEBUG);
+		}
+	}
+
+	/**
+	 * Delete previous images if a record is being overwritten.
+	 *
+	 * @access protected
+	 * @param Model $model
+	 * @param array $fields
+	 * @return void
+	 */
+	protected function _cleanupOldImages(Model $model, array $fields) {
+		$data = $model->findById($model->id);
+		$columns = $this->_columns[$model->alias];
+
+		if (empty($data[$model->alias])) {
+			return;
+		}
+
+		foreach ($fields as $column => $value) {
+			if (empty($data[$model->alias][$column])) {
+				continue;
+			}
+
+			// Delete image if previous value doesn't match new value
+			$previous = $data[$model->alias][$column];
+
+			if ($previous !== $value) {
+				$this->_deleteImage($model, $columns[$column], $previous);
+			}
+		}
 	}
 
 }
