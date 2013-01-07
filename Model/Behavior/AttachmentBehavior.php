@@ -115,7 +115,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'prepend' => '',
 		'uploadDir' => '',
 		'finalPath' => '',
-		'dbColumn' => 'thumbnail',
+		'dbColumn' => '',
 		'overwrite' => false,
 		'self' => false
 	);
@@ -130,14 +130,13 @@ class AttachmentBehavior extends ModelBehavior {
 	public function setup(Model $model, $settings = array()) {
 		if ($settings) {
 			foreach ($settings as $field => $attachment) {
-				$attachment = Set::merge($this->_defaultSettings, $attachment);
-				$attachment['field'] = $field;
+				$attachment = Set::merge($this->_defaultSettings, $attachment + array(
+					'dbColumn' => $field
+				));
+
+				$columns = array($attachment['dbColumn'] => $field);
 
 				// Set defaults if not defined
-				if (!$attachment['dbColumn']) {
-					$attachment['dbColumn'] = $field;
-				}
-
 				if (!$attachment['tempDir']) {
 					$attachment['tempDir'] = TMP;
 				}
@@ -147,14 +146,13 @@ class AttachmentBehavior extends ModelBehavior {
 					$attachment['finalPath'] = 'files/uploads/';
 				}
 
-				$columns = array($attachment['dbColumn'] => $field);
-
 				// Merge transform settings with defaults
 				if ($attachment['transforms']) {
-					foreach ($attachment['transforms'] as &$transform) {
+					foreach ($attachment['transforms'] as $dbColumn => $transform) {
 						$transform = Set::merge($this->_transformSettings, $transform + array(
 							'uploadDir' => $attachment['uploadDir'],
-							'finalPath' => $attachment['finalPath']
+							'finalPath' => $attachment['finalPath'],
+							'dbColumn' => $dbColumn
 						));
 
 						if ($transform['self']) {
@@ -162,6 +160,7 @@ class AttachmentBehavior extends ModelBehavior {
 						}
 
 						$columns[$transform['dbColumn']] = $field;
+						$attachment['transforms'][$dbColumn] = $transform;
 					}
 				}
 
@@ -266,10 +265,10 @@ class AttachmentBehavior extends ModelBehavior {
 					if ($attachment['transforms']) {
 						$transit->transform();
 
-						foreach ($transit->getTransformedFiles() as $i => $transformedFile) {
-							$transform = $attachment['transforms'][$i];
+						$transformedFiles = $transit->getTransformedFiles();
 
-							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $transformedFile, $transform);
+						foreach (array_values($attachment['transforms']) as $i => $transform) {
+							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $transformedFiles[$i], $transform);
 						}
 					}
 
