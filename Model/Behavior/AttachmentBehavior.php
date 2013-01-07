@@ -42,7 +42,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Transit instances indexed by model alias.
 	 *
 	 * @access protected
-	 * @var array
+	 * @var \Transit\Transit[]
 	 */
 	protected $_uploads = array();
 
@@ -404,7 +404,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @access public
 	 * @param Model $model
-	 * @return array
+	 * @return \Transit\File[]
 	 */
 	public function getTransformedFiles(Model $model) {
 		if (isset($this->_uploads[$model->alias])) {

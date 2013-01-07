@@ -14,7 +14,7 @@
 	"require": {
 		"php": ">=5.3",
 		"composer/installers": "*",
-		"mjohnson/transit": "*"
+		"mjohnson/transit": "1.*"
 	},
 	"support": {
 		"source": "https://github.com/milesj/cake-uploader"
