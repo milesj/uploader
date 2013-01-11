@@ -18,7 +18,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Default list of validation sets.
 	 *
-	 * @access protected
 	 * @var array
 	 */
 	protected $_defaults = array(
@@ -73,7 +72,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Generated list of validation rules.
 	 *
-	 * @access protected
 	 * @var array
 	 */
 	protected $_validations = array();
@@ -81,7 +79,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Setup the validation and model settings.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $settings
 	 */
@@ -96,7 +93,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validates an image file size. Default max size is 5 MB.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -109,7 +105,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks that the image height is exact.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -122,7 +117,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks that the image width is exact.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -135,7 +129,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks the maximum image height.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -148,7 +141,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks the maximum image width.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -161,7 +153,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks the minimum image height.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -174,7 +165,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Checks the minimum image width.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
@@ -187,7 +177,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validates the extension.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param array $allowed
@@ -200,7 +189,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validates the type.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param array $allowed
@@ -213,7 +201,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validates the mime type.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param array|string $mimeType
@@ -226,7 +213,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Makes sure a file field is required and not optional.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $data
 	 * @param boolean $required
@@ -245,7 +231,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Build the validation rules and validate.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @return boolean
 	 */
@@ -319,7 +304,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Allow empty file uploads to circumvent file validations.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param string $field
 	 * @param array $value
@@ -346,7 +330,6 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validate the field against the validation rules.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param array $data
 	 * @param string $method

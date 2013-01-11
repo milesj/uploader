@@ -41,7 +41,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Transit instances indexed by model alias.
 	 *
-	 * @access protected
 	 * @var \Transit\Transit[]
 	 */
 	protected $_uploads = array();
@@ -49,7 +48,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Mapping of database columns to attachment fields.
 	 *
-	 * @access protected
 	 * @var array
 	 */
 	protected $_columns = array();
@@ -72,7 +70,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		transforms		- List of transforms to apply to the image
 	 * 		transport		- Settings for file transportation
 	 *
-	 * @access protected
 	 * @var array
 	 */
 	protected $_defaultSettings = array(
@@ -105,7 +102,6 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		overwrite		- Overwrite a file with the same name if it exists
 	 * 		self			- Should the transforms apply to the uploaded file instead of creating new images
 	 *
-	 * @access protected
 	 * @var array
 	 */
 	protected $_transformSettings = array(
@@ -123,7 +119,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Save attachment settings.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param array $settings
 	 */
@@ -177,7 +172,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Cleanup and reset the behavior when its detached.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @return void
 	 */
@@ -191,7 +185,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Deletes any files that have been attached to this model.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param boolean $cascade
 	 * @return boolean
@@ -207,7 +200,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Before saving the data, try uploading the file, if successful save to database.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @return boolean
 	 */
@@ -376,7 +368,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Delete all files associated with a record but do not delete the record.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param int $id
 	 * @param array $filter
@@ -406,7 +397,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Return the uploaded original File object.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @return \Transit\File
 	 */
@@ -421,7 +411,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Return the transformed File objects.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @return \Transit\File[]
 	 */
@@ -436,7 +425,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Trigger callback methods to modify attachment settings before uploading.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param array $options
 	 * @return array
@@ -462,7 +450,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Add Transit Transformers based on the attachment settings.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param \Transit\Transit $transit
 	 * @param array $attachment
@@ -486,7 +473,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Set the Transit Transporter to use based on the attachment settings.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param \Transit\Transit $transit
 	 * @param array $attachment
@@ -502,9 +488,8 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Return a Transformer based on the options.
 	 *
-	 * @access protected
 	 * @param array $options
-	 * @return \Transit\Transformer\Transformer
+	 * @return \Transit\Transformer
 	 * @throws \Exception
 	 */
 	protected function _getTransformer(array $options) {
@@ -530,9 +515,8 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Return a Transporter based on the options.
 	 *
-	 * @access protected
 	 * @param array $options
-	 * @return \Transit\Transporter\Transporter
+	 * @return \Transit\Transporter
 	 * @throws \Exception
 	 */
 	protected function _getTransporter(array $options) {
@@ -552,7 +536,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Rename or move the file and return its relative path.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param \Transit\File $file
 	 * @param array $options
@@ -577,7 +560,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Attempt to delete a file using the attachment settings.
 	 *
-	 * @access public
 	 * @param Model $model
 	 * @param string $field
 	 * @param string $path
@@ -611,7 +593,6 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Delete previous files if a record is being overwritten.
 	 *
-	 * @access protected
 	 * @param Model $model
 	 * @param array $fields
 	 * @return void
