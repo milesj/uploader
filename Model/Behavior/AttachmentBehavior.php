@@ -129,6 +129,9 @@ class AttachmentBehavior extends ModelBehavior {
 	 */
 	public function setup(Model $model, $settings = array()) {
 		if ($settings) {
+			if (!isset($this->_columns[$model->alias])) {
+				$this->_columns[$model->alias] = array();
+			}
 			foreach ($settings as $field => $attachment) {
 				$attachment = Set::merge($this->_defaultSettings, $attachment + array(
 					'dbColumn' => $field
@@ -165,7 +168,7 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 
 				$this->settings[$model->alias][$field] = $attachment;
-				$this->_columns[$model->alias] = $columns;
+				$this->_columns[$model->alias] += $columns;
 			}
 		}
 	}
