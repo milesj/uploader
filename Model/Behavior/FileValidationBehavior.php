@@ -357,6 +357,8 @@ class FileValidationBehavior extends ModelBehavior {
 				return call_user_func_array(array($validator, $method), $params);
 			}
 		}
+
+		return false;
 	}
 
 }

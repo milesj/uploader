@@ -490,7 +490,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
-	 * @throws \Exception
+	 * @throws \InvalidArgumentException
 	 */
 	protected function _getTransformer(array $options) {
 		switch ($options['method']) {
@@ -507,7 +507,7 @@ class AttachmentBehavior extends ModelBehavior {
 				return new ScaleTransformer($options);
 			break;
 			default:
-				throw new Exception(sprintf('Invalid transformation method %s', $options['method']));
+				throw new InvalidArgumentException(sprintf('Invalid transformation method %s', $options['method']));
 			break;
 		}
 	}
@@ -517,7 +517,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 *
 	 * @param array $options
 	 * @return \Transit\Transporter
-	 * @throws \Exception
+	 * @throws \InvalidArgumentException
 	 */
 	protected function _getTransporter(array $options) {
 		switch ($options['class']) {
@@ -528,7 +528,7 @@ class AttachmentBehavior extends ModelBehavior {
 				return new GlacierTransporter($options['accessKey'], $options['secretKey'], $options);
 			break;
 			default:
-				throw new Exception(sprintf('Invalid transport class %s', $options['class']));
+				throw new InvalidArgumentException(sprintf('Invalid transport class %s', $options['class']));
 			break;
 		}
 	}
