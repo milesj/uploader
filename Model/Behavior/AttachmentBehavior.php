@@ -298,7 +298,7 @@ class AttachmentBehavior extends ModelBehavior {
 			// Trigger form errors if validation fails
 			} catch (ValidationException $e) {
 				if ($attachment['allowEmpty']) {
-					if (empty($attachment['defaultPath'])) {
+					if (empty($attachment['defaultPath']) || $model->id) {
 						unset($model->data[$alias][$attachment['dbColumn']]);
 					} else {
 						$model->data[$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
