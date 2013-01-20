@@ -12,7 +12,9 @@
 		}
 	],
 	"require": {
-		"php": ">=5.3",
+		"php": ">=5.3.0",
+		"ext-curl": "*",
+		"ext-mbstring": "*",
 		"composer/installers": "*",
 		"mjohnson/transit": "1.*"
 	},
