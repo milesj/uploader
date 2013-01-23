@@ -282,11 +282,13 @@ class AttachmentBehavior extends ModelBehavior {
 					// Transport the files and save their remote path
 					if ($attachment['transport']) {
 						if ($transportedFiles = $transit->transport()) {
+							$transformSchemas = array_values($attachment['transforms']);
+
 							foreach ($transportedFiles as $i => $transportedFile) {
 								if ($i === 0) {
 									$dbColumn = $attachment['dbColumn'];
 								} else {
-									$dbColumn = $attachment['transforms'][($i - 1)]['dbColumn'];
+									$dbColumn = $transformSchemas[($i - 1)]['dbColumn'];
 								}
 
 								$data[$dbColumn] = $transportedFile;
