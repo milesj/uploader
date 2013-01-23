@@ -6,7 +6,7 @@ Provides support for image transformation and remote storage transportation.
 ## Requirements ##
 
 * CakePHP 2
-* PHP 5.3
+* PHP 5.3.3
 * Composer
 * Multibyte
 * Curl
