@@ -19,6 +19,6 @@
 		"mjohnson/transit": "1.*"
 	},
 	"support": {
-		"source": "https://github.com/milesj/cake-uploader"
+		"source": "https://github.com/milesj/Uploader"
 	}
 }
