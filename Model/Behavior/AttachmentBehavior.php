@@ -255,6 +255,7 @@ class AttachmentBehavior extends ModelBehavior {
 				// Successful upload or import
 				if ($response) {
 					$originalFile = $transit->getOriginalFile();
+					$metaData = $originalFile->toArray();
 
 					// Rename and move file
 					$data[$attachment['dbColumn']] = $this->_renameAndMove($model, $originalFile, $attachment);
@@ -328,10 +329,8 @@ class AttachmentBehavior extends ModelBehavior {
 			// Save file meta data
 			$cleanup = $data;
 
-			if ($attachment['metaColumns'] && $data) {
+			if ($attachment['metaColumns'] && $data && !empty($metaData)) {
 				foreach ($attachment['metaColumns'] as $method => $column) {
-					$metaData = $transit->getOriginalFile()->toArray();
-
 					if (isset($metaData[$method]) && $column) {
 						$data[$column] = $metaData[$method];
 					}
