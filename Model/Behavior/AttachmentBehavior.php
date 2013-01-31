@@ -353,21 +353,6 @@ class AttachmentBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Deprecated.
-	 *
-	 * @param Model $model
-	 * @param int $id
-	 * @param array $filter
-	 * @return boolean
-	 * @deprecated
-	 */
-	public function deleteImages(Model $model, $id, array $filter = array()) {
-		trigger_error('AttachmentBehavior::deleteImages() is deprecated, please use deleteFiles()', E_USER_NOTICE);
-
-		return $this->deleteFiles($model, $id, $filter);
-	}
-
-	/**
 	 * Delete all files associated with a record but do not delete the record.
 	 *
 	 * @param Model $model
