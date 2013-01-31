@@ -376,8 +376,12 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function deleteFiles(Model $model, $id, array $filter = array()) {
-		$data = $model->findById($id);
 		$columns = $this->_columns[$model->alias];
+		$data = $model->find('first', array(
+			'conditions' => array($model->alias . '.' . $model->primaryKey => $id),
+			'contain' => false,
+			'recursive' => -1
+		));
 
 		if (empty($data[$model->alias])) {
 			return false;
@@ -600,8 +604,12 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @return void
 	 */
 	protected function _cleanupOldFiles(Model $model, array $fields) {
-		$data = $model->findById($model->id);
 		$columns = $this->_columns[$model->alias];
+		$data = $model->find('first', array(
+			'conditions' => array($model->alias . '.' . $model->primaryKey => $model->id),
+			'contain' => false,
+			'recursive' => -1
+		));
 
 		if (empty($data[$model->alias])) {
 			return;
