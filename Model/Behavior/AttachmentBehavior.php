@@ -371,6 +371,8 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
+		$save = array();
+
 		foreach ($data[$model->alias] as $column => $value) {
 			if (empty($columns[$column])) {
 				continue;
@@ -378,7 +380,19 @@ class AttachmentBehavior extends ModelBehavior {
 				continue;
 			}
 
-			$this->_deleteFile($model, $columns[$column], $value);
+			if ($this->_deleteFile($model, $columns[$column], $value)) {
+				$save[$column] = '';
+			}
+		}
+
+		// Set the fields to empty
+		if ($save) {
+			$model->id = $id;
+			$model->save($save, array(
+				'validate' => false,
+				'callbacks' => false,
+				'fieldList' => array_keys($save)
+			));
 		}
 
 		return true;
@@ -553,11 +567,11 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param string $field
 	 * @param string $path
-	 * @return void
+	 * @return bool
 	 */
 	protected function _deleteFile(Model $model, $field, $path) {
 		if (empty($this->settings[$model->alias][$field])) {
-			return;
+			return false;
 		}
 
 		$attachment = $this->settings[$model->alias][$field];
@@ -567,17 +581,21 @@ class AttachmentBehavior extends ModelBehavior {
 			// Delete remote file
 			if ($attachment['transport']) {
 				$transporter = $this->_getTransporter($attachment['transport']);
-				$transporter->delete($path);
+
+				return $transporter->delete($path);
 
 			// Delete local file
 			} else {
 				$file = new File($basePath . basename($path));
-				$file->delete();
+
+				return $file->delete();
 			}
 
 		} catch (Exception $e) {
 			$this->log($e->getMessage(), LOG_DEBUG);
 		}
+
+		return false;
 	}
 
 	/**
