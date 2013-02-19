@@ -254,23 +254,20 @@ class AttachmentBehavior extends ModelBehavior {
 
 				// Successful upload or import
 				if ($response) {
-					$originalFile = $transit->getOriginalFile();
-					$metaData = $originalFile->toArray();
 
 					// Rename and move file
-					$data[$attachment['dbColumn']] = $this->_renameAndMove($model, $originalFile, $attachment);
+					$data[$attachment['dbColumn']] = $this->_renameAndMove($model, $transit->getOriginalFile(), $attachment);
 
 					// Transform the files and save their path
 					if ($attachment['transforms']) {
 						$transit->transform();
 
-						$originalFile = $transit->getOriginalFile();
 						$transformedFiles = $transit->getTransformedFiles();
 						$count = 0;
 
 						foreach ($attachment['transforms'] as $transform) {
 							if ($transform['self']) {
-								$tempFile = $originalFile;
+								$tempFile = $transit->getOriginalFile();
 							} else {
 								$tempFile = $transformedFiles[$count];
 								$count++;
@@ -279,6 +276,8 @@ class AttachmentBehavior extends ModelBehavior {
 							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $tempFile, $transform);
 						}
 					}
+
+					$metaData = $transit->getOriginalFile()->toArray();
 
 					// Transport the files and save their remote path
 					if ($attachment['transport']) {
