@@ -240,7 +240,7 @@ class AttachmentBehavior extends ModelBehavior {
 					$response = $transit->upload($overwrite);
 
 				// Remote import
-				} else if (strpos($file, 'http') === 0) {
+				} else if (preg_match('/^http/i', $file)) {
 					$response = $transit->importFromRemote($overwrite);
 
 				// Local import
@@ -323,6 +323,10 @@ class AttachmentBehavior extends ModelBehavior {
 
 				// Rollback the files since it threw errors
 				$transit->rollback();
+
+				if ($attachment['stopSave']) {
+					return false;
+				}
 			}
 
 			// Save file meta data

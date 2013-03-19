@@ -349,16 +349,6 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Parse out the extension.
-	 *
-	 * @param string $path
-	 * @return string
-	 */
-	protected function _ext($path) {
-		return mb_strtolower(pathinfo($path, PATHINFO_EXTENSION));
-	}
-
-	/**
 	 * Validate the field against the validation rules.
 	 *
 	 * @param Model $model
@@ -377,50 +367,43 @@ class FileValidationBehavior extends ModelBehavior {
 				return false;
 			}
 
-			// Extension is special as the tmp_name uses the .tmp extension
-			if ($method === 'ext') {
-				return in_array($this->_ext($value['name']), $params[0]);
+			$file = null;
 
-			// Use robust validator
-			} else {
-				$file = null;
+			// Upload, use temp file
+			if (is_array($value)) {
+				$file = new File($value['tmp_name']);
 
-				// Upload, use temp file
-				if (is_array($value)) {
-					$file = new File($value['tmp_name']);
+			// Import, copy file for validation
+			} else if (preg_match('/^http/i', $value)) {
+				$target = TMP . md5($value);
 
-				// Import, copy file for validation
-				} else if (preg_match('/^http/', $value)) {
-					$target = TMP . md5($value) . '.' . $this->_ext($value);
+				// Already imported from previous validation
+				if (file_exists($target)) {
+					$file = new File($target);
 
-					// Already imported from previous validation
-					if (file_exists($target)) {
-						$file = new File($target);
+				// Attempt to copy
+				} else if (copy($value, $target)) {
+					$file = new File($target);
 
-					// Attempt to copy
-					} else if (copy($value, $target)) {
-						$file = new File($target);
-
-					// Delete just in case
-					} else {
-						@unlink($target);
-					}
-
-					// Save temp so we can delete later
-					if ($file) {
-						$this->_tempFile = $file;
-					}
+				// Delete just in case
+				} else {
+					@unlink($target);
 				}
 
-				if (!$file) {
-					throw new UnexpectedValueException('Invalid upload or import for validation');
+				// Save temp so we can delete later
+				if ($file) {
+					$this->_tempFile = $file;
 				}
-
-				$validator = new ImageValidator();
-				$validator->setFile($file);
-
-				return call_user_func_array(array($validator, $method), $params);
 			}
+
+			if (!$file) {
+				throw new UnexpectedValueException('Invalid upload or import for validation');
+			}
+
+			$validator = new ImageValidator();
+			$validator->setFile($file);
+
+			return call_user_func_array(array($validator, $method), $params);
 		}
 
 		return false;
