@@ -77,6 +77,13 @@ class FileValidationBehavior extends ModelBehavior {
 	protected $_validations = array();
 
 	/**
+	 * Temporary file used for validation only.
+	 *
+	 * @var \Transit\File
+	 */
+	protected $_tempFile;
+
+	/**
 	 * Setup the validation and model settings.
 	 *
 	 * @param Model $model
@@ -302,6 +309,20 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
+	 * Delete the temporary file.
+	 *
+	 * @param Model $model
+	 * @return bool
+	 */
+	public function afterValidate(Model $model) {
+		if ($this->_tempFile) {
+			$this->_tempFile->delete();
+		}
+
+		return true;
+	}
+
+	/**
 	 * Allow empty file uploads to circumvent file validations.
 	 *
 	 * @param Model $model
@@ -328,6 +349,16 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
+	 * Parse out the extension.
+	 *
+	 * @param string $path
+	 * @return string
+	 */
+	protected function _ext($path) {
+		return mb_strtolower(pathinfo($path, PATHINFO_EXTENSION));
+	}
+
+	/**
 	 * Validate the field against the validation rules.
 	 *
 	 * @param Model $model
@@ -335,6 +366,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param string $method
 	 * @param array $params
 	 * @return boolean
+	 * @throws UnexpectedValueException
 	 */
 	protected function _validate(Model $model, $data, $method, array $params) {
 		foreach ($data as $field => $value) {
@@ -347,12 +379,45 @@ class FileValidationBehavior extends ModelBehavior {
 
 			// Extension is special as the tmp_name uses the .tmp extension
 			if ($method === 'ext') {
-				return in_array(mb_strtolower(pathinfo($value['name'], PATHINFO_EXTENSION)), $params[0]);
+				return in_array($this->_ext($value['name']), $params[0]);
 
 			// Use robust validator
 			} else {
+				$file = null;
+
+				// Upload, use temp file
+				if (is_array($value)) {
+					$file = new File($value['tmp_name']);
+
+				// Import, copy file for validation
+				} else if (preg_match('/^http/', $value)) {
+					$target = TMP . md5($value) . '.' . $this->_ext($value);
+
+					// Already imported from previous validation
+					if (file_exists($target)) {
+						$file = new File($target);
+
+					// Attempt to copy
+					} else if (copy($value, $target)) {
+						$file = new File($target);
+
+					// Delete just in case
+					} else {
+						@unlink($target);
+					}
+
+					// Save temp so we can delete later
+					if ($file) {
+						$this->_tempFile = $file;
+					}
+				}
+
+				if (!$file) {
+					throw new UnexpectedValueException('Invalid upload or import for validation');
+				}
+
 				$validator = new ImageValidator();
-				$validator->setFile(new File($value['tmp_name']));
+				$validator->setFile($file);
 
 				return call_user_func_array(array($validator, $method), $params);
 			}
