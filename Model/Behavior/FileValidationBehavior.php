@@ -194,7 +194,7 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Validates the type.
+	 * Validates the type, e.g., image.
 	 *
 	 * @param Model $model
 	 * @param array $data
@@ -206,7 +206,7 @@ class FileValidationBehavior extends ModelBehavior {
 	}
 
 	/**
-	 * Validates the mime type.
+	 * Validates the mime type, e.g., image/jpeg.
 	 *
 	 * @param Model $model
 	 * @param array $data
