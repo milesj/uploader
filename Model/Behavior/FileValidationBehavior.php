@@ -227,7 +227,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 */
 	public function required(Model $model, $data, $required = true) {
 		foreach ($data as $field => $value) {
-			if ($required && (!$value || empty($value['tmp_name']))) {
+			if ($required && $this->_isEmpty($value)) {
 				return false;
 			}
 		}
@@ -297,7 +297,21 @@ class FileValidationBehavior extends ModelBehavior {
 
 			if ($validations) {
 				if (!empty($model->validate[$field])) {
-					$validations = $validations + $model->validate[$field];
+					$currentRules = $model->validate[$field];
+
+					// Fix single rule validate
+					if (isset($currentRules['rule'])) {
+						$currentRules = array(
+							$currentRules['rule'] => $currentRules
+						);
+					}
+
+					$validations = $currentRules + $validations;
+				}
+
+				// Remove notEmpty for uploads
+				if (isset($model->data[$model->alias][$field]['tmp_name']) && isset($validations['notEmpty'])) {
+					unset($validations['notEmpty']);
 				}
 
 				$this->_validations[$field] = $validations;
@@ -335,7 +349,7 @@ class FileValidationBehavior extends ModelBehavior {
 			$rule = $this->_validations[$field]['required'];
 			$required = isset($rule['rule'][1]) ? $rule['rule'][1] : true;
 
-			if (empty($value['tmp_name'])) {
+			if ($this->_isEmpty($value)) {
 				if ($rule['allowEmpty']) {
 					return true;
 
@@ -346,6 +360,19 @@ class FileValidationBehavior extends ModelBehavior {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Check if a file input field is empty.
+	 *
+	 * @param string|array $value
+	 * @return bool
+	 */
+	protected function _isEmpty($value) {
+		return (
+			is_array($value) && empty($value['tmp_name']) || // uploads
+			is_string($value) && !$value // imports
+		);
 	}
 
 	/**
@@ -363,7 +390,7 @@ class FileValidationBehavior extends ModelBehavior {
 			if ($this->_allowEmpty($model, $field, $value)) {
 				return true;
 
-			} else if (empty($value['tmp_name'])) {
+			} else if ($this->_isEmpty($value)) {
 				return false;
 			}
 
@@ -382,12 +409,14 @@ class FileValidationBehavior extends ModelBehavior {
 					$file = new File($target);
 
 				// Attempt to copy
-				} else if (copy($value, $target)) {
-					$file = new File($target);
-
-				// Delete just in case
 				} else {
-					@unlink($target);
+					$transit = new \Transit\Transit($value);
+					$transit->setDirectory(TMP);
+
+					if ($transit->importFromRemote()) {
+						$file = $transit->getOriginalFile();
+						$file->rename(basename($target));
+					}
 				}
 
 				// Save temp so we can delete later
@@ -397,7 +426,8 @@ class FileValidationBehavior extends ModelBehavior {
 			}
 
 			if (!$file) {
-				throw new UnexpectedValueException('Invalid upload or import for validation');
+				$this->log(sprintf('Invalid upload or import for validation: %s', json_encode($value)), LOG_DEBUG);
+				return false;
 			}
 
 			$validator = new ImageValidator();
