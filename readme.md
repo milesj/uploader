@@ -1,4 +1,4 @@
-# Uploader v4.0.8 #
+# Uploader v4.0.9 #
 
 A CakePHP plugin that will validate and upload files through the model layer.
 Provides support for image transformation and remote storage transportation.
