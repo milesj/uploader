@@ -299,16 +299,22 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Trigger form errors if validation fails
 			} catch (ValidationException $e) {
+				$dbColumns = array_merge(array($attachment['dbColumn']), array_keys($attachment['transforms']));
+
+				foreach ($dbColumns as $dbCol) {
+					unset($model->data[$alias][$dbCol]);
+				}
+
+				// Allow empty uploads
 				if ($attachment['allowEmpty']) {
-					if (empty($attachment['defaultPath']) || $model->id) {
-						unset($model->data[$alias][$attachment['dbColumn']]);
-					} else {
+					if (!empty($attachment['defaultPath']) && !$model->id) {
 						$model->data[$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
 					}
 
 					continue;
 				}
 
+				// Invalidate and stop
 				$model->invalidate($field, __d('uploader', $e->getMessage()));
 
 				if ($attachment['stopSave']) {
