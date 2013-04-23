@@ -19,6 +19,9 @@
 		"composer/installers": "*",
 		"mjohnson/transit": "1.*"
 	},
+	"suggest": {
+		"aws/aws-sdk-php": "~2.2"
+	},
 	"support": {
 		"source": "https://github.com/milesj/Uploader"
 	}
