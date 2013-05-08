@@ -579,7 +579,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
-		$attachment = $this->settings[$model->alias][$field];
+		$attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$field]);
 		$basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
 
 		try {
