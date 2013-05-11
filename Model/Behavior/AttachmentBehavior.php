@@ -376,6 +376,9 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
+		// Set data in case $this->data is used in callbacks
+		$model->set($data);
+
 		$save = array();
 
 		foreach ($data[$model->alias] as $column => $value) {
