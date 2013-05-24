@@ -190,7 +190,18 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function extension(Model $model, $data, array $allowed = array()) {
-		return $this->_validate($model, $data, 'ext', array($allowed));
+		foreach ($data as $field => $value) {
+			if ($this->_allowEmpty($model, $field, $value)) {
+				return true;
+
+			} else if ($this->_isEmpty($value)) {
+				return false;
+			}
+
+			return in_array(mb_strtolower(pathinfo($value['name'], PATHINFO_EXTENSION)), $allowed);
+		}
+
+		return false;
 	}
 
 	/**
