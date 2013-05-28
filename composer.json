@@ -17,7 +17,7 @@
 		"ext-mbstring": "*",
 		"ext-fileinfo": "*",
 		"composer/installers": "*",
-		"mjohnson/transit": "1.*"
+		"mjohnson/transit": "~1.2"
 	},
 	"suggest": {
 		"aws/aws-sdk-php": "~2.2"

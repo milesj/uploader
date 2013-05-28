@@ -190,18 +190,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @return boolean
 	 */
 	public function extension(Model $model, $data, array $allowed = array()) {
-		foreach ($data as $field => $value) {
-			if ($this->_allowEmpty($model, $field, $value)) {
-				return true;
-
-			} else if ($this->_isEmpty($value)) {
-				return false;
-			}
-
-			return in_array(mb_strtolower(pathinfo($value['name'], PATHINFO_EXTENSION)), $allowed);
-		}
-
-		return false;
+		return $this->_validate($model, $data, 'ext', array($allowed));
 	}
 
 	/**
@@ -409,7 +398,7 @@ class FileValidationBehavior extends ModelBehavior {
 
 			// Upload, use temp file
 			if (is_array($value)) {
-				$file = new File($value['tmp_name']);
+				$file = new File($value);
 
 			// Import, copy file for validation
 			} else if (preg_match('/^http/i', $value)) {
