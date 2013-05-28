@@ -41,36 +41,36 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Transit instances indexed by model alias.
 	 *
-	 * @var \Transit\Transit[]
+	 * @type \Transit\Transit[]
 	 */
 	protected $_uploads = array();
 
 	/**
 	 * Mapping of database columns to attachment fields.
 	 *
-	 * @var array
+	 * @type array
 	 */
 	protected $_columns = array();
 
 	/**
 	 * Default attachment settings.
 	 *
-	 * 		nameCallback	- Method to format filename with
-	 * 		append			- What to append to the end of the filename
-	 * 		prepend			- What to prepend to the beginning of the filename
-	 * 		tempDir			- Directory to upload files to temporarily
-	 * 		uploadDir		- Directory to move file to after upload to make it publicly accessible
-	 * 		finalPath		- The final path to prepend to file names (like a domain)
-	 * 		dbColumn		- Database column to write file path to
-	 * 		metaColumns		- Database columns to write meta data to
-	 * 		defaultPath		- Default image if no file is uploaded
-	 * 		overwrite		- Overwrite a file with the same name if it exists
-	 * 		stopSave		- Stop save() if error exists during upload
-	 * 		allowEmpty		- Allow an empty file upload to continue
-	 * 		transforms		- List of transforms to apply to the image
-	 * 		transport		- Settings for file transportation
-	 *
-	 * @var array
+	 * @type array {
+	 * 		@type string $nameCallback	Method to format filename with
+	 * 		@type string $append		What to append to the end of the filename
+	 * 		@type string $prepend		What to prepend to the beginning of the filename
+	 * 		@type string $tempDir		Directory to upload files to temporarily
+	 * 		@type string $uploadDir		Directory to move file to after upload to make it publicly accessible
+	 * 		@type string $finalPath		The final path to prepend to file names (like a domain)
+	 * 		@type string $dbColumn		Database column to write file path to
+	 * 		@type array $metaColumns	Database columns to write meta data to
+	 * 		@type string $defaultPath	Default image if no file is uploaded
+	 * 		@type bool $overwrite		Overwrite a file with the same name if it exists
+	 * 		@type bool $stopSave		Stop save() if error exists during upload
+	 * 		@type bool $allowEmpty		Allow an empty file upload to continue
+	 * 		@type array $transforms		List of transforms to apply to the image
+	 * 		@type array $transport		Settings for file transportation
+	 * }
 	 */
 	protected $_defaultSettings = array(
 		'nameCallback' => '',
@@ -92,17 +92,17 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Default transform settings.
 	 *
-	 * 		method			- The transform method
-	 * 		nameCallback	- Method to format filename with
-	 * 		append			- What to append to the end of the filename
-	 * 		prepend			- What to prepend to the beginning of the filename
-	 * 		uploadDir		- Directory to move file to after upload to make it publicly accessible
-	 * 		finalPath		- The final path to prepend to file names (like a domain)
-	 * 		dbColumn		- Database column to write file path to
-	 * 		overwrite		- Overwrite a file with the same name if it exists
-	 * 		self			- Should the transforms apply to the uploaded file instead of creating new images
-	 *
-	 * @var array
+	 * @type array {
+	 * 		@type string $method		The transform method
+	 * 		@type string $nameCallback	Method to format filename with
+	 * 		@type string $append		What to append to the end of the filename
+	 * 		@type string $prepend		What to prepend to the beginning of the filename
+	 * 		@type string $uploadDir		Directory to move file to after upload to make it publicly accessible
+	 * 		@type string $finalPath		The final path to prepend to file names (like a domain)
+	 * 		@type string $dbColumn		Database column to write file path to
+	 * 		@type bool $overwrite		Overwrite a file with the same name if it exists
+	 * 		@type bool $self			Should the transforms apply to the uploaded file instead of creating new images
+	 * }
 	 */
 	protected $_transformSettings = array(
 		'method' => '',
@@ -186,8 +186,8 @@ class AttachmentBehavior extends ModelBehavior {
 	 * Deletes any files that have been attached to this model.
 	 *
 	 * @param Model $model
-	 * @param boolean $cascade
-	 * @return boolean
+	 * @param bool $cascade
+	 * @return bool
 	 */
 	public function beforeDelete(Model $model, $cascade = true) {
 		if (empty($model->id)) {
@@ -200,8 +200,10 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Before saving the data, try uploading the file, if successful save to database.
 	 *
+	 * @uses Transit\Transit
+	 *
 	 * @param Model $model
-	 * @return boolean
+	 * @return bool
 	 */
 	public function beforeSave(Model $model) {
 		$alias = $model->alias;
@@ -362,7 +364,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param int $id
 	 * @param array $filter
-	 * @return boolean
+	 * @return bool
 	 */
 	public function deleteFiles(Model $model, $id, array $filter = array()) {
 		$columns = $this->_columns[$model->alias];
@@ -500,6 +502,11 @@ class AttachmentBehavior extends ModelBehavior {
 	/**
 	 * Return a Transformer based on the options.
 	 *
+	 * @uses Transit\Transformer\Image\CropTransformer
+	 * @uses Transit\Transformer\Image\FlipTransformer
+	 * @uses Transit\Transformer\Image\ResizeTransformer
+	 * @uses Transit\Transformer\Image\ScaleTransformer
+	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
 	 * @throws \InvalidArgumentException
@@ -526,6 +533,9 @@ class AttachmentBehavior extends ModelBehavior {
 
 	/**
 	 * Return a Transporter based on the options.
+	 *
+	 * @uses Transit\Transporter\Aws\S3Transporter
+	 * @uses Transit\Transporter\Aws\GlacierTransporter
 	 *
 	 * @param array $options
 	 * @return \Transit\Transporter
@@ -571,6 +581,8 @@ class AttachmentBehavior extends ModelBehavior {
 
 	/**
 	 * Attempt to delete a file using the attachment settings.
+	 *
+	 * @uses Transit\File
 	 *
 	 * @param Model $model
 	 * @param string $field

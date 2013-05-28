@@ -18,7 +18,7 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Default list of validation sets.
 	 *
-	 * @var array
+	 * @type array
 	 */
 	protected $_defaults = array(
 		'width' => array(
@@ -72,14 +72,14 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Generated list of validation rules.
 	 *
-	 * @var array
+	 * @type array
 	 */
 	protected $_validations = array();
 
 	/**
 	 * Temporary file used for validation only.
 	 *
-	 * @var \Transit\File
+	 * @type \Transit\File
 	 */
 	protected $_tempFile;
 
@@ -103,7 +103,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function filesize(Model $model, $data, $size = 5242880) {
 		return $this->_validate($model, $data, 'size', array($size));
@@ -115,7 +115,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function height(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'height', array($size));
@@ -127,7 +127,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function width(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'width', array($size));
@@ -139,7 +139,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function maxHeight(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'maxHeight', array($size));
@@ -151,7 +151,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function maxWidth(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'maxWidth', array($size));
@@ -163,7 +163,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function minHeight(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'minHeight', array($size));
@@ -175,7 +175,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param int $size
-	 * @return boolean
+	 * @return bool
 	 */
 	public function minWidth(Model $model, $data, $size) {
 		return $this->_validate($model, $data, 'minWidth', array($size));
@@ -187,7 +187,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param array $allowed
-	 * @return boolean
+	 * @return bool
 	 */
 	public function extension(Model $model, $data, array $allowed = array()) {
 		return $this->_validate($model, $data, 'ext', array($allowed));
@@ -199,7 +199,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param array $allowed
-	 * @return boolean
+	 * @return bool
 	 */
 	public function type(Model $model, $data, array $allowed = array()) {
 		return $this->_validate($model, $data, 'type', array($allowed));
@@ -211,7 +211,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param array $data
 	 * @param array|string $mimeType
-	 * @return boolean
+	 * @return bool
 	 */
 	public function mimeType(Model $model, $data, $mimeType) {
 		return $this->_validate($model, $data, 'mimeType', array($mimeType));
@@ -222,11 +222,11 @@ class FileValidationBehavior extends ModelBehavior {
 	 *
 	 * @param Model $model
 	 * @param array $data
-	 * @param boolean $required
-	 * @return boolean
+	 * @param bool $required
+	 * @return bool
 	 */
 	public function required(Model $model, $data, $required = true) {
-		foreach ($data as $field => $value) {
+		foreach ($data as $value) {
 			if ($required && $this->_isEmpty($value)) {
 				return false;
 			}
@@ -239,7 +239,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * Build the validation rules and validate.
 	 *
 	 * @param Model $model
-	 * @return boolean
+	 * @return bool
 	 */
 	public function beforeValidate(Model $model) {
 		if (empty($this->settings[$model->alias])) {
@@ -342,7 +342,7 @@ class FileValidationBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param string $field
 	 * @param array $value
-	 * @return boolean
+	 * @return bool
 	 */
 	protected function _allowEmpty(Model $model, $field, $value) {
 		if (isset($this->_validations[$field]['required'])) {
@@ -378,11 +378,15 @@ class FileValidationBehavior extends ModelBehavior {
 	/**
 	 * Validate the field against the validation rules.
 	 *
+	 * @uses Transit\Transit
+	 * @uses Transit\File
+	 * @uses Transit\Validator\ImageValidator
+	 *
 	 * @param Model $model
 	 * @param array $data
 	 * @param string $method
 	 * @param array $params
-	 * @return boolean
+	 * @return bool
 	 * @throws UnexpectedValueException
 	 */
 	protected function _validate(Model $model, $data, $method, array $params) {
