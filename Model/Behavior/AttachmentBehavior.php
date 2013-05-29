@@ -141,7 +141,7 @@ class AttachmentBehavior extends ModelBehavior {
 				}
 
 				if (!$attachment['uploadDir']) {
-					$attachment['finalPath'] = 'files/uploads/';
+					$attachment['finalPath'] = $attachment['finalPath'] ?: '/files/uploads/';
 					$attachment['uploadDir'] = WWW_ROOT . $attachment['finalPath'];
 				}
 
