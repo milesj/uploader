@@ -133,6 +133,11 @@ class AttachmentBehavior extends ModelBehavior {
 					'dbColumn' => $field
 				));
 
+				// Fix dbColumn if they set it to empty
+				if (!$attachment['dbColumn']) {
+					$attachment['dbColumn'] = $field;
+				}
+
 				$columns = array($attachment['dbColumn'] => $field);
 
 				// Set defaults if not defined
