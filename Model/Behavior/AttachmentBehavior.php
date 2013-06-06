@@ -70,6 +70,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		@type bool $allowEmpty		Allow an empty file upload to continue
 	 * 		@type array $transforms		List of transforms to apply to the image
 	 * 		@type array $transport		Settings for file transportation
+	 * 		@type array $curl			List of cURL options to set for remote importing
 	 * }
 	 */
 	protected $_defaultSettings = array(
@@ -86,7 +87,8 @@ class AttachmentBehavior extends ModelBehavior {
 		'stopSave' => true,
 		'allowEmpty' => true,
 		'transforms' => array(),
-		'transport' => array()
+		'transport' => array(),
+		'curl' => array()
 	);
 
 	/**
@@ -248,7 +250,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 				// Remote import
 				} else if (preg_match('/^http/i', $file)) {
-					$response = $transit->importFromRemote($overwrite);
+					$response = $transit->importFromRemote($overwrite, $attachment['curl']);
 
 				// Local import
 				} else if (file_exists($file)) {
