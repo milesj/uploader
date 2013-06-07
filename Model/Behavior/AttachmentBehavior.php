@@ -316,10 +316,20 @@ class AttachmentBehavior extends ModelBehavior {
 					unset($model->data[$alias][$dbCol]);
 				}
 
-				// Allow empty uploads
+				// Allow empty uploads and set default paths
 				if ($attachment['allowEmpty']) {
-					if (!empty($attachment['defaultPath']) && !$model->id) {
-						$model->data[$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
+					if (!$model->id) {
+						if ($attachment['defaultPath']) {
+							$model->data[$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
+						}
+
+						if ($attachment['transforms']) {
+							foreach ($attachment['transforms'] as $transform) {
+								if ($transform['defaultPath']) {
+									$model->data[$alias][$transform['dbColumn']] = $transform['defaultPath'];
+								}
+							}
+						}
 					}
 
 					continue;
