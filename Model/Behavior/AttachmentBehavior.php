@@ -15,6 +15,8 @@ use Transit\Transformer\Image\CropTransformer;
 use Transit\Transformer\Image\FlipTransformer;
 use Transit\Transformer\Image\ResizeTransformer;
 use Transit\Transformer\Image\ScaleTransformer;
+use Transit\Transformer\Image\ExifTransformer;
+use Transit\Transformer\Image\RotateTransformer;
 use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
 
@@ -31,6 +33,8 @@ class AttachmentBehavior extends ModelBehavior {
 	const FLIP = 'flip';
 	const RESIZE = 'resize';
 	const SCALE = 'scale';
+	const ROTATE = 'rotate';
+	const EXIF = 'exif';
 
 	/**
 	 * Transportation types.
@@ -102,6 +106,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		@type string $uploadDir		Directory to move file to after upload to make it publicly accessible
 	 * 		@type string $finalPath		The final path to prepend to file names (like a domain)
 	 * 		@type string $dbColumn		Database column to write file path to
+	 * 		@type string $defaultPath	Default image if no file is uploaded
 	 * 		@type bool $overwrite		Overwrite a file with the same name if it exists
 	 * 		@type bool $self			Should the transforms apply to the uploaded file instead of creating new images
 	 * }
@@ -114,6 +119,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'uploadDir' => '',
 		'finalPath' => '',
 		'dbColumn' => '',
+		'defaultPath' => '',
 		'overwrite' => false,
 		'self' => false
 	);
@@ -513,6 +519,8 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @uses Transit\Transformer\Image\FlipTransformer
 	 * @uses Transit\Transformer\Image\ResizeTransformer
 	 * @uses Transit\Transformer\Image\ScaleTransformer
+	 * @uses Transit\Transformer\Image\RotateTransformer
+	 * @uses Transit\Transformer\Image\ExifTransformer
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
@@ -531,6 +539,12 @@ class AttachmentBehavior extends ModelBehavior {
 			break;
 			case self::SCALE:
 				return new ScaleTransformer($options);
+			break;
+			case self::ROTATE:
+				return new RotateTransformer($options);
+			break;
+			case self::EXIF:
+				return new ExifTransformer($options);
 			break;
 			default:
 				throw new InvalidArgumentException(sprintf('Invalid transformation method %s', $options['method']));
