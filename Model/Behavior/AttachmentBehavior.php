@@ -131,54 +131,56 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param array $settings
 	 */
 	public function setup(Model $model, $settings = array()) {
-		if ($settings) {
-			if (!isset($this->_columns[$model->alias])) {
-				$this->_columns[$model->alias] = array();
+		if (!$settings) {
+			return;
+		}
+
+		if (!isset($this->_columns[$model->alias])) {
+			$this->_columns[$model->alias] = array();
+		}
+
+		foreach ($settings as $field => $attachment) {
+			$attachment = Set::merge($this->_defaultSettings, $attachment + array(
+				'dbColumn' => $field
+			));
+
+			// Fix dbColumn if they set it to empty
+			if (!$attachment['dbColumn']) {
+				$attachment['dbColumn'] = $field;
 			}
 
-			foreach ($settings as $field => $attachment) {
-				$attachment = Set::merge($this->_defaultSettings, $attachment + array(
-					'dbColumn' => $field
-				));
+			$columns = array($attachment['dbColumn'] => $field);
 
-				// Fix dbColumn if they set it to empty
-				if (!$attachment['dbColumn']) {
-					$attachment['dbColumn'] = $field;
-				}
+			// Set defaults if not defined
+			if (!$attachment['tempDir']) {
+				$attachment['tempDir'] = TMP;
+			}
 
-				$columns = array($attachment['dbColumn'] => $field);
+			if (!$attachment['uploadDir']) {
+				$attachment['finalPath'] = $attachment['finalPath'] ?: '/files/uploads/';
+				$attachment['uploadDir'] = WWW_ROOT . $attachment['finalPath'];
+			}
 
-				// Set defaults if not defined
-				if (!$attachment['tempDir']) {
-					$attachment['tempDir'] = TMP;
-				}
+			// Merge transform settings with defaults
+			if ($attachment['transforms']) {
+				foreach ($attachment['transforms'] as $dbColumn => $transform) {
+					$transform = Set::merge($this->_transformSettings, $transform + array(
+						'uploadDir' => $attachment['uploadDir'],
+						'finalPath' => $attachment['finalPath'],
+						'dbColumn' => $dbColumn
+					));
 
-				if (!$attachment['uploadDir']) {
-					$attachment['finalPath'] = $attachment['finalPath'] ?: '/files/uploads/';
-					$attachment['uploadDir'] = WWW_ROOT . $attachment['finalPath'];
-				}
-
-				// Merge transform settings with defaults
-				if ($attachment['transforms']) {
-					foreach ($attachment['transforms'] as $dbColumn => $transform) {
-						$transform = Set::merge($this->_transformSettings, $transform + array(
-							'uploadDir' => $attachment['uploadDir'],
-							'finalPath' => $attachment['finalPath'],
-							'dbColumn' => $dbColumn
-						));
-
-						if ($transform['self']) {
-							$transform['dbColumn'] = $attachment['dbColumn'];
-						}
-
-						$columns[$transform['dbColumn']] = $field;
-						$attachment['transforms'][$dbColumn] = $transform;
+					if ($transform['self']) {
+						$transform['dbColumn'] = $attachment['dbColumn'];
 					}
-				}
 
-				$this->settings[$model->alias][$field] = $attachment;
-				$this->_columns[$model->alias] += $columns;
+					$columns[$transform['dbColumn']] = $field;
+					$attachment['transforms'][$dbColumn] = $transform;
+				}
 			}
+
+			$this->settings[$model->alias][$field] = $attachment;
+			$this->_columns[$model->alias] += $columns;
 		}
 	}
 
@@ -456,7 +458,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return $this->_uploads[$model->alias]->getTransformedFiles();
 		}
 
-		return null;
+		return array();
 	}
 
 	/**
