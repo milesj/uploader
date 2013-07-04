@@ -410,7 +410,7 @@ class AttachmentBehavior extends ModelBehavior {
 		$save = array();
 
 		foreach ($data[$model->alias] as $column => $value) {
-			if (empty($columns[$column])) {
+			if (empty($columns[$column]) || empty($value)) {
 				continue;
 			} else if ($filter && !in_array($column, $filter)) {
 				continue;
