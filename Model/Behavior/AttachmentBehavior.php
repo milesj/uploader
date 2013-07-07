@@ -211,7 +211,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
-		return $this->deleteFiles($model, $model->id);
+		return $this->deleteFiles($model, $model->id, array(), true);
 	}
 
 	/**
@@ -391,9 +391,10 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param int $id
 	 * @param array $filter
+	 * @param bool $isDelete
 	 * @return bool
 	 */
-	public function deleteFiles(Model $model, $id, array $filter = array()) {
+	public function deleteFiles(Model $model, $id, array $filter = array(), $isDelete = false) {
 		$columns = $this->_columns[$model->alias];
 		$data = $model->find('first', array(
 			'conditions' => array($model->alias . '.' . $model->primaryKey => $id),
@@ -411,7 +412,7 @@ class AttachmentBehavior extends ModelBehavior {
 		$save = array();
 
 		foreach ($data[$model->alias] as $column => $value) {
-			if (empty($columns[$column])) {
+			if (empty($columns[$column]) || empty($value)) {
 				continue;
 			} else if ($filter && !in_array($column, $filter)) {
 				continue;
@@ -423,7 +424,7 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		// Set the fields to empty
-		if ($save) {
+		if ($save && !$isDelete) {
 			$model->id = $id;
 			$model->save($save, array(
 				'validate' => false,
@@ -535,7 +536,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @uses Transit\Transformer\Image\ScaleTransformer
 	 * @uses Transit\Transformer\Image\RotateTransformer
 	 * @uses Transit\Transformer\Image\ExifTransformer
-	 * @uses Transit\Transformer\Image\FitTransformer
+	 * @uses Transit\transformer\Image\FitTransormer
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
