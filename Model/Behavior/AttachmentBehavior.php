@@ -17,6 +17,7 @@ use Transit\Transformer\Image\ResizeTransformer;
 use Transit\Transformer\Image\ScaleTransformer;
 use Transit\Transformer\Image\ExifTransformer;
 use Transit\Transformer\Image\RotateTransformer;
+use Transit\Transformer\Image\FitTransformer;
 use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
 
@@ -35,6 +36,7 @@ class AttachmentBehavior extends ModelBehavior {
 	const SCALE = 'scale';
 	const ROTATE = 'rotate';
 	const EXIF = 'exif';
+        const FIT = 'fit';
 
 	/**
 	 * Transportation types.
@@ -209,7 +211,7 @@ class AttachmentBehavior extends ModelBehavior {
 			return false;
 		}
 
-		return $this->deleteFiles($model, $model->id, array(), true);
+		return $this->deleteFiles($model, $model->id);
 	}
 
 	/**
@@ -389,10 +391,9 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @param int $id
 	 * @param array $filter
-	 * @param bool $isDelete
 	 * @return bool
 	 */
-	public function deleteFiles(Model $model, $id, array $filter = array(), $isDelete = false) {
+	public function deleteFiles(Model $model, $id, array $filter = array()) {
 		$columns = $this->_columns[$model->alias];
 		$data = $model->find('first', array(
 			'conditions' => array($model->alias . '.' . $model->primaryKey => $id),
@@ -410,7 +411,7 @@ class AttachmentBehavior extends ModelBehavior {
 		$save = array();
 
 		foreach ($data[$model->alias] as $column => $value) {
-			if (empty($columns[$column]) || empty($value)) {
+			if (empty($columns[$column])) {
 				continue;
 			} else if ($filter && !in_array($column, $filter)) {
 				continue;
@@ -422,7 +423,7 @@ class AttachmentBehavior extends ModelBehavior {
 		}
 
 		// Set the fields to empty
-		if ($save && !$isDelete) {
+		if ($save) {
 			$model->id = $id;
 			$model->save($save, array(
 				'validate' => false,
@@ -534,6 +535,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @uses Transit\Transformer\Image\ScaleTransformer
 	 * @uses Transit\Transformer\Image\RotateTransformer
 	 * @uses Transit\Transformer\Image\ExifTransformer
+         * @uses Transit\Transformer\Image\FitTransformer
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
@@ -559,6 +561,9 @@ class AttachmentBehavior extends ModelBehavior {
 			case self::EXIF:
 				return new ExifTransformer($options);
 			break;
+                        case self::FIT:
+                            return new FitTransformer($options);
+                            break;
 			default:
 				throw new InvalidArgumentException(sprintf('Invalid transformation method %s', $options['method']));
 			break;
