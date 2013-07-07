@@ -536,7 +536,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @uses Transit\Transformer\Image\ScaleTransformer
 	 * @uses Transit\Transformer\Image\RotateTransformer
 	 * @uses Transit\Transformer\Image\ExifTransformer
-	 * @uses Transit\transformer\Image\FitTransormer
+	 * @uses Transit\Transformer\Image\FitTransformer
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
