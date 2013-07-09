@@ -67,6 +67,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		@type string $prepend		What to prepend to the beginning of the filename
 	 * 		@type string $tempDir		Directory to upload files to temporarily
 	 * 		@type string $uploadDir		Directory to move file to after upload to make it publicly accessible
+	 * 		@type string $transportDir	Directory to place files in after transporting
 	 * 		@type string $finalPath		The final path to prepend to file names (like a domain)
 	 * 		@type string $dbColumn		Database column to write file path to
 	 * 		@type array $metaColumns	Database columns to write meta data to
@@ -85,6 +86,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'prepend' => '',
 		'tempDir' => TMP,
 		'uploadDir' => '',
+		'transportDir' => '',
 		'finalPath' => '',
 		'dbColumn' => '',
 		'metaColumns' => array(),
@@ -106,6 +108,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * 		@type string $append		What to append to the end of the filename
 	 * 		@type string $prepend		What to prepend to the beginning of the filename
 	 * 		@type string $uploadDir		Directory to move file to after upload to make it publicly accessible
+	 * 		@type string $transportDir	Directory to place files in after transporting
 	 * 		@type string $finalPath		The final path to prepend to file names (like a domain)
 	 * 		@type string $dbColumn		Database column to write file path to
 	 * 		@type string $defaultPath	Default image if no file is uploaded
@@ -119,6 +122,7 @@ class AttachmentBehavior extends ModelBehavior {
 		'append' => '',
 		'prepend' => '',
 		'uploadDir' => '',
+		'transportDir' => '',
 		'finalPath' => '',
 		'dbColumn' => '',
 		'defaultPath' => '',
@@ -274,6 +278,7 @@ class AttachmentBehavior extends ModelBehavior {
 				// Successful upload or import
 				if ($response) {
 					$dbColumnMap = array($attachment['dbColumn']);
+					$transportConfig = array($this->_prepareTransport($attachment));
 
 					// Rename and move file
 					$data[$attachment['dbColumn']] = $this->_renameAndMove($model, $transit->getOriginalFile(), $attachment);
@@ -294,6 +299,8 @@ class AttachmentBehavior extends ModelBehavior {
 								$tempFile = $transformedFiles[$count];
 								$dbColumnMap[] = $transform['dbColumn'];
 								$count++;
+
+								$transportConfig[] = $this->_prepareTransport($transform);
 							}
 
 							$data[$transform['dbColumn']] = $this->_renameAndMove($model, $tempFile, $transform);
@@ -304,7 +311,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 					// Transport the files and save their remote path
 					if ($attachment['transport']) {
-						if ($transportedFiles = $transit->transport()) {
+						if ($transportedFiles = $transit->transport($transportConfig)) {
 							foreach ($transportedFiles as $i => $transportedFile) {
 								$data[$dbColumnMap[$i]] = $transportedFile;
 							}
@@ -348,7 +355,7 @@ class AttachmentBehavior extends ModelBehavior {
 
 			// Log exceptions that shouldn't be shown to the client
 			} catch (Exception $e) {
-				$model->invalidate($field, __d('uploader', 'An unknown error has occurred'));
+				$model->invalidate($field, __d('uploader', $e->getMessage()));
 
 				$this->log($e->getMessage(), LOG_DEBUG);
 
@@ -689,6 +696,26 @@ class AttachmentBehavior extends ModelBehavior {
 				$this->_deleteFile($model, $columns[$column], $previous);
 			}
 		}
+	}
+
+	/**
+	 * Prepare transport configuration.
+	 *
+	 * @param array $settings
+	 * @return array
+	 */
+	protected function _prepareTransport(array $settings) {
+		$config = array();
+
+		if (!empty($settings['transportDir'])) {
+			$config['folder'] = $settings['transportDir'];
+		}
+
+		if (!empty($settings['returnUrl'])) {
+			$config['returnUrl'] = $settings['returnUrl'];
+		}
+
+		return $config;
 	}
 
 }
