@@ -17,6 +17,7 @@ use Transit\Transformer\Image\ResizeTransformer;
 use Transit\Transformer\Image\ScaleTransformer;
 use Transit\Transformer\Image\ExifTransformer;
 use Transit\Transformer\Image\RotateTransformer;
+use Transit\Transformer\Image\FitTransformer;
 use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
 
@@ -35,6 +36,7 @@ class AttachmentBehavior extends ModelBehavior {
 	const SCALE = 'scale';
 	const ROTATE = 'rotate';
 	const EXIF = 'exif';
+	const FIT = 'fit';
 
 	/**
 	 * Transportation types.
@@ -534,6 +536,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @uses Transit\Transformer\Image\ScaleTransformer
 	 * @uses Transit\Transformer\Image\RotateTransformer
 	 * @uses Transit\Transformer\Image\ExifTransformer
+	 * @uses Transit\Transformer\Image\FitTransformer
 	 *
 	 * @param array $options
 	 * @return \Transit\Transformer
@@ -558,6 +561,9 @@ class AttachmentBehavior extends ModelBehavior {
 			break;
 			case self::EXIF:
 				return new ExifTransformer($options);
+			break;
+			case self::FIT:
+				return new FitTransformer($options);
 			break;
 			default:
 				throw new InvalidArgumentException(sprintf('Invalid transformation method %s', $options['method']));
