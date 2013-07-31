@@ -427,6 +427,11 @@ class AttachmentBehavior extends ModelBehavior {
 
 			if ($this->_deleteFile($model, $columns[$column], $value)) {
 				$save[$column] = '';
+
+				// Reset meta data also
+				foreach ($this->settings[$model->alias][$columns[$column]]['metaColumns'] as $metaKey => $fieldKey) {
+					$save[$fieldKey] = '';
+				}
 			}
 		}
 
