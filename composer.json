@@ -24,6 +24,6 @@
 		"aws/aws-sdk-php": "~2.2"
 	},
 	"support": {
-		"source": "https://github.com/milesj/Uploader"
+		"source": "https://github.com/milesj/uploader"
 	}
 }
