@@ -20,6 +20,7 @@
 		"mjohnson/transit": "~1.4"
 	},
 	"suggest": {
+        "ext-gd": "Enable the GD library for image transforming",
 		"ext-exif": "Extract exif data from images",
 		"aws/aws-sdk-php": "~2.2"
 	},
