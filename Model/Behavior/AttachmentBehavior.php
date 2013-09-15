@@ -226,7 +226,7 @@ class AttachmentBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @return bool
 	 */
-	public function beforeSave(Model $model) {
+	public function beforeSave(Model $model, $options = array()) {
 		$alias = $model->alias;
 		$cleanup = array();
 
