@@ -1,30 +1,30 @@
 {
-	"name": "mjohnson/uploader",
-	"type": "cakephp-plugin",
-	"description": "File uploader and validation plugin for CakePHP.",
-	"keywords": ["cakephp", "uploader", "plugin", "file", "validation", "attachment"],
-	"homepage": "http://milesj.me/code/cakephp/uploader",
-	"license": "MIT",
-	"authors": [
-		{
-			"name": "Miles Johnson",
-			"homepage": "http://milesj.me"
-		}
-	],
-	"require": {
-		"php": ">=5.3.3",
-		"ext-curl": "*",
-		"ext-mbstring": "*",
-		"ext-fileinfo": "*",
-		"composer/installers": "*",
-		"mjohnson/transit": "~1.4"
-	},
-	"suggest": {
+    "name": "mjohnson/uploader",
+    "type": "cakephp-plugin",
+    "description": "File uploader and validation plugin for CakePHP.",
+    "keywords": ["cakephp", "uploader", "plugin", "file", "validation", "attachment"],
+    "homepage": "http://milesj.me/code/cakephp/uploader",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Miles Johnson",
+            "homepage": "http://milesj.me"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "ext-curl": "*",
+        "ext-mbstring": "*",
+        "ext-fileinfo": "*",
+        "composer/installers": "*",
+        "mjohnson/transit": "~1.4"
+    },
+    "suggest": {
         "ext-gd": "Enable the GD library for image transforming",
-		"ext-exif": "Extract exif data from images",
-		"aws/aws-sdk-php": "~2.2"
-	},
-	"support": {
-		"source": "https://github.com/milesj/uploader"
-	}
+        "ext-exif": "Extract exif data from images",
+        "aws/aws-sdk-php": "~2.2"
+    },
+    "support": {
+        "source": "https://github.com/milesj/uploader"
+    }
 }

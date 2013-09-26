@@ -6,9 +6,9 @@ Provides support for image transformation and remote storage transportation.
 ## Requirements ##
 
 * PHP 5.3.3
-	* Fileinfo
-	* Multibyte
-	* Curl
+    * Fileinfo
+    * Multibyte
+    * Curl
 * CakePHP 2
 * Composer
 
