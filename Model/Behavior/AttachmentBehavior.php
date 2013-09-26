@@ -203,6 +203,46 @@ class AttachmentBehavior extends ModelBehavior {
 		$this->_columns = array();
 	}
 
+    /**
+     * After a find, replace any empty fields with the default path.
+     *
+     * @param Model $model
+     * @param array $results
+     * @param bool $primary
+     * @return array
+     */
+    public function afterFind(Model $model, $results, $primary) {
+        $alias = $model->alias;
+
+        foreach ($results as $i => $data) {
+            if (empty($data[$alias])) {
+                continue;
+            }
+
+            foreach ($data[$alias] as $field => $value) {
+                if (empty($this->settings[$alias][$field]) || !empty($value)) {
+                    continue;
+                }
+
+                $attachment = $this->_settingsCallback($model, $this->settings[$alias][$field]);
+
+                if ($attachment['defaultPath']) {
+                    $results[$i][$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
+                }
+
+                if ($attachment['transforms']) {
+                    foreach ($attachment['transforms'] as $transform) {
+                        if ($transform['defaultPath']) {
+                            $results[$i][$alias][$transform['dbColumn']] = $transform['defaultPath'];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $results;
+    }
+
 	/**
 	 * Deletes any files that have been attached to this model.
 	 *
@@ -327,22 +367,8 @@ class AttachmentBehavior extends ModelBehavior {
 					unset($model->data[$alias][$dbCol]);
 				}
 
-				// Allow empty uploads and set default paths
+				// Allow empty uploads
 				if ($attachment['allowEmpty']) {
-					if (!$model->id) {
-						if ($attachment['defaultPath']) {
-							$model->data[$alias][$attachment['dbColumn']] = $attachment['defaultPath'];
-						}
-
-						if ($attachment['transforms']) {
-							foreach ($attachment['transforms'] as $transform) {
-								if ($transform['defaultPath']) {
-									$model->data[$alias][$transform['dbColumn']] = $transform['defaultPath'];
-								}
-							}
-						}
-					}
-
 					continue;
 				}
 
@@ -444,6 +470,9 @@ class AttachmentBehavior extends ModelBehavior {
 				'fieldList' => array_keys($save)
 			));
 		}
+
+        // Reset ID
+        $model->id = null;
 
 		return true;
 	}
