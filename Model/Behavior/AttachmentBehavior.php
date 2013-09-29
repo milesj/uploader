@@ -211,7 +211,7 @@ class AttachmentBehavior extends ModelBehavior {
      * @param bool $primary
      * @return array
      */
-    public function afterFind(Model $model, $results, $primary) {
+    public function afterFind(Model $model, $results, $primary=false) {
         $alias = $model->alias;
 
         foreach ($results as $i => $data) {
