@@ -298,6 +298,7 @@ class AttachmentBehavior extends ModelBehavior {
             // Attempt upload or import
             try {
                 $overwrite = $attachment['overwrite'];
+                $response = null;
 
                 // File upload
                 if (is_array($file)) {
@@ -312,7 +313,7 @@ class AttachmentBehavior extends ModelBehavior {
                     $response = $transit->importFromLocal($overwrite);
 
                 // Stream import
-                } else {
+                } else if (!empty($file)) {
                     $response = $transit->importFromStream($overwrite);
                 }
 
