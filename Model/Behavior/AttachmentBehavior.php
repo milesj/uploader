@@ -473,9 +473,6 @@ class AttachmentBehavior extends ModelBehavior {
             ));
         }
 
-        // Reset ID
-        $model->id = null;
-
         return true;
     }
 
