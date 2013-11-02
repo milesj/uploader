@@ -62,22 +62,24 @@ class AttachmentBehavior extends ModelBehavior {
      * Default attachment settings.
      *
      * @type array {
-     *         @type string $nameCallback   Method to format filename with
-     *         @type string $append         What to append to the end of the filename
-     *         @type string $prepend        What to prepend to the beginning of the filename
-     *         @type string $tempDir        Directory to upload files to temporarily
-     *         @type string $uploadDir      Directory to move file to after upload to make it publicly accessible
-     *         @type string $transportDir   Directory to place files in after transporting
-     *         @type string $finalPath      The final path to prepend to file names (like a domain)
-     *         @type string $dbColumn       Database column to write file path to
-     *         @type array $metaColumns     Database columns to write meta data to
-     *         @type string $defaultPath    Default image if no file is uploaded
-     *         @type bool $overwrite        Overwrite a file with the same name if it exists
-     *         @type bool $stopSave         Stop save() if error exists during upload
-     *         @type bool $allowEmpty       Allow an empty file upload to continue
-     *         @type array $transforms      List of transforms to apply to the image
-     *         @type array $transport       Settings for file transportation
-     *         @type array $curl            List of cURL options to set for remote importing
+     *          @type string $nameCallback   Method to format filename with
+     *          @type string $append         What to append to the end of the filename
+     *          @type string $prepend        What to prepend to the beginning of the filename
+     *          @type string $tempDir        Directory to upload files to temporarily
+     *          @type string $uploadDir      Directory to move file to after upload to make it publicly accessible
+     *          @type string $transportDir   Directory to place files in after transporting
+     *          @type string $finalPath      The final path to prepend to file names (like a domain)
+     *          @type string $dbColumn       Database column to write file path to
+     *          @type array $metaColumns     Database columns to write meta data to
+     *          @type string $defaultPath    Default image if no file is uploaded
+     *          @type bool $overwrite        Overwrite a file with the same name if it exists
+     *          @type bool $stopSave         Stop save() if error exists during upload
+     *          @type bool $allowEmpty       Allow an empty file upload to continue
+     *          @type array $transforms      List of transforms to apply to the image
+     *          @type array $transformers    List of custom transformers to class/namespaces
+     *          @type array $transport       Settings for file transportation
+     *          @type array $transporters    List of custom transporters to class/namespaces
+     *          @type array $curl            List of cURL options to set for remote importing
      * }
      */
     protected $_defaultSettings = array(
@@ -95,7 +97,9 @@ class AttachmentBehavior extends ModelBehavior {
         'stopSave' => true,
         'allowEmpty' => true,
         'transforms' => array(),
+        'transformers' => array(),
         'transport' => array(),
+        'transporters' => array(),
         'curl' => array()
     );
 
@@ -103,7 +107,7 @@ class AttachmentBehavior extends ModelBehavior {
      * Default transform settings.
      *
      * @type array {
-     *         @type string $method         The transform method
+     *         @type string $class          The transform method / class to use
      *         @type string $nameCallback   Method to format filename with
      *         @type string $append         What to append to the end of the filename
      *         @type string $prepend        What to prepend to the beginning of the filename
@@ -117,7 +121,7 @@ class AttachmentBehavior extends ModelBehavior {
      * }
      */
     protected $_transformSettings = array(
-        'method' => '',
+        'class' => '',
         'nameCallback' => '',
         'append' => '',
         'prepend' => '',
@@ -542,7 +546,7 @@ class AttachmentBehavior extends ModelBehavior {
         }
 
         foreach ($attachment['transforms'] as $options) {
-            $transformer = $this->_getTransformer($options);
+            $transformer = $this->_getTransformer($attachment, $options);
 
             if ($options['self']) {
                 $transit->addSelfTransformer($transformer);
@@ -564,7 +568,7 @@ class AttachmentBehavior extends ModelBehavior {
             return;
         }
 
-        $transit->setTransporter($this->_getTransporter($attachment['transport']));
+        $transit->setTransporter($this->_getTransporter($attachment, $attachment['transport']));
     }
 
     /**
@@ -578,12 +582,15 @@ class AttachmentBehavior extends ModelBehavior {
      * @uses Transit\Transformer\Image\ExifTransformer
      * @uses Transit\Transformer\Image\FitTransformer
      *
+     * @param array $attachment
      * @param array $options
      * @return \Transit\Transformer
      * @throws \InvalidArgumentException
      */
-    protected function _getTransformer(array $options) {
-        switch ($options['method']) {
+    protected function _getTransformer(array $attachment, array $options) {
+        $class = isset($options['method']) ? $options['method'] : $options['class'];
+
+        switch ($class) {
             case self::CROP:
                 return new CropTransformer($options);
             break;
@@ -606,9 +613,13 @@ class AttachmentBehavior extends ModelBehavior {
                 return new FitTransformer($options);
             break;
             default:
-                throw new InvalidArgumentException(sprintf('Invalid transformation method %s', $options['method']));
+                if (isset($attachment['transformers'][$class])) {
+                    return new $attachment['transformers'][$class]($options);
+                }
             break;
         }
+
+        throw new InvalidArgumentException(sprintf('Invalid transform class %s', $class));
     }
 
     /**
@@ -617,12 +628,15 @@ class AttachmentBehavior extends ModelBehavior {
      * @uses Transit\Transporter\Aws\S3Transporter
      * @uses Transit\Transporter\Aws\GlacierTransporter
      *
+     * @param array $attachment
      * @param array $options
      * @return \Transit\Transporter
      * @throws \InvalidArgumentException
      */
-    protected function _getTransporter(array $options) {
-        switch ($options['class']) {
+    protected function _getTransporter(array $attachment, array $options) {
+        $class = $options['class'];
+
+        switch ($class) {
             case self::S3:
                 return new S3Transporter($options['accessKey'], $options['secretKey'], $options);
             break;
@@ -630,9 +644,13 @@ class AttachmentBehavior extends ModelBehavior {
                 return new GlacierTransporter($options['accessKey'], $options['secretKey'], $options);
             break;
             default:
-                throw new InvalidArgumentException(sprintf('Invalid transport class %s', $options['class']));
+                if (isset($attachment['transporters'][$class])) {
+                    return new $attachment['transporters'][$class]($options);
+                }
             break;
         }
+
+        throw new InvalidArgumentException(sprintf('Invalid transport class %s', $class));
     }
 
     /**
@@ -680,7 +698,7 @@ class AttachmentBehavior extends ModelBehavior {
         try {
             // Delete remote file
             if ($attachment['transport']) {
-                $transporter = $this->_getTransporter($attachment['transport']);
+                $transporter = $this->_getTransporter($attachment, $attachment['transport']);
 
                 return $transporter->delete($path);
 
