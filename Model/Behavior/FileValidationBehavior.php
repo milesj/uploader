@@ -7,6 +7,7 @@
 
 App::uses('ModelBehavior', 'Model');
 
+use Transit\Transit;
 use Transit\File;
 use Transit\Validator\ImageValidator;
 
@@ -406,19 +407,26 @@ class FileValidationBehavior extends ModelBehavior {
                 $file = new File($value);
 
             // Import, copy file for validation
-            } else if (preg_match('/^http/i', $value)) {
+            } else if (!empty($value)) {
                 $target = TMP . md5($value);
+
+                $transit = new Transit($value);
+                $transit->setDirectory(TMP);
 
                 // Already imported from previous validation
                 if (file_exists($target)) {
                     $file = new File($target);
 
-                // Attempt to copy
-                } else {
-                    $transit = new \Transit\Transit($value);
-                    $transit->setDirectory(TMP);
-
+                // Attempt to copy from remote
+                } else if (preg_match('/^http/i', $value)) {
                     if ($transit->importFromRemote()) {
+                        $file = $transit->getOriginalFile();
+                        $file->rename(basename($target));
+                    }
+
+                // Or from stream
+                } else {
+                    if ($transit->importFromStream()) {
                         $file = $transit->getOriginalFile();
                         $file->rename(basename($target));
                     }
