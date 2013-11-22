@@ -100,7 +100,8 @@ class AttachmentBehavior extends ModelBehavior {
         'transformers' => array(),
         'transport' => array(),
         'transporters' => array(),
-        'curl' => array()
+        'curl' => array(),
+        'cleanup' => true
     );
 
     /**
@@ -737,6 +738,12 @@ class AttachmentBehavior extends ModelBehavior {
 
         foreach ($fields as $column => $value) {
             if (empty($data[$model->alias][$column])) {
+                continue;
+            }
+            
+            $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$column]);
+
+            if (!$attachment['cleanup']) {
                 continue;
             }
 
