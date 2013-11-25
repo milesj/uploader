@@ -62,24 +62,25 @@ class AttachmentBehavior extends ModelBehavior {
      * Default attachment settings.
      *
      * @type array {
-     *          @type string $nameCallback   Method to format filename with
-     *          @type string $append         What to append to the end of the filename
-     *          @type string $prepend        What to prepend to the beginning of the filename
-     *          @type string $tempDir        Directory to upload files to temporarily
-     *          @type string $uploadDir      Directory to move file to after upload to make it publicly accessible
-     *          @type string $transportDir   Directory to place files in after transporting
-     *          @type string $finalPath      The final path to prepend to file names (like a domain)
-     *          @type string $dbColumn       Database column to write file path to
-     *          @type array $metaColumns     Database columns to write meta data to
-     *          @type string $defaultPath    Default image if no file is uploaded
-     *          @type bool $overwrite        Overwrite a file with the same name if it exists
-     *          @type bool $stopSave         Stop save() if error exists during upload
-     *          @type bool $allowEmpty       Allow an empty file upload to continue
-     *          @type array $transforms      List of transforms to apply to the image
-     *          @type array $transformers    List of custom transformers to class/namespaces
-     *          @type array $transport       Settings for file transportation
-     *          @type array $transporters    List of custom transporters to class/namespaces
-     *          @type array $curl            List of cURL options to set for remote importing
+     *      @type string $nameCallback  Method to format filename with
+     *      @type string $append        What to append to the end of the filename
+     *      @type string $prepend       What to prepend to the beginning of the filename
+     *      @type string $tempDir       Directory to upload files to temporarily
+     *      @type string $uploadDir     Directory to move file to after upload to make it publicly accessible
+     *      @type string $transportDir  Directory to place files in after transporting
+     *      @type string $finalPath     The final path to prepend to file names (like a domain)
+     *      @type string $dbColumn      Database column to write file path to
+     *      @type array $metaColumns    Database columns to write meta data to
+     *      @type string $defaultPath   Default image if no file is uploaded
+     *      @type bool $overwrite       Overwrite a file with the same name if it exists
+     *      @type bool $stopSave        Stop save() if error exists during upload
+     *      @type bool $allowEmpty      Allow an empty file upload to continue
+     *      @type array $transforms     List of transforms to apply to the image
+     *      @type array $transformers   List of custom transformers to class/namespaces
+     *      @type array $transport      Settings for file transportation
+     *      @type array $transporters   List of custom transporters to class/namespaces
+     *      @type array $curl           List of cURL options to set for remote importing
+     *      @type bool $cleanup         Remove old files when new files are being written
      * }
      */
     protected $_defaultSettings = array(
@@ -108,17 +109,17 @@ class AttachmentBehavior extends ModelBehavior {
      * Default transform settings.
      *
      * @type array {
-     *         @type string $class          The transform method / class to use
-     *         @type string $nameCallback   Method to format filename with
-     *         @type string $append         What to append to the end of the filename
-     *         @type string $prepend        What to prepend to the beginning of the filename
-     *         @type string $uploadDir      Directory to move file to after upload to make it publicly accessible
-     *         @type string $transportDir   Directory to place files in after transporting
-     *         @type string $finalPath      The final path to prepend to file names (like a domain)
-     *         @type string $dbColumn       Database column to write file path to
-     *         @type string $defaultPath    Default image if no file is uploaded
-     *         @type bool $overwrite        Overwrite a file with the same name if it exists
-     *         @type bool $self             Should the transforms apply to the uploaded file instead of creating new images
+     *      @type string $class         The transform method / class to use
+     *      @type string $nameCallback  Method to format filename with
+     *      @type string $append        What to append to the end of the filename
+     *      @type string $prepend       What to prepend to the beginning of the filename
+     *      @type string $uploadDir     Directory to move file to after upload to make it publicly accessible
+     *      @type string $transportDir  Directory to place files in after transporting
+     *      @type string $finalPath     The final path to prepend to file names (like a domain)
+     *      @type string $dbColumn      Database column to write file path to
+     *      @type string $defaultPath   Default image if no file is uploaded
+     *      @type bool $overwrite       Overwrite a file with the same name if it exists
+     *      @type bool $self            Should the transforms apply to the uploaded file instead of creating new images
      * }
      */
     protected $_transformSettings = array(
@@ -740,7 +741,7 @@ class AttachmentBehavior extends ModelBehavior {
             if (empty($data[$model->alias][$column])) {
                 continue;
             }
-            
+
             $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$column]);
 
             if (!$attachment['cleanup']) {
