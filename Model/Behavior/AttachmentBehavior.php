@@ -747,10 +747,12 @@ class AttachmentBehavior extends ModelBehavior {
                 continue;
             }
 
-            $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$column]);
+            if (!empty($this->settings[$model->alias][$column])) {
+                $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$column]);
 
-            if (!$attachment['cleanup']) {
-                continue;
+                if (!$attachment['cleanup']) {
+                    continue;
+                }
             }
 
             // Delete if previous value doesn't match new value
