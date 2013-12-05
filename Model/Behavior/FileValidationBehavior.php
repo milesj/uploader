@@ -417,6 +417,10 @@ class FileValidationBehavior extends ModelBehavior {
                 if (file_exists($target)) {
                     $file = new File($target);
 
+                // Local file
+                } else if (file_exists($value)) {
+                    $file = new File($value);
+
                 // Attempt to copy from remote
                 } else if (preg_match('/^http/i', $value)) {
                     if ($transit->importFromRemote()) {
