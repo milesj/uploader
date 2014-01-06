@@ -93,7 +93,7 @@ class FileValidationBehavior extends ModelBehavior {
     public function setup(Model $model, $settings = array()) {
         if ($settings) {
             foreach ($settings as $field => $options) {
-                $this->settings[$model->alias][$field] = $options + array('required' => true);
+                $this->settings[$model->alias][$field] = (array) $options + array('required' => true);
             }
         }
     }
