@@ -332,9 +332,13 @@ class AttachmentBehavior extends ModelBehavior {
                     $data[$attachment['dbColumn']] = $this->_renameAndMove($model, $transit->getOriginalFile(), $attachment);
 
                     // Fetch exif data before transforming
-                    $metaData = array_flip(array_filter(array_flip(array_filter($transit->getOriginalFile()->toArray())), function($key) {
-                        return (substr($key, 0, 4) === 'exif');
-                    }));
+                    $metaData = array();
+
+                    foreach ($transit->getOriginalFile()->toArray() as $key => $value) {
+                        if (substr($key, 0, 4) === 'exif' && $value) {
+                            $metaData[$key] = $value;
+                        }
+                    }
 
                     // Transform the files and save their path
                     if ($attachment['transforms']) {
