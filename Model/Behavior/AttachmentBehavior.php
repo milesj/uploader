@@ -468,7 +468,7 @@ class AttachmentBehavior extends ModelBehavior {
                 continue;
             }
 
-            if ($this->_deleteFile($model, $columns[$column], $value)) {
+            if ($this->_deleteFile($model, $columns[$column], $value, $column)) {
                 $save[$column] = '';
 
                 // Reset meta data also
@@ -696,15 +696,25 @@ class AttachmentBehavior extends ModelBehavior {
      * @param Model $model
      * @param string $field
      * @param string $path
+     * @param string $column
      * @return bool
      */
-    protected function _deleteFile(Model $model, $field, $path) {
+    protected function _deleteFile(Model $model, $field, $path, $column) {
         if (empty($this->settings[$model->alias][$field])) {
             return false;
         }
 
         $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$field]);
         $basePath = $attachment['uploadDir'] ?: $attachment['tempDir'];
+
+        // Get uploadDir from transform
+        if ($attachment['transforms']) {
+            foreach ($attachment['transforms'] as $transform) {
+                if ($transform['dbColumn'] === $column) {
+                    $basePath = $transform['uploadDir'];
+                }
+            }
+        }
 
         try {
             // Delete remote file
@@ -763,7 +773,7 @@ class AttachmentBehavior extends ModelBehavior {
             $previous = $data[$model->alias][$column];
 
             if ($previous !== $value) {
-                $this->_deleteFile($model, $columns[$column], $previous);
+                $this->_deleteFile($model, $columns[$column], $previous, $column);
             }
         }
     }
