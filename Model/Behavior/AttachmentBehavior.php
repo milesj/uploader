@@ -425,12 +425,10 @@ class AttachmentBehavior extends ModelBehavior {
             if ($data) {
                 $model->data[$alias] = $data + $model->data[$alias];
             }
+            
         }
 
-        // If we are doing an update, delete the previous files that are being replaced
-        if ($model->id && $cleanup) {
-            $this->_cleanupOldFiles($model, $cleanup);
-        }
+        
 
         return true;
     }
