@@ -20,6 +20,7 @@ use Transit\Transformer\Image\RotateTransformer;
 use Transit\Transformer\Image\FitTransformer;
 use Transit\Transporter\Aws\S3Transporter;
 use Transit\Transporter\Aws\GlacierTransporter;
+use Transit\Transporter\Rackspace\CloudFilesTransporter;
 
 /**
  * A CakePHP Behavior that attaches a file to a model, uploads automatically,
@@ -43,6 +44,7 @@ class AttachmentBehavior extends ModelBehavior {
      */
     const S3 = 's3';
     const GLACIER = 'glacier';
+    const CLOUD_FILES = 'cloudfiles';
 
     /**
      * Transit instances indexed by model alias.
@@ -275,7 +277,6 @@ class AttachmentBehavior extends ModelBehavior {
      */
     public function beforeSave(Model $model, $options = array()) {
         $alias = $model->alias;
-        $cleanup = array();
 
         if (empty($model->data[$alias])) {
             return true;
@@ -654,6 +655,9 @@ class AttachmentBehavior extends ModelBehavior {
             break;
             case self::GLACIER:
                 return new GlacierTransporter($options['accessKey'], $options['secretKey'], $options);
+            break;
+            case self::CLOUD_FILES:
+                return new CloudFilesTransporter($options['username'], $options['apiKey'], $options);
             break;
             default:
                 if (isset($attachment['transporters'][$class])) {

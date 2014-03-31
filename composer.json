@@ -17,7 +17,7 @@
         "ext-mbstring": "*",
         "ext-fileinfo": "*",
         "composer/installers": "*",
-        "mjohnson/transit": "~1.4"
+        "mjohnson/transit": "~1.5"
     },
     "suggest": {
         "ext-gd": "Enable the GD library for image transforming",
