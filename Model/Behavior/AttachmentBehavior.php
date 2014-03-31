@@ -448,11 +448,7 @@ class AttachmentBehavior extends ModelBehavior {
      */
     public function deleteFiles(Model $model, $id, array $filter = array(), $isDelete = false) {
         $columns = $this->_columns[$model->alias];
-        $data = $model->find('first', array(
-            'conditions' => array($model->alias . '.' . $model->primaryKey => $id),
-            'contain' => false,
-            'recursive' => -1
-        ));
+        $data = $this->_doFind($model, array($model->alias . '.' . $model->primaryKey => $id));
 
         if (empty($data[$model->alias])) {
             return false;
@@ -694,6 +690,29 @@ class AttachmentBehavior extends ModelBehavior {
     }
 
     /**
+     * Trigger a find() call but disable virtual fields before doing so.
+     *
+     * @param Model $model
+     * @param array $where
+     * @param string $type
+     * @return array
+     */
+    protected function _doFind(Model $model, array $where, $type = 'first') {
+        $virtual = $model->virtualFields;
+        $model->virtualFields = array();
+
+        $results = $model->find($type, array(
+            'conditions' => $where,
+            'contain' => false,
+            'recursive' => -1
+        ));
+
+        $model->virtualFields = $virtual;
+
+        return $results;
+    }
+
+    /**
      * Attempt to delete a file using the attachment settings.
      *
      * @uses Transit\File
@@ -751,11 +770,7 @@ class AttachmentBehavior extends ModelBehavior {
      */
     protected function _cleanupOldFiles(Model $model, array $fields) {
         $columns = $this->_columns[$model->alias];
-        $data = $model->find('first', array(
-            'conditions' => array($model->alias . '.' . $model->primaryKey => $model->id),
-            'contain' => false,
-            'recursive' => -1
-        ));
+        $data = $this->_doFind($model, array($model->alias . '.' . $model->primaryKey => $model->id));
 
         if (empty($data[$model->alias])) {
             return;
