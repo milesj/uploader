@@ -704,7 +704,8 @@ class AttachmentBehavior extends ModelBehavior {
         $results = $model->find($type, array(
             'conditions' => $where,
             'contain' => false,
-            'recursive' => -1
+            'recursive' => -1,
+            'order' => ''
         ));
 
         $model->virtualFields = $virtual;
