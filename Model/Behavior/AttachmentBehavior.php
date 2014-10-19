@@ -782,8 +782,8 @@ class AttachmentBehavior extends ModelBehavior {
                 continue;
             }
 
-            if (!empty($this->settings[$model->alias][$column])) {
-                $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$column]);
+            if (!empty($this->settings[$model->alias][$columns[$column]])) {
+                $attachment = $this->_settingsCallback($model, $this->settings[$model->alias][$columns[$column]]);
 
                 if (!$attachment['cleanup']) {
                     continue;
