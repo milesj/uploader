@@ -17,12 +17,12 @@
         "ext-mbstring": "*",
         "ext-fileinfo": "*",
         "composer/installers": "*",
-        "mjohnson/transit": "~1.5"
+        "mjohnson/transit": "~1.6"
     },
     "suggest": {
         "ext-gd": "Enable the GD library for image transforming",
         "ext-exif": "Extract exif data from images",
-        "aws/aws-sdk-php": "~2.2"
+        "aws/aws-sdk-php": "~2.7"
     },
     "support": {
         "source": "https://github.com/milesj/uploader"
