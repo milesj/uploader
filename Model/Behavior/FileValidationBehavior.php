@@ -333,6 +333,7 @@ class FileValidationBehavior extends ModelBehavior {
     public function afterValidate(Model $model) {
         if ($this->_tempFile) {
             $this->_tempFile->delete();
+            $this->_tempFile = null;
         }
 
         return true;
