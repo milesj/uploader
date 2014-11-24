@@ -80,9 +80,9 @@ class FileValidationBehavior extends ModelBehavior {
     /**
      * Temporary file used for validation only.
      *
-     * @type \Transit\File
+     * @type \Transit\File[]
      */
-    protected $_tempFile;
+    protected $_tempFiles = array();
 
     /**
      * Setup the validation and model settings.
@@ -331,9 +331,12 @@ class FileValidationBehavior extends ModelBehavior {
      * @return bool
      */
     public function afterValidate(Model $model) {
-        if ($this->_tempFile) {
-            $this->_tempFile->delete();
-            $this->_tempFile = null;
+        if (!empty($this->_tempFiles)) {
+            foreach ($this->_tempFiles as $file) {
+                echo 'delete tmp: ' . $file->path() . PHP_EOL;
+                $file->delete();
+            }
+            $this->_tempFiles = array();
         }
 
         return true;
@@ -409,37 +412,40 @@ class FileValidationBehavior extends ModelBehavior {
 
             // Import, copy file for validation
             } else if (!empty($value)) {
-                $target = TMP . md5($value);
+                $target = md5($value);
 
                 $transit = new Transit($value);
                 $transit->setDirectory(TMP);
 
                 // Already imported from previous validation
-                if (file_exists($target)) {
-                    $file = new File($target);
+                if (isset($this->_tempFiles[$target])) {
+                    $file = $this->_tempFiles[$target];
 
                 // Local file
                 } else if (file_exists($value)) {
-                    $file = new File($value);
+                    if ($transit->importFromLocal()) {
+                        $file = $transit->getOriginalFile();
+                        $file->rename($target);
+                    }
 
                 // Attempt to copy from remote
                 } else if (preg_match('/^http/i', $value)) {
                     if ($transit->importFromRemote()) {
                         $file = $transit->getOriginalFile();
-                        $file->rename(basename($target));
+                        $file->rename($target);
                     }
 
                 // Or from stream
                 } else {
                     if ($transit->importFromStream()) {
                         $file = $transit->getOriginalFile();
-                        $file->rename(basename($target));
+                        $file->rename($target);
                     }
                 }
 
                 // Save temp so we can delete later
-                if ($file) {
-                    $this->_tempFile = $file;
+                if ($file && !isset($this->_tempFiles[$target])) {
+                    $this->_tempFiles[$target] = $file;
                 }
             }
 
