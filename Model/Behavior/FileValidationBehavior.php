@@ -333,7 +333,6 @@ class FileValidationBehavior extends ModelBehavior {
     public function afterValidate(Model $model) {
         if (!empty($this->_tempFiles)) {
             foreach ($this->_tempFiles as $file) {
-                echo 'delete tmp: ' . $file->path() . PHP_EOL;
                 $file->delete();
             }
             $this->_tempFiles = array();
