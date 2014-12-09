@@ -684,7 +684,7 @@ class AttachmentBehavior extends ModelBehavior {
             $file->move($options['uploadDir'], $options['overwrite']);
         }
 
-        $file->rename($nameCallback, $options['append'], $options['prepend']);
+        $file->rename($nameCallback, $options['append'], $options['prepend'], $options['overwrite']);
 
         return (string) $options['finalPath'] . $file->basename();
     }
